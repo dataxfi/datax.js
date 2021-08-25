@@ -1,0 +1,51 @@
+{
+  "name": "@dataxfi/datax.js",
+  "version": "0.1.0",
+  "description": "Javascript client for DataX",
+  "main": "index.js",
+  "scripts": {
+    "test": "npm run test:unit",
+    "test:unit": "mocha --config=test/.mocharc.json --node-env=test --exit 'test/unit/**/*.test.ts'",
+    "test:integration": "mocha --config=test/.mocharc.json --node-env=test --exit 'test/integration/**/*.test.ts'"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/dataxfi/datax.js.git"
+  },
+  "keywords": [
+    "DataX",
+    "DataDeFi",
+    "DEX"
+  ],
+  "author": "DataX Finance (https://datax.fi)",
+  "license": "Apache-2.0",
+  "bugs": {
+    "url": "https://github.com/dataxfi/datax.js/issues"
+  },
+  "homepage": "https://github.com/dataxfi/datax.js#readme",
+  "dependencies": {
+    "@dataxfi/ocean.js": "^0.16.6",
+    "@oceanprotocol/contracts": "^0.6.5",
+    "@uniswap/token-lists": "^1.0.0-beta.25",
+    "abi-decoder": "^2.4.0",
+    "ajv": "^8.6.2",
+    "axios": "^0.21.1",
+    "bignumber.js": "^9.0.1",
+    "decimal.js": "^10.3.1",
+    "dotenv": "^10.0.0",
+    "ganache-core": "^2.13.2",
+    "typescript": "^4.3.5",
+    "web3": "^1.4.0",
+    "web3-core": "^1.4.0",
+    "web3-utils": "^1.4.0"
+  },
+  "devDependencies": {
+    "@types/chai": "^4.2.21",
+    "@types/mocha": "^9.0.0",
+    "chai": "^4.3.4",
+    "mocha": "^9.0.3",
+    "source-map-support": "^0.5.19",
+    "ts-node": "^10.1.0",
+    "ts-node-register": "^1.0.0"
+  }
+}
