@@ -1,4 +1,4 @@
-[![banner](https://pbs.twimg.com/profile_banners/1408084525813481476/1624962873/1500x500)](https://datax.fi)
+[![banner](https://pbs.twimg.com/profile_banners/1408084525813481476/1630443594/1500x500)](https://datax.fi)
 
 <h1 align="center">datax.js</h1>
 
@@ -17,10 +17,11 @@ npm install @dataxfi/datax
 import Web3 from 'web3'
 import { Ocean, TokenList, Config } from '@dataxfi/datax'
 
-const network = 'mainnet' //["mainnet", "polygon", "rinkeby", "development"]
+
+const networkId = '1' // "1" = mainnet,  "137" = polygon, "56" = bsc, "4" = rinkeby
 const web3 = new Web3('your-web3-provider')
 
-const ocean = new Ocean(web3, network)
+const ocean = new Ocean(web3, networkId)
 
 //now you can use functions in Ocean.ts file
 
