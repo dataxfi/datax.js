@@ -8,8 +8,8 @@ export default class TokenList extends Base {
   private pinataApiKey: string
   private pinataSecretKey: string
 
-  constructor(web3: any, network: any, pinataAPIKey: string, pinataSecretKey: string){
-    super(web3, network)
+  constructor(web3: any, networkId: any, pinataAPIKey: string, pinataSecretKey: string){
+    super(web3, networkId)
     this.pinataApiKey = pinataAPIKey
     this.pinataSecretKey = pinataSecretKey
   }
@@ -21,7 +21,7 @@ export default class TokenList extends Base {
 public async fetchGlobalTokenList(): Promise<TList>{
   try {
 
-    let apiResp = await axios(`https://gateway.pinata.cloud/ipfs/${this.config.config.tokenList[this.network]}`)
+    let apiResp = await axios(`https://gateway.pinata.cloud/ipfs/${this.config.default.tokenList}`)
     console.log(apiResp)
     const tokenList = apiResp.data
     console.log(tokenList)
@@ -41,7 +41,7 @@ public async fetchGlobalTokenList(): Promise<TList>{
  public async fetchDataTokenList(): Promise<TList>{
   try {
 
-  let apiResp = await axios(`https://gateway.pinata.cloud/ipfs/${this.config.config.datatokenList[this.network]}`)
+  let apiResp = await axios(`https://gateway.pinata.cloud/ipfs/${this.config.default.datatokenList}`)
   console.log(apiResp)
   const tokenList = apiResp.data
   console.log(tokenList)
@@ -291,7 +291,7 @@ private async pinTokenListToIPFS(listname: string, list: TList): Promise<string>
     }
     pinata['pinataContent'] = list
     
-  const url = `${this.config.config.pinataAPIBaseUrl}/pinning/pinJSONToIPFS`;
+  const url = `${this.config.default.pinataAPIBaseUrl}/pinning/pinJSONToIPFS`;
   let resp = await axios
       .post(url, pinata, {
           headers: {
