@@ -1,7 +1,7 @@
 import {DataTokens, Logger, OceanPool } from '@dataxfi/ocean.js'
 import { TransactionReceipt } from 'web3-core'
 import { AbiItem } from 'web3-utils/types'
-import {default as ExchangeRouter} from './abi/ExchangeRouter.json'
+import {default as DataxRouter} from './abi/DataxRouter.json'
 import datatokensABI from '@oceanprotocol/contracts/artifacts/DataTokenTemplate.json'
 import poolABI from '@oceanprotocol/contracts/artifacts/BPool.json'
 import BFactoryABI from '@oceanprotocol/contracts/artifacts/BFactory.json'
@@ -10,7 +10,7 @@ import BigNumber from 'bignumber.js'
 import DTFactoryABI from '@oceanprotocol/contracts/artifacts/DTFactory.json'
 import Base from './Base'
 
-const APPROXIMATION = 0.999
+const SLIPPAGE_TOLERANCE = 0.001
 
 export interface TokensReceived {
     dtAmount: string
@@ -36,14 +36,14 @@ export default class Ocean extends Base{
 
     private logger: any = null
     private oceanPool: OceanPool = null
-    private oceanTokenAddress: string = null
+    public oceanTokenAddress: string = null
     private poolFactoryAddress: string = null
   
     constructor(web3: any, network: any, poolFactoryAddress?:string, oceanTokenAddress?:string){
       super(web3, network)
       this.logger = Logger
-      this.poolFactoryAddress = poolFactoryAddress ? poolFactoryAddress : this.config.defaultConfig.poolFactoryAddress
-      this.oceanTokenAddress = oceanTokenAddress ? oceanTokenAddress : this.config.defaultConfig.oceanTokenAddress
+      this.poolFactoryAddress = poolFactoryAddress ? poolFactoryAddress : this.config.default.poolFactoryAddress
+      this.oceanTokenAddress = oceanTokenAddress ? oceanTokenAddress : this.config.default.oceanTokenAddress
       this.oceanPool = new OceanPool(this.web3,
         this.logger,
         BFactoryABI.abi as AbiItem[],
@@ -65,7 +65,7 @@ export default class Ocean extends Base{
  public async getBalance(tokenAddress: string, account: string): Promise<string> {
    try {
     const datatoken = new DataTokens(
-    this.config.defaultConfig.factoryAddress,
+    this.config.default.factoryAddress,
     DTFactoryABI.abi as AbiItem[],
     datatokensABI.abi as AbiItem[],
     this.web3,
@@ -115,7 +115,7 @@ export default class Ocean extends Base{
     public async approve(tokenAddress: string , spender: string, amount: string, account: string): Promise<TransactionReceipt> {
       try {
         const datatoken = new DataTokens(
-         this.config.defaultConfig.factoryAddress,
+         this.config.default.factoryAddress,
          DTFactoryABI.abi as AbiItem[],
          datatokensABI.abi as AbiItem[],
          this.web3,
@@ -131,22 +131,22 @@ export default class Ocean extends Base{
   
      
 /**
- * get DT price per OCEAN
+ * get Dt price per OCEAN
  * @param poolAddress 
  * @returns 
  */
-public async getDTPerOCEAN(poolAddress: string): Promise<string> {
+public async getDtPerOcean(poolAddress: string): Promise<string> {
     return await this.oceanPool.getDTNeeded(poolAddress, '1')
     
 }
 
 
 /**
- * get OCEAN price per DT
+ * get Ocean price per Dt
  * @param poolAddress 
  * @returns 
  */
-public async getOCEANPerDT(poolAddress: string): Promise<string> {
+public async getOceanPerDt(poolAddress: string): Promise<string> {
     return await this.oceanPool.getOceanNeeded(poolAddress, '1')
 }
 
@@ -161,12 +161,12 @@ public async getOCEANPerDT(poolAddress: string): Promise<string> {
 }
 
 /**
-   * Calculate how many data token are you going to receive for selling a specific oceanAmount (buying DT)
+   * Calculate how many data token are you going to receive for selling a specific oceanAmount (buying Dt)
    * @param {String} poolAddress
    * @param {String} oceanAmount
    * @return {String[]} - amount of ocean tokens received
    */
- public async getDTReceived(poolAddress: string, oceanAmount: string): Promise<string> {
+ public async getDtReceived(poolAddress: string, oceanAmount: string): Promise<string> {
     return await this.oceanPool.getDTReceived(poolAddress, oceanAmount)
 
 }
@@ -244,7 +244,7 @@ public async getAllStakedPools(account: string): Promise<PoolShare[]> {
  * @param poolAddress 
  * @returns 
  */
-public async getSwapFee(poolAddress: string){
+public async getSwapFee(poolAddress: string): Promise<string>{
     return await this.oceanPool.getSwapFee(poolAddress)
 }
 
@@ -293,11 +293,11 @@ public async swapExactOceanToDt(account: string, poolAddress: string, minimumdtA
  * @param account 
  * @param poolAddress 
  * @param minimumOceanAmountWanted 
- * @param maxDTAmount 
+ * @param maxDtAmount 
  * @returns 
  */
-public async swapExactDtToOcean(account: string, poolAddress: string, minimumOceanAmountWanted: string, maxDTAmount: string):Promise<TransactionReceipt> {
-  return await this.oceanPool.sellDT(account, poolAddress, maxDTAmount, minimumOceanAmountWanted)
+public async swapExactDtToOcean(account: string, poolAddress: string, minimumOceanAmountWanted: string, maxDtAmount: string):Promise<TransactionReceipt> {
+  return await this.oceanPool.sellDT(account, poolAddress, maxDtAmount, minimumOceanAmountWanted)
 }
 
 /**
@@ -320,20 +320,20 @@ public async swapDtToExactOcean(account: string, poolAddress: string, oceanAmoun
 
 /**
  * Returns input Datatoken amount needed for swapping to exact Datatoken out
- * @param outputDTAmountWanted 
+ * @param outputDtAmountWanted 
  * @param inputPoolAddress 
  * @param outputPoolAddress 
  * @returns 
  */
 public async getDtNeededForExactDt(
-    outputDTAmountWanted: string,
+    outputDtAmountWanted: string,
     inputPoolAddress: string,
     outputPoolAddress: string,
 ): Promise<any> {
 
   try {
    //calculate OCEAN needed
-  const oceanNeeded = await this.oceanPool.getOceanNeeded(outputPoolAddress, outputDTAmountWanted)
+  const oceanNeeded = await this.oceanPool.getOceanNeeded(outputPoolAddress, outputDtAmountWanted)
   console.log('oceanNeeded - ', oceanNeeded)
 
   //calculate Input Dt needed
@@ -351,10 +351,10 @@ public async getDtNeededForExactDt(
 /**
  * Swaps input Datatoken for exact output Datatoken
  * @param account 
- * @param inputDTAddress 
- * @param outputDTAddress 
- * @param outputDTAmountWanted 
- * @param maxInputDTAmount 
+ * @param inputDtAddress 
+ * @param outputDtAddress 
+ * @param outputDtAmountWanted 
+ * @param maxInputDtAmount 
  * @param inputPoolAddress 
  * @param outputPoolAddress 
  * @param proxyAddress 
@@ -362,56 +362,60 @@ public async getDtNeededForExactDt(
  */
 public async swapDtToExactDt(
     account: string,
-    inputDTAddress: string,
-    outputDTAddress: string,
-    outputDTAmountWanted: string,
-    maxInputDTAmount: string,
+    inputDtAddress: string,
+    outputDtAddress: string,
+    outputDtAmountWanted: string,
+    maxInputDtAmount: string,
     inputPoolAddress: string,
     outputPoolAddress: string,
     proxyAddress?: string,
+    slippageInPercent?: string,
   ): Promise<any> {
 
     try {
     
-    proxyAddress = proxyAddress ? proxyAddress : this.config.exchangeRouter[this.network]
+    proxyAddress = proxyAddress ? proxyAddress : this.config.default.routerAddress
 
     //calculate OCEAN received
-    const oceanReceived = await this.oceanPool.getOceanReceived(inputPoolAddress, maxInputDTAmount)
+    const oceanReceived = await this.oceanPool.getOceanReceived(inputPoolAddress, maxInputDtAmount)
     console.log('oceanReceived - ', oceanReceived)
   
-    // calculate Output DT received
-    const outputDTReceived = await this.oceanPool.getDTReceived(outputPoolAddress, oceanReceived)
-    console.log('outputDTReceived - ', outputDTReceived)
+    // calculate Output Dt received
+    const outputDtReceived = await this.oceanPool.getDTReceived(outputPoolAddress, oceanReceived)
+    console.log('outputDtReceived - ', outputDtReceived)
+
+    const slippage = slippageInPercent ? new Decimal(slippageInPercent) : new Decimal(SLIPPAGE_TOLERANCE)
+    const isSlippageOkay = new Decimal(outputDtReceived).lt(new Decimal(outputDtAmountWanted).sub(new Decimal(outputDtAmountWanted).mul(slippage)))
     
-    if(new Decimal(outputDTReceived).lt(Number(outputDTAmountWanted) * APPROXIMATION)){
-      throw new Error(`ERROR: not getting needed outputDT amount. Amount received - ${outputDTReceived}`)
+    if(isSlippageOkay){
+      throw new Error(`ERROR: not getting needed outputDt amount. Amount received - ${outputDtReceived}`)
     }
   
     //prepare swap route
     const swaps = 
       [{
         pool: inputPoolAddress,
-        tokenIn: inputDTAddress,
+        tokenIn: inputDtAddress,
         tokenOut: this.oceanTokenAddress,
-        limitReturnAmount: this.web3.utils.toWei(maxInputDTAmount),
+        limitReturnAmount: this.web3.utils.toWei(maxInputDtAmount),
         swapAmount: this.web3.utils.toWei(oceanReceived),
-        maxPrice: this.config.config.maxUint256
+        maxPrice: this.config.default.maxUint256
       },
       {
         pool: outputPoolAddress,
         tokenIn: this.oceanTokenAddress,
-        tokenOut: outputDTAddress,
+        tokenOut: outputDtAddress,
         limitReturnAmount: this.web3.utils.toWei(oceanReceived),
-        swapAmount: this.web3.utils.toWei(outputDTAmountWanted),
-        maxPrice: this.config.config.maxUint256
+        swapAmount: this.web3.utils.toWei(outputDtAmountWanted),
+        maxPrice: this.config.default.maxUint256
       }]
 
   
   //check allowance
-    let inputDTApproved = await this.checkIfApproved(inputDTAddress, account, proxyAddress, maxInputDTAmount)
-    if(!inputDTApproved){
-        let approveAmt = maxInputDTAmount
-        let approveTx = await this.approve(inputDTAddress, proxyAddress, this.web3.utils.toWei(maxInputDTAmount), account)
+    let inputDtApproved = await this.checkIfApproved(inputDtAddress, account, proxyAddress, maxInputDtAmount)
+    if(!inputDtApproved){
+        let approveAmt = maxInputDtAmount
+        let approveTx = await this.approve(inputDtAddress, proxyAddress, this.web3.utils.toWei(maxInputDtAmount), account)
     }
 
     let oceanApproved = await this.checkIfApproved(this.oceanTokenAddress, account, proxyAddress, oceanReceived)
@@ -420,10 +424,10 @@ public async swapDtToExactDt(
     }
 
     //swap
-    const proxyInst  = new this.web3.eth.Contract(ExchangeRouter.abi as AbiItem[], proxyAddress)
-    let estGas = await proxyInst.methods.swapDtToExactDt(swaps, inputDTAddress, outputDTAddress, this.web3.utils.toWei(maxInputDTAmount)).estimateGas({from: account})
+    const proxyInst  = new this.web3.eth.Contract(DataxRouter.abi as AbiItem[], proxyAddress)
+    let estGas = await proxyInst.methods.swapDtToExactDt(swaps, inputDtAddress, outputDtAddress, this.web3.utils.toWei(maxInputDtAmount)).estimateGas({from: account})
     console.log('Gas needed - ', estGas)
-    let totalAmountOut = await proxyInst.methods.swapDtToExactDt(swaps, inputDTAddress, outputDTAddress, this.web3.utils.toWei(maxInputDTAmount)).send({from: account, gas: 1000000})
+    let totalAmountOut = await proxyInst.methods.swapDtToExactDt(swaps, inputDtAddress, outputDtAddress, this.web3.utils.toWei(maxInputDtAmount)).send({from: account, gas: 1000000})
     return totalAmountOut
 
     } catch (e) {
@@ -470,7 +474,8 @@ public async swapDtToExactDt(
  * @param inputDtAmount 
  * @param inputPoolAddress 
  * @param outputPoolAddress 
- * @param proxyAddress 
+ * @param proxyAddress
+ * @param slippageInPercent 
  * @returns 
  */
 public async swapExactDtToDt(
@@ -482,21 +487,26 @@ public async swapExactDtToDt(
     inputPoolAddress: string,
     outputPoolAddress: string,
     proxyAddress?: string,
+    slippageInPercent?: string,
   ): Promise<any> {
     
     try {
-    proxyAddress = proxyAddress ? proxyAddress : this.config.exchangeRouter[this.network]
+    proxyAddress = proxyAddress ? proxyAddress : this.config.default.routerAddress
 
     //calculate OCEAN received
     const oceanReceived = await this.oceanPool.getOceanReceived(inputPoolAddress, inputDtAmount)
     console.log('oceanReceived - ', oceanReceived)
   
-    // calculate Output DT received
+    // calculate Output Dt received
     const outputDtReceived = await this.oceanPool.getDTReceived(outputPoolAddress, oceanReceived)
-    console.log('outputDTReceived - ', outputDtReceived)
+    console.log('outputDtReceived - ', outputDtReceived)
     
-    if(new Decimal(outputDtReceived).lt(Number(minOutputDtAmount) * APPROXIMATION)){
-      throw new Error(`ERROR: not getting needed outputDT amount. Amount received - ${outputDtReceived}`)
+    const slippage = slippageInPercent ? new Decimal(slippageInPercent) : new Decimal(SLIPPAGE_TOLERANCE)
+    const isSlippageOkay = new Decimal(outputDtReceived).lt(new Decimal(minOutputDtAmount).sub(new Decimal(minOutputDtAmount).mul(slippage)))
+    
+
+    if(isSlippageOkay){
+      throw new Error(`ERROR: not getting needed outputDt amount. Amount received - ${outputDtReceived}`)
     }
   
     //prepare swap route
@@ -507,7 +517,7 @@ public async swapExactDtToDt(
         tokenOut: this.oceanTokenAddress,
         limitReturnAmount: this.web3.utils.toWei(oceanReceived),
         swapAmount: this.web3.utils.toWei(inputDtAmount),
-        maxPrice: this.config.config.maxUint256
+        maxPrice: this.config.default.maxUint256
       },
       {
         pool: outputPoolAddress,
@@ -515,7 +525,7 @@ public async swapExactDtToDt(
         tokenOut: outputDtAddress,
         limitReturnAmount: this.web3.utils.toWei(minOutputDtAmount),
         swapAmount: this.web3.utils.toWei(oceanReceived),
-        maxPrice: this.config.config.maxUint256
+        maxPrice: this.config.default.maxUint256
       }]
     ]
 
@@ -535,7 +545,7 @@ public async swapExactDtToDt(
     }
 
     //swap
-    const proxyInst  = new this.web3.eth.Contract(ExchangeRouter.abi as AbiItem[], proxyAddress)
+    const proxyInst  = new this.web3.eth.Contract(DataxRouter.abi as AbiItem[], proxyAddress)
     let estGas = await proxyInst.methods.swapExactDtToDt(swaps, inputDtAddress, outputDtAddress, this.web3.utils.toWei(inputDtAmount), this.web3.utils.toWei(minOutputDtAmount)).estimateGas({from: account})
     console.log('Gas needed - ', estGas)
     let totalAmountOut = await proxyInst.methods.swapExactDtToDt(swaps, inputDtAddress, outputDtAddress, this.web3.utils.toWei(inputDtAmount), this.web3.utils.toWei(minOutputDtAmount)).send({from: account, gas: estGas ? estGas : 1000000})
@@ -556,7 +566,7 @@ getPriceImpact(string fromTokenAddress, string toTokenAddress, string fromTokenA
  
 
 //TODO
-public async getPoolSharesAfterLiquidity(poolAddress: string, account: string, suppliedOCEAN: string, suppliedDT: string): Promise<string> {
+public async getPoolSharesAfterLiquidity(poolAddress: string, account: string, suppliedOCEAN: string, suppliedDt: string): Promise<string> {
 
 }
 

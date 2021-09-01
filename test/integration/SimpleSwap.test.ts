@@ -10,7 +10,7 @@ import Web3 from 'web3'
 import factory from '@oceanprotocol/contracts/artifacts/DTFactory.json'
 import datatokensTemplate from '@oceanprotocol/contracts/artifacts/DataTokenTemplate.json'
 import bFactory from '@oceanprotocol/contracts/artifacts/BFactory.json'
-import proxy from '../../src/abi/ExchangeRouter.json'
+import proxy from '../../src/abi/DataxRouter.json'
 import bPool from '@oceanprotocol/contracts/artifacts/BPool.json'
 import bToken from '@oceanprotocol/contracts/artifacts/BToken.json'
 
@@ -32,7 +32,7 @@ describe('Simple flow', () => {
   let ocean: Ocean
 
 
-  const network = 'development'
+  const network = '4'
   const tokenAmount = '100000'
   const blob = 'http://localhost:8030/api/v1/services/consume'
   const dtAmount = '3000'
@@ -41,12 +41,12 @@ describe('Simple flow', () => {
     (parseFloat(dtAmount) * (10 - parseFloat(dtWeight))) / parseFloat(dtWeight)
   const fee = '0.01'
   const oceanWeight = 10 - parseInt(dtWeight)
-
+  
   before(async () => {
 
     config = new Config(web3, network)
 
-    DTContracts = new TestContractHandler(
+     DTContracts = new TestContractHandler(
       factory.abi as AbiItem[],
       datatokensTemplate.abi as AbiItem[],
       datatokensTemplate.bytecode,
@@ -199,7 +199,7 @@ describe('Simple flow', () => {
   it('Bob swaps Ocean for ALICE Dt from Pool1', async () => {
     
     const oceanSpent = '30'
-    const dtReceived = await ocean.getDTReceived(BalancerContracts.pool1Address, oceanSpent)
+    const dtReceived = await ocean.getDtReceived(BalancerContracts.pool1Address, oceanSpent)
     console.log("DT Received - ", dtReceived)
 
     let dtBalanceBeforeSwap = await ocean.getBalance(dt1Address, bob)
@@ -280,6 +280,9 @@ describe('Simple flow', () => {
     console.log('BOB balance of Bob after swap -' , bobAfterSwap)
     let aliceAfterSwap = await ocean.getBalance(dt1Address, bob)
     console.log('ALICE balance of Bob after swap -' , aliceAfterSwap)
+
   })
+
+  
 })
 

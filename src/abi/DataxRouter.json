@@ -72,7 +72,7 @@
                             "type": "uint256"
                         }
                     ],
-                    "internalType": "struct ExchangeRouter.Swap[]",
+                    "internalType": "struct DataxRouter.Swap[]",
                     "name": "swapSequences",
                     "type": "tuple[]"
                 }
@@ -164,7 +164,7 @@
                             "type": "uint256"
                         }
                     ],
-                    "internalType": "struct ExchangeRouter.Swap[]",
+                    "internalType": "struct DataxRouter.Swap[]",
                     "name": "swapSequences",
                     "type": "tuple[]"
                 },
@@ -232,7 +232,7 @@
                             "type": "uint256"
                         }
                     ],
-                    "internalType": "struct ExchangeRouter.Swap[][]",
+                    "internalType": "struct DataxRouter.Swap[][]",
                     "name": "swapSequences",
                     "type": "tuple[][]"
                 },
