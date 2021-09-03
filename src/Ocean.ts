@@ -171,6 +171,25 @@ public async getOceanPerDt(poolAddress: string): Promise<string> {
 
 }
 
+/**
+   * Calculate how many data token are needed to buy a specific oceanAmount
+   * @param {String} poolAddress
+   * @param {String} oceanAmountWanted
+   * @return {String[]} - amount of datatokens needed
+   */
+ public async getDtNeeded(poolAddress: string, oceanAmountWanted: string): Promise<string> {
+  return await this.oceanPool.getDTNeeded(poolAddress, oceanAmountWanted)
+}
+
+/**
+   * Calculate how many OCEAN are needed to buy a specific amount of datatokens
+   * @param {String} poolAddress
+   * @param {String} dtAmountWanted
+   * @return {String[]} - amount of Ocean needed
+   */
+ public async getOceanNeeded(poolAddress: string, dtAmountWanted: string): Promise<string> {
+  return await this.oceanPool.getOceanNeeded(poolAddress, dtAmountWanted)
+}
 
 /**
  * stake OCEAN tokens in a pool
