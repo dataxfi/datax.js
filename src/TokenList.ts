@@ -18,10 +18,10 @@ export default class TokenList extends Base {
  * fetch global token list with all ERC20 tokens + Datatokens
  * @returns 
  */
-public async fetchGlobalTokenList(): Promise<TList>{
+public async fetchGlobalTokenList(chainId: number): Promise<TList>{
   try {
 
-    let apiResp = await axios(`https://gateway.pinata.cloud/ipfs/${this.config.default.tokenList}`)
+    let apiResp = await axios(`https://gateway.pinata.cloud/ipfs/${this.config.custom[String(chainId)].tokenList}`)
     console.log(apiResp)
     const tokenList = apiResp.data
     console.log(tokenList)
@@ -38,10 +38,10 @@ public async fetchGlobalTokenList(): Promise<TList>{
  * fetch list of all Datatokens
  * @returns 
  */
- public async fetchDataTokenList(): Promise<TList>{
+ public async fetchDataTokenList(chainId: number): Promise<TList>{
   try {
 
-  let apiResp = await axios(`https://gateway.pinata.cloud/ipfs/${this.config.default.datatokenList}`)
+  let apiResp = await axios(`https://gateway.pinata.cloud/ipfs/${this.config.custom[String(chainId)].datatokenList}`)
   console.log(apiResp)
   const tokenList = apiResp.data
   console.log(tokenList)

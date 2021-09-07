@@ -312,11 +312,11 @@ public async swapExactOceanToDt(account: string, poolAddress: string, minimumdtA
  * @param account 
  * @param poolAddress 
  * @param minimumOceanAmountWanted 
- * @param maxDtAmount 
+ * @param dtAmount 
  * @returns 
  */
-public async swapExactDtToOcean(account: string, poolAddress: string, minimumOceanAmountWanted: string, maxDtAmount: string):Promise<TransactionReceipt> {
-  return await this.oceanPool.sellDT(account, poolAddress, maxDtAmount, minimumOceanAmountWanted)
+public async swapExactDtToOcean(account: string, poolAddress: string, minimumOceanAmountWanted: string, dtAmount: string):Promise<TransactionReceipt> {
+  return await this.oceanPool.sellDT(account, poolAddress, dtAmount, minimumOceanAmountWanted)
 }
 
 /**
@@ -324,13 +324,12 @@ public async swapExactDtToOcean(account: string, poolAddress: string, minimumOce
  * @param account 
  * @param poolAddress 
  * @param oceanAmountWanted 
- * @param dtAmount 
+ * @param maxDtAmount 
  * @returns 
  */
-public async swapDtToExactOcean(account: string, poolAddress: string, oceanAmountWanted: string, dtAmount: string):Promise<TransactionReceipt> {
+public async swapDtToExactOcean(account: string, poolAddress: string, oceanAmountWanted: string, maxDtAmount: string):Promise<TransactionReceipt> {
   try {
-    let dtNeeded = await this.oceanPool.getDTNeeded(poolAddress, oceanAmountWanted)
-    return await this.oceanPool.sellDT(account, poolAddress, dtNeeded, oceanAmountWanted)
+    return await this.oceanPool.sellDT(account, poolAddress, maxDtAmount, oceanAmountWanted)
   } catch (e) {
     console.error(`ERROR: ${e.message}`)
     throw new Error(`ERROR: ${e.message}`)

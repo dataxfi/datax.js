@@ -40,7 +40,7 @@ export default class Config {
     }
   }
 
-  private custom = {
+  public custom = {
     "1": {
       "routerAddress": "",
       "datatokenList": "Qmc8Dp1U2kW6FJbpUYGr5W6sVyJsQeQzVundT9vooCH6aX",
@@ -48,7 +48,7 @@ export default class Config {
     },
     "4": {
       "routerAddress": "0x0B9376Ae7203657fEab7108cfe83e328e7a99ABf",
-      "datatokenList": "QmYSUFsudtPNLpRgYB5uGtLFvcJ29MeZaQKt2z5vZ8P9Zi",
+      "datatokenList": "QmUcsbmbYT6sFTAzsoH1jtgzwi9B3RhBsZzFHjbs6igoQg",
       "tokenList": ""
     },
     "137": {
