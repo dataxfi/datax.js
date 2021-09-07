@@ -23,7 +23,7 @@ export default class Config {
    * @param networkId 
    * @returns 
    */
-  private getNetwork(networkId: string): string {
+  public getNetwork(networkId: string): string {
     switch(networkId){
       case '1':
         return "mainnet"
