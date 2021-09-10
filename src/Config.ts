@@ -12,8 +12,8 @@ export default class Config {
     this.web3 = web3
     this.networkId = networkId
     this.default = {
-      ...new ConfigHelper().getConfig(this.getNetwork(this.networkId)), 
-      ...this.getCustomConfig(this.networkId), 
+      ...new ConfigHelper().getConfig(this.getNetwork(networkId)), 
+      ...this.getCustomConfig(networkId), 
       ...this.extra
     }
   }
@@ -36,7 +36,7 @@ export default class Config {
       case "8996":
         return "development"
       default: 
-        return "rinkeby"
+        return "unknown"
     }
   }
 

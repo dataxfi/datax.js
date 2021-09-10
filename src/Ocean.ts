@@ -10,7 +10,7 @@ import BigNumber from 'bignumber.js'
 import DTFactoryABI from '@oceanprotocol/contracts/artifacts/DTFactory.json'
 import Base from './Base'
 
-const SLIPPAGE_TOLERANCE = 0.001
+const SLIPPAGE_TOLERANCE = 0.01
 
 export interface TokensReceived {
     dtAmount: string
@@ -375,7 +375,7 @@ public async getDtNeededForExactDt(
  * @param maxInputDtAmount 
  * @param inputPoolAddress 
  * @param outputPoolAddress 
- * @param proxyAddress 
+ * @param routerAddress 
  * @returns 
  */
 public async swapDtToExactDt(
@@ -386,13 +386,13 @@ public async swapDtToExactDt(
     maxInputDtAmount: string,
     inputPoolAddress: string,
     outputPoolAddress: string,
-    proxyAddress?: string,
+    routerAddress?: string,
     slippageInPercent?: string,
   ): Promise<any> {
 
     try {
     
-    proxyAddress = proxyAddress ? proxyAddress : this.config.default.routerAddress
+    routerAddress = routerAddress ? routerAddress : this.config.default.routerAddress
 
     //calculate OCEAN received
     const oceanReceived = await this.oceanPool.getOceanReceived(inputPoolAddress, maxInputDtAmount)
@@ -409,6 +409,9 @@ public async swapDtToExactDt(
       throw new Error(`ERROR: not getting needed outputDt amount. Amount received - ${outputDtReceived}`)
     }
   
+    let outputDtAmountWantedWithSlippage = new Decimal(outputDtAmountWanted).sub(new Decimal(outputDtAmountWanted).mul(slippage))
+    console.log('Minimum Output DT amount received with Slippage - ', outputDtAmountWantedWithSlippage)
+    
     //prepare swap route
     const swaps = 
       [{
@@ -424,25 +427,25 @@ public async swapDtToExactDt(
         tokenIn: this.oceanTokenAddress,
         tokenOut: outputDtAddress,
         limitReturnAmount: this.web3.utils.toWei(oceanReceived),
-        swapAmount: this.web3.utils.toWei(outputDtAmountWanted),
+        swapAmount: this.web3.utils.toWei(outputDtAmountWantedWithSlippage),
         maxPrice: this.config.default.maxUint256
       }]
 
   
   //check allowance
-    let inputDtApproved = await this.checkIfApproved(inputDtAddress, account, proxyAddress, maxInputDtAmount)
+    let inputDtApproved = await this.checkIfApproved(inputDtAddress, account, routerAddress, maxInputDtAmount)
     if(!inputDtApproved){
         let approveAmt = maxInputDtAmount
-        let approveTx = await this.approve(inputDtAddress, proxyAddress, this.web3.utils.toWei(maxInputDtAmount), account)
+        let approveTx = await this.approve(inputDtAddress, routerAddress, this.web3.utils.toWei(maxInputDtAmount), account)
     }
 
-    let oceanApproved = await this.checkIfApproved(this.oceanTokenAddress, account, proxyAddress, oceanReceived)
+    let oceanApproved = await this.checkIfApproved(this.oceanTokenAddress, account, routerAddress, oceanReceived)
     if(!oceanApproved){
-        let approveTx = await this.approve(this.oceanTokenAddress, proxyAddress, this.web3.utils.toWei(oceanReceived) , account)
+        let approveTx = await this.approve(this.oceanTokenAddress, routerAddress, this.web3.utils.toWei(oceanReceived) , account)
     }
 
     //swap
-    const proxyInst  = new this.web3.eth.Contract(DataxRouter.abi as AbiItem[], proxyAddress)
+    const proxyInst  = new this.web3.eth.Contract(DataxRouter.abi as AbiItem[], routerAddress)
     let estGas = await proxyInst.methods.swapDtToExactDt(swaps, inputDtAddress, outputDtAddress, this.web3.utils.toWei(maxInputDtAmount)).estimateGas({from: account})
     console.log('Gas needed - ', estGas)
     let totalAmountOut = await proxyInst.methods.swapDtToExactDt(swaps, inputDtAddress, outputDtAddress, this.web3.utils.toWei(maxInputDtAmount)).send({from: account, gas: 1000000})
@@ -492,7 +495,7 @@ public async swapDtToExactDt(
  * @param inputDtAmount 
  * @param inputPoolAddress 
  * @param outputPoolAddress 
- * @param proxyAddress
+ * @param routerAddress
  * @param slippageInPercent 
  * @returns 
  */
@@ -504,12 +507,12 @@ public async swapExactDtToDt(
     inputDtAmount: string,
     inputPoolAddress: string,
     outputPoolAddress: string,
-    proxyAddress?: string,
+    routerAddress?: string,
     slippageInPercent?: string,
   ): Promise<any> {
     
     try {
-    proxyAddress = proxyAddress ? proxyAddress : this.config.default.routerAddress
+    routerAddress = routerAddress ? routerAddress : this.config.default.routerAddress
 
     //calculate OCEAN received
     const oceanReceived = await this.oceanPool.getOceanReceived(inputPoolAddress, inputDtAmount)
@@ -527,6 +530,8 @@ public async swapExactDtToDt(
       throw new Error(`ERROR: not getting needed outputDt amount. Amount received - ${outputDtReceived}`)
     }
   
+    let minOutputDtReceivedWithSlippage = new Decimal(minOutputDtAmount).sub(new Decimal(minOutputDtAmount).mul(slippage))
+    console.log("Min DT Received With Slippage - ",  minOutputDtReceivedWithSlippage)
     //prepare swap route
     const swaps = [
       [{
@@ -541,7 +546,7 @@ public async swapExactDtToDt(
         pool: outputPoolAddress,
         tokenIn: this.oceanTokenAddress,
         tokenOut: outputDtAddress,
-        limitReturnAmount: this.web3.utils.toWei(minOutputDtAmount),
+        limitReturnAmount: this.web3.utils.toWei(minOutputDtReceivedWithSlippage),
         swapAmount: this.web3.utils.toWei(oceanReceived),
         maxPrice: this.config.default.maxUint256
       }]
@@ -549,24 +554,24 @@ public async swapExactDtToDt(
 
   
   //check allowance
-    let inputDtApproved = await this.checkIfApproved(inputDtAddress, account, proxyAddress, inputDtAmount)
+    let inputDtApproved = await this.checkIfApproved(inputDtAddress, account, routerAddress, inputDtAmount)
   
     if(!inputDtApproved){
         let approveAmt = inputDtAmount
-        let approveTx = await this.approve(inputDtAddress, proxyAddress, this.web3.utils.toWei(inputDtAmount), account)
+        let approveTx = await this.approve(inputDtAddress, routerAddress, this.web3.utils.toWei(inputDtAmount), account)
     }
 
-    let oceanApproved = await this.checkIfApproved(this.oceanTokenAddress, account, proxyAddress, oceanReceived)
+    let oceanApproved = await this.checkIfApproved(this.oceanTokenAddress, account, routerAddress, oceanReceived)
   
     if(!oceanApproved){
-        let approveTx = await this.approve(this.oceanTokenAddress, proxyAddress, this.web3.utils.toWei(oceanReceived) , account)
+        let approveTx = await this.approve(this.oceanTokenAddress, routerAddress, this.web3.utils.toWei(oceanReceived) , account)
     }
 
     //swap
-    const proxyInst  = new this.web3.eth.Contract(DataxRouter.abi as AbiItem[], proxyAddress)
-    let estGas = await proxyInst.methods.swapExactDtToDt(swaps, inputDtAddress, outputDtAddress, this.web3.utils.toWei(inputDtAmount), this.web3.utils.toWei(minOutputDtAmount)).estimateGas({from: account})
+    const proxyInst  = new this.web3.eth.Contract(DataxRouter.abi as AbiItem[], routerAddress)
+    let estGas = await proxyInst.methods.swapExactDtToDt(swaps, inputDtAddress, outputDtAddress, this.web3.utils.toWei(inputDtAmount), this.web3.utils.toWei(minOutputDtReceivedWithSlippage)).estimateGas({from: account})
     console.log('Gas needed - ', estGas)
-    let totalAmountOut = await proxyInst.methods.swapExactDtToDt(swaps, inputDtAddress, outputDtAddress, this.web3.utils.toWei(inputDtAmount), this.web3.utils.toWei(minOutputDtAmount)).send({from: account, gas: estGas ? estGas : 1000000})
+    let totalAmountOut = await proxyInst.methods.swapExactDtToDt(swaps, inputDtAddress, outputDtAddress, this.web3.utils.toWei(inputDtAmount), this.web3.utils.toWei(minOutputDtReceivedWithSlippage)).send({from: account, gas: estGas ? estGas : 1000000})
     return totalAmountOut
 
     } catch (e) {
