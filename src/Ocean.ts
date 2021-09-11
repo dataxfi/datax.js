@@ -409,9 +409,9 @@ public async swapDtToExactDt(
       throw new Error(`ERROR: not getting needed outputDt amount. Amount received - ${outputDtReceived}`)
     }
   
-    let outputDtAmountWantedWithSlippage = new Decimal(outputDtAmountWanted).sub(new Decimal(outputDtAmountWanted).mul(slippage))
+    let outputDtAmountWantedWithSlippage = new Decimal(outputDtAmountWanted).sub(new Decimal(outputDtAmountWanted).mul(slippage)).toString()
     console.log('Minimum Output DT amount received with Slippage - ', outputDtAmountWantedWithSlippage)
-    
+
     //prepare swap route
     const swaps = 
       [{
@@ -530,7 +530,7 @@ public async swapExactDtToDt(
       throw new Error(`ERROR: not getting needed outputDt amount. Amount received - ${outputDtReceived}`)
     }
   
-    let minOutputDtReceivedWithSlippage = new Decimal(minOutputDtAmount).sub(new Decimal(minOutputDtAmount).mul(slippage))
+    let minOutputDtReceivedWithSlippage = new Decimal(minOutputDtAmount).sub(new Decimal(minOutputDtAmount).mul(slippage)).toString()
     console.log("Min DT Received With Slippage - ",  minOutputDtReceivedWithSlippage)
     //prepare swap route
     const swaps = [
