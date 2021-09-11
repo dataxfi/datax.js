@@ -36,7 +36,7 @@ export default class Config {
       case "8996":
         return "development"
       default: 
-        return "unknown"
+        return "rinkeby"
     }
   }
 
