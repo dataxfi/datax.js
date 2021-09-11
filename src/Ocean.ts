@@ -313,10 +313,14 @@ public async swapExactOceanToDt(account: string, poolAddress: string, minimumdtA
  * @param poolAddress 
  * @param minimumOceanAmountWanted 
  * @param dtAmount 
+ * @param slippage
  * @returns 
  */
-public async swapExactDtToOcean(account: string, poolAddress: string, minimumOceanAmountWanted: string, dtAmount: string):Promise<TransactionReceipt> {
-  return await this.oceanPool.sellDT(account, poolAddress, dtAmount, minimumOceanAmountWanted)
+public async swapExactDtToOcean(account: string, poolAddress: string, minimumOceanAmountWanted: string, dtAmount: string, slippage: string):Promise<TransactionReceipt> {
+  let minOceanAmountWantedWithSlippage = new Decimal(minimumOceanAmountWanted).sub(new Decimal(minimumOceanAmountWanted).mul(slippage)).toString()
+  console.log("Min Ocean Amount received after Slippage - ",  minOceanAmountWantedWithSlippage)
+    
+  return await this.oceanPool.sellDT(account, poolAddress, dtAmount, minOceanAmountWantedWithSlippage)
 }
 
 /**
@@ -325,11 +329,14 @@ public async swapExactDtToOcean(account: string, poolAddress: string, minimumOce
  * @param poolAddress 
  * @param oceanAmountWanted 
  * @param maxDtAmount 
+ * @param slippage
  * @returns 
  */
-public async swapDtToExactOcean(account: string, poolAddress: string, oceanAmountWanted: string, maxDtAmount: string):Promise<TransactionReceipt> {
+public async swapDtToExactOcean(account: string, poolAddress: string, oceanAmountWanted: string, maxDtAmount: string, slippage: string):Promise<TransactionReceipt> {
   try {
-    return await this.oceanPool.sellDT(account, poolAddress, maxDtAmount, oceanAmountWanted)
+    let maxDTAmountWithSlippage = new Decimal(maxDtAmount).add(new Decimal(maxDtAmount).mul(slippage)).toString()
+    console.log("Max DT Amount spent With Slippage - ",  maxDTAmountWithSlippage)
+    return await this.oceanPool.sellDT(account, poolAddress, maxDTAmountWithSlippage, oceanAmountWanted)
   } catch (e) {
     console.error(`ERROR: ${e.message}`)
     throw new Error(`ERROR: ${e.message}`)
@@ -409,8 +416,8 @@ public async swapDtToExactDt(
       throw new Error(`ERROR: not getting needed outputDt amount. Amount received - ${outputDtReceived}`)
     }
   
-    let outputDtAmountWantedWithSlippage = new Decimal(outputDtAmountWanted).sub(new Decimal(outputDtAmountWanted).mul(slippage)).toString()
-    console.log('Minimum Output DT amount received with Slippage - ', outputDtAmountWantedWithSlippage)
+    let maxInputDtAmountWithSlippage = new Decimal(maxInputDtAmount).add(new Decimal(maxInputDtAmount).mul(slippage)).toString()
+    console.log('Max Input DT Amount with Slippage - ', maxInputDtAmountWithSlippage)
 
     //prepare swap route
     const swaps = 
@@ -427,16 +434,16 @@ public async swapDtToExactDt(
         tokenIn: this.oceanTokenAddress,
         tokenOut: outputDtAddress,
         limitReturnAmount: this.web3.utils.toWei(oceanReceived),
-        swapAmount: this.web3.utils.toWei(outputDtAmountWantedWithSlippage),
+        swapAmount: this.web3.utils.toWei(outputDtAmountWanted),
         maxPrice: this.config.default.maxUint256
       }]
 
   
   //check allowance
-    let inputDtApproved = await this.checkIfApproved(inputDtAddress, account, routerAddress, maxInputDtAmount)
+    let inputDtApproved = await this.checkIfApproved(inputDtAddress, account, routerAddress, maxInputDtAmountWithSlippage)
     if(!inputDtApproved){
         let approveAmt = maxInputDtAmount
-        let approveTx = await this.approve(inputDtAddress, routerAddress, this.web3.utils.toWei(maxInputDtAmount), account)
+        let approveTx = await this.approve(inputDtAddress, routerAddress, this.web3.utils.toWei(maxInputDtAmountWithSlippage), account)
     }
 
     let oceanApproved = await this.checkIfApproved(this.oceanTokenAddress, account, routerAddress, oceanReceived)
@@ -446,9 +453,9 @@ public async swapDtToExactDt(
 
     //swap
     const proxyInst  = new this.web3.eth.Contract(DataxRouter.abi as AbiItem[], routerAddress)
-    let estGas = await proxyInst.methods.swapDtToExactDt(swaps, inputDtAddress, outputDtAddress, this.web3.utils.toWei(maxInputDtAmount)).estimateGas({from: account})
+    let estGas = await proxyInst.methods.swapDtToExactDt(swaps, inputDtAddress, outputDtAddress, this.web3.utils.toWei(maxInputDtAmountWithSlippage)).estimateGas({from: account})
     console.log('Gas needed - ', estGas)
-    let totalAmountOut = await proxyInst.methods.swapDtToExactDt(swaps, inputDtAddress, outputDtAddress, this.web3.utils.toWei(maxInputDtAmount)).send({from: account, gas: 1000000})
+    let totalAmountOut = await proxyInst.methods.swapDtToExactDt(swaps, inputDtAddress, outputDtAddress, this.web3.utils.toWei(maxInputDtAmountWithSlippage)).send({from: account, gas: 1000000})
     return totalAmountOut
 
     } catch (e) {
