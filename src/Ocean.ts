@@ -291,8 +291,15 @@ public async calculateSwapFee(poolAddress: string, tokenInAmount: string): Promi
  * @param maxOceanAmount 
  * @returns 
  */
-public async swapOceanToExactDt(account: string, poolAddress: string, dtAmountWanted: string, maxOceanAmount: string):Promise<TransactionReceipt> {
-    return await this.oceanPool.buyDT(account, poolAddress, dtAmountWanted, maxOceanAmount)
+public async swapOceanToExactDt(account: string, poolAddress: string, dtAmountWanted: string, maxOceanAmount: string, slippage: string):Promise<TransactionReceipt> {
+  try {
+    let maxOceanAmountSpentWithSlippage = new Decimal(maxOceanAmount).add(new Decimal(maxOceanAmount).mul(slippage)).toString()
+    console.log("Min Ocean Amount spent with Slippage - ",  maxOceanAmountSpentWithSlippage)
+    return await this.oceanPool.buyDT(account, poolAddress, dtAmountWanted, maxOceanAmountSpentWithSlippage)
+  } catch (e) {
+    console.error(`ERROR: ${e.message}`)
+    throw new Error(`ERROR: ${e.message}`)
+  } 
 }
 
 /**
@@ -303,8 +310,15 @@ public async swapOceanToExactDt(account: string, poolAddress: string, dtAmountWa
  * @param OceanAmount 
  * @returns 
  */
-public async swapExactOceanToDt(account: string, poolAddress: string, minimumdtAmountWanted: string, OceanAmount: string): Promise<TransactionReceipt> {
-    return await this.oceanPool.buyDTWithExactOcean(account, poolAddress, minimumdtAmountWanted, OceanAmount)
+public async swapExactOceanToDt(account: string, poolAddress: string, minimumdtAmountWanted: string, OceanAmount: string, slippage: string): Promise<TransactionReceipt> {
+  try {
+    let mindtAmountWantedWithSlippage = new Decimal(minimumdtAmountWanted).sub(new Decimal(minimumdtAmountWanted).mul(slippage)).toString()
+    console.log("Min DT Amount received after Slippage - ",  mindtAmountWantedWithSlippage)
+    return await this.oceanPool.buyDTWithExactOcean(account, poolAddress, mindtAmountWantedWithSlippage, OceanAmount)
+  } catch (e) {
+    console.error(`ERROR: ${e.message}`)
+    throw new Error(`ERROR: ${e.message}`)
+  } 
 }
 
 /**
@@ -317,10 +331,15 @@ public async swapExactOceanToDt(account: string, poolAddress: string, minimumdtA
  * @returns 
  */
 public async swapExactDtToOcean(account: string, poolAddress: string, minimumOceanAmountWanted: string, dtAmount: string, slippage: string):Promise<TransactionReceipt> {
-  let minOceanAmountWantedWithSlippage = new Decimal(minimumOceanAmountWanted).sub(new Decimal(minimumOceanAmountWanted).mul(slippage)).toString()
-  console.log("Min Ocean Amount received after Slippage - ",  minOceanAmountWantedWithSlippage)
-    
-  return await this.oceanPool.sellDT(account, poolAddress, dtAmount, minOceanAmountWantedWithSlippage)
+  try { 
+    let minOceanAmountWantedWithSlippage = new Decimal(minimumOceanAmountWanted).sub(new Decimal(minimumOceanAmountWanted).mul(slippage)).toString()
+    console.log("Min Ocean Amount received after Slippage - ",  minOceanAmountWantedWithSlippage)
+      
+    return await this.oceanPool.sellDT(account, poolAddress, dtAmount, minOceanAmountWantedWithSlippage)
+  } catch (e) {
+    console.error(`ERROR: ${e.message}`)
+    throw new Error(`ERROR: ${e.message}`)
+  } 
 }
 
 /**
