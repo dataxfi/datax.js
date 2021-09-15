@@ -294,7 +294,7 @@ public async calculateSwapFee(poolAddress: string, tokenInAmount: string): Promi
 public async swapOceanToExactDt(account: string, poolAddress: string, dtAmountWanted: string, maxOceanAmount: string, slippage: string):Promise<TransactionReceipt> {
   try {
     let maxOceanAmountSpentWithSlippage = new Decimal(maxOceanAmount).add(new Decimal(maxOceanAmount).mul(slippage)).toString()
-    console.log("Min Ocean Amount spent with Slippage - ",  maxOceanAmountSpentWithSlippage)
+    console.log("Max Ocean Amount spent with Slippage - ",  maxOceanAmountSpentWithSlippage)
     return await this.oceanPool.buyDT(account, poolAddress, dtAmountWanted, maxOceanAmountSpentWithSlippage)
   } catch (e) {
     console.error(`ERROR: ${e.message}`)
@@ -444,7 +444,7 @@ public async swapDtToExactDt(
         pool: inputPoolAddress,
         tokenIn: inputDtAddress,
         tokenOut: this.oceanTokenAddress,
-        limitReturnAmount: this.web3.utils.toWei(maxInputDtAmount),
+        limitReturnAmount: this.web3.utils.toWei(maxInputDtAmountWithSlippage),
         swapAmount: this.web3.utils.toWei(oceanReceived),
         maxPrice: this.config.default.maxUint256
       },
@@ -461,7 +461,6 @@ public async swapDtToExactDt(
   //check allowance
     let inputDtApproved = await this.checkIfApproved(inputDtAddress, account, routerAddress, maxInputDtAmountWithSlippage)
     if(!inputDtApproved){
-        let approveAmt = maxInputDtAmount
         let approveTx = await this.approve(inputDtAddress, routerAddress, this.web3.utils.toWei(maxInputDtAmountWithSlippage), account)
     }
 
