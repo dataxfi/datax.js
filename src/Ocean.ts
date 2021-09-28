@@ -605,20 +605,31 @@ public async swapExactDtToDt(
     } 
   }
   
+  
+  /**
+     * Returns max amount of tokens that you can withdraw from the pool
+     * @param poolAddress
+     * @param tokenAddress
+     */
+  public async getMaxRemoveLiquidity(
+      poolAddress: string,
+      tokenAddress: string
+    ): Promise<string> {
+     return this.oceanPool.getMaxAddLiquidity(poolAddress, tokenAddress)
+    }
 
+  /**
+   * Returns max amount of tokens that you can add to the pool
+   * @param poolAddress
+   * @param tokenAddress
+   */
+  public async getMaxAddLiquidity(
+      poolAddress: string,
+      tokenAddress: string
+    ): Promise<string> {
+     return this.oceanPool.getMaxAddLiquidity(poolAddress, tokenAddress)
+  }
 
-
-
-/*
-getPriceImpact(string fromTokenAddress, string toTokenAddress, string fromTokenAmount, string minToTokenAmountReceived) returns (string priceImpact)
- 
-
-//TODO
-public async getPoolSharesAfterLiquidity(poolAddress: string, account: string, suppliedOCEAN: string, suppliedDt: string): Promise<string> {
-
-}
-
-*/
 
 
 }
