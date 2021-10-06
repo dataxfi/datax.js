@@ -31,7 +31,7 @@ const ocean = new Ocean(web3, networkId)
 ## 🏛 License
 
 ```
-Copyright ((C)) 2021 Ocean Protocol Foundation
+Copyright ((C)) 2021 Datax Finance
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
