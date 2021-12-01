@@ -351,8 +351,8 @@ export default class TokenList extends Base {
         "https://www.googleapis.com/drive/v3/files?pageSize=10&fields=nextPageToken%2C%20files%28id%2C%20name%29",
         {
           headers: {
-            "Accept-Encoding": "gzip",
-            "User-Agent": "google-api-nodejs-client/0.7.2 (gzip)",
+            //"Accept-Encoding": "gzip",
+            //"User-Agent": "google-api-nodejs-client/0.7.2 (gzip)",
             Authorization: `Bearer ${access_token}`,
             Accept: "application/json",
           },
@@ -369,8 +369,8 @@ export default class TokenList extends Base {
         `https://www.googleapis.com/drive/v3/files/${found.id}?alt=media`,
         {
           headers: {
-            "Accept-Encoding": "gzip",
-            "User-Agent": "google-api-nodejs-client/0.7.2 (gzip)",
+            //"Accept-Encoding": "gzip",
+            //"User-Agent": "google-api-nodejs-client/0.7.2 (gzip)",
             Authorization: `Bearer ${access_token}`,
             "x-goog-api-client": "gl-node/16.0.0 auth/7.10.2",
             Accept: "application/json",
