@@ -1,6 +1,6 @@
 {
   "name": "@dataxfi/datax.js",
-  "version": "0.1.17",
+  "version": "0.1.19",
   "description": "Javascript client for DataX",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -26,12 +26,12 @@
   },
   "homepage": "https://github.com/dataxfi/datax.js#readme",
   "dependencies": {
-    "@dataxfi/ocean.js": "^0.17.0",
+    "@dataxfi/ocean.js": "^0.17.1",
     "@oceanprotocol/contracts": "^0.6.5",
     "@uniswap/token-lists": "^1.0.0-beta.25",
     "abi-decoder": "^2.4.0",
     "ajv": "^8.6.2",
-    "axios": "^0.21.1",
+    "axios": "^0.21.4",
     "bignumber.js": "^9.0.1",
     "decimal.js": "^10.3.1",
     "dotenv": "^10.0.0",
@@ -46,7 +46,7 @@
     "@types/chai": "^4.2.21",
     "@types/mocha": "^9.0.0",
     "chai": "^4.3.4",
-    "mocha": "^9.0.3",
+    "mocha": "^9.1.3",
     "source-map-support": "^0.5.19",
     "ts-node": "^10.1.0",
     "ts-node-register": "^1.0.0"

@@ -274,6 +274,7 @@ export default class Ocean extends Base {
     return await this.oceanPool.addOceanLiquidity(account, poolAddress, amount);
   }
 
+
   /**
    * unstake OCEAN tokens from pool
    * @param account
@@ -896,23 +897,23 @@ export default class Ocean extends Base {
   }
 
   /**
-   * Returns max amount of tokens that you can withdraw from the pool
+   * Returns max amount of tokens that you can unstake from the pool
    * @param poolAddress
    * @param tokenAddress
    */
-  public async getMaxRemoveLiquidity(
+  public async getMaxUnstakeAmount(
     poolAddress: string,
     tokenAddress: string
   ): Promise<string> {
-    return this.oceanPool.getMaxAddLiquidity(poolAddress, tokenAddress);
+    return this.oceanPool.getMaxRemoveLiquidity(poolAddress, tokenAddress);
   }
 
   /**
-   * Returns max amount of tokens that you can add to the pool
+   * Returns max amount of tokens that you can stake to the pool
    * @param poolAddress
    * @param tokenAddress
    */
-  public async getMaxAddLiquidity(
+  public async getMaxStakeAmount(
     poolAddress: string,
     tokenAddress: string
   ): Promise<string> {
