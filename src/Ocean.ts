@@ -919,4 +919,19 @@ export default class Ocean extends Base {
   ): Promise<string> {
     return this.oceanPool.getMaxAddLiquidity(poolAddress, tokenAddress);
   }
+
+  /**
+   * returns no. of shares needed to unstake given token amount
+   * @param poolAddress 
+   * @param tokenAddress 
+   * @param tokenAmount 
+   * @returns 
+   */
+  public async getPoolSharesRequiredToUnstake(
+    poolAddress: string,
+    tokenAddress: string,
+    tokenAmount: string
+  ): Promise<string> {
+    return this.oceanPool.calcPoolInGivenSingleOut(poolAddress, tokenAddress, tokenAmount);
+  }
 }
