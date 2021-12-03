@@ -33,6 +33,10 @@ export default class Config {
         return "rinkeby"
       case "56":
         return "bsc"
+      case "246":
+        return "energyweb"
+      case "1285":
+        return "moonriver"
       case "8996":
         return "development"
       default: 
@@ -57,6 +61,16 @@ export default class Config {
       "tokenList": ""
     },
     "56": {
+      "routerAddress": "",
+      "datatokenList": "",
+      "tokenList": ""
+    },
+    "1285": {
+      "routerAddress": "",
+      "datatokenList": "",
+      "tokenList": ""
+    },
+    "246": {
       "routerAddress": "",
       "datatokenList": "",
       "tokenList": ""
