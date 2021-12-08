@@ -33,8 +33,8 @@ export interface Swap {
 }
 
 export interface TokenDetails {
-  name: string
-  symbol: string
+  name: string;
+  symbol: string;
 }
 
 export default class Ocean extends Base {
@@ -235,7 +235,6 @@ export default class Ocean extends Base {
     return await this.oceanPool.getPoolDetails(poolAddress);
   }
 
- 
   /**
    * gets token details (NAME & SYMBOL)
    * @param tokenAddress
@@ -253,9 +252,9 @@ export default class Ocean extends Base {
 
       const name = await datatoken.getName(tokenAddress);
       const symbol = await datatoken.getSymbol(tokenAddress);
-      return {name:name, symbol:symbol};
+      return { name: name, symbol: symbol };
     } catch (e) {
-      console.error(e)
+      console.error(e);
       throw new Error(`ERROR: ${e.message}`);
     }
   }
@@ -273,7 +272,6 @@ export default class Ocean extends Base {
   ): Promise<TransactionReceipt> {
     return await this.oceanPool.addOceanLiquidity(account, poolAddress, amount);
   }
-
 
   /**
    * unstake OCEAN tokens from pool
@@ -350,8 +348,16 @@ export default class Ocean extends Base {
    * @param account
    * @returns
    */
-  public async getAllStakedPools(account: string): Promise<PoolShare[]> {
-    return await this.oceanPool.getPoolSharesByAddress(account);
+  public async getAllStakedPools(
+    account: string,
+    fromBlock: number,
+    toBlock: number,
+  ): Promise<PoolShare[]> {
+    return await this.oceanPool.getPoolSharesByAddress(
+      account,
+      fromBlock,
+      toBlock
+    );
   }
 
   /**
@@ -922,16 +928,20 @@ export default class Ocean extends Base {
 
   /**
    * returns no. of shares needed to unstake given token amount
-   * @param poolAddress 
-   * @param tokenAddress 
-   * @param tokenAmount 
-   * @returns 
+   * @param poolAddress
+   * @param tokenAddress
+   * @param tokenAmount
+   * @returns
    */
   public async getPoolSharesRequiredToUnstake(
     poolAddress: string,
     tokenAddress: string,
     tokenAmount: string
   ): Promise<string> {
-    return this.oceanPool.calcPoolInGivenSingleOut(poolAddress, tokenAddress, tokenAmount);
+    return this.oceanPool.calcPoolInGivenSingleOut(
+      poolAddress,
+      tokenAddress,
+      tokenAmount
+    );
   }
 }
