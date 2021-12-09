@@ -944,4 +944,20 @@ export default class Ocean extends Base {
       tokenAmount
     );
   }
+
+  /**
+   * Returns Ocean amount received after spending poolShares
+   * @param poolAddress 
+   * @param poolShares 
+   * @returns 
+   */
+  public async getOceanRemovedforPoolShares(
+    poolAddress: string,
+    poolShares: string
+    ): Promise<string>{
+      return this.oceanPool.getOceanRemovedforPoolShares(
+        poolAddress, 
+        poolShares
+      );
+  }
 }
