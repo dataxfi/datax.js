@@ -2,7 +2,7 @@ require("dotenv").config();
 import Base from "./Base";
 import { TokenList as TList } from "@uniswap/token-lists";
 import axios from "axios";
-import nJwt from 'njwt'
+import nJwt from "njwt";
 
 export default class TokenList extends Base {
   private pinataApiKey: string;
@@ -317,14 +317,13 @@ export default class TokenList extends Base {
 
   public async fetchPreparedTokenList(
     chainId: number,
-    CLIENT_EMAIL : string,
+    CLIENT_EMAIL: string,
     PRIVATE_KEY: string,
     TOKEN_URI: string,
     SCOPE: string,
-    PRIVATE_KEY_ID:string
+    PRIVATE_KEY_ID: string
   ): Promise<TList> {
     try {
-     
       const iat = Math.trunc(Date.now() / 1000);
       const exp = Math.trunc(iat + 3600);
 
@@ -360,10 +359,20 @@ export default class TokenList extends Base {
       );
 
       const files = response.data.files;
-      const found = files.find((file) => {
+
+      const regularFiles = files.filter((file) => file.name[0] !== "B");
+      const backupFiles = files.filter((file) => file.name[0] === "B");
+
+      let found = regularFiles.find((file) => {
         const fileChainId = file.name.replace(/^\D+/g, "");
         return fileChainId == chainId;
       });
+
+      if (!found)
+        found = backupFiles.find((file) => {
+          const fileChainId = file.name.replace(/^\D+/g, "");
+          return fileChainId == chainId;
+        });
 
       const file = await axios.get(
         `https://www.googleapis.com/drive/v3/files/${found.id}?alt=media`,
