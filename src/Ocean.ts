@@ -89,8 +89,8 @@ export default class Ocean extends Base {
       let balance = await datatoken.balance(tokenAddress, account);
       return balance;
     } catch (e) {
-      console.error(`ERROR: ${e.message}`);
-      throw new Error(`ERROR: ${e.message}`);
+      console.error('ERROR:', e);
+      throw e;
     }
   }
 
@@ -121,8 +121,8 @@ export default class Ocean extends Base {
         return true;
       }
     } catch (e) {
-      console.error(`ERROR: ${e.message}`);
-      throw new Error(`ERROR: ${e.message}`);
+      console.error('ERROR:', e);
+      throw e;
     }
     return false;
   }
@@ -151,8 +151,8 @@ export default class Ocean extends Base {
 
       return await datatoken.approve(tokenAddress, spender, amount, account);
     } catch (e) {
-      console.error(`ERROR: ${e.message}`);
-      throw new Error(`ERROR: ${e.message}`);
+      console.error('ERROR:', e);
+      throw e;
     }
   }
 
@@ -254,8 +254,8 @@ export default class Ocean extends Base {
       const symbol = await datatoken.getSymbol(tokenAddress);
       return { name: name, symbol: symbol };
     } catch (e) {
-      console.error(e);
-      throw new Error(`ERROR: ${e.message}`);
+      console.error('ERROR:', e);
+      throw e;
     }
   }
 
@@ -322,8 +322,8 @@ export default class Ocean extends Base {
       let totalSupply = await poolInst.methods.totalSupply().call();
       return this.web3.utils.fromWei(totalSupply);
     } catch (e) {
-      console.error(`ERROR: ${e.message}`);
-      throw new Error(`ERROR: ${e.message}`);
+      console.error('ERROR:', e);
+      throw e;
     }
   }
 
@@ -351,7 +351,7 @@ export default class Ocean extends Base {
   public async getAllStakedPools(
     account: string,
     fromBlock: number,
-    toBlock: number,
+    toBlock: number
   ): Promise<PoolShare[]> {
     return await this.oceanPool.getPoolSharesByAddress(
       account,
@@ -383,8 +383,8 @@ export default class Ocean extends Base {
       let swapFee = await this.oceanPool.getSwapFee(poolAddress);
       return new Decimal(tokenInAmount).mul(swapFee).toString();
     } catch (e) {
-      console.error(`ERROR: ${e.message}`);
-      throw new Error(`ERROR: ${e.message}`);
+      console.error('ERROR:', e);
+      throw e;
     }
   }
 
@@ -418,8 +418,8 @@ export default class Ocean extends Base {
         maxOceanAmountSpentWithSlippage
       );
     } catch (e) {
-      console.error(`ERROR: ${e.message}`);
-      throw new Error(`ERROR: ${e.message}`);
+      console.error('ERROR:', e);
+      throw e;
     }
   }
 
@@ -453,8 +453,8 @@ export default class Ocean extends Base {
         OceanAmount
       );
     } catch (e) {
-      console.error(`ERROR: ${e.message}`);
-      throw new Error(`ERROR: ${e.message}`);
+      console.error('ERROR:', e);
+      throw e;
     }
   }
 
@@ -492,8 +492,8 @@ export default class Ocean extends Base {
         minOceanAmountWantedWithSlippage
       );
     } catch (e) {
-      console.error(`ERROR: ${e.message}`);
-      throw new Error(`ERROR: ${e.message}`);
+      console.error('ERROR:', e);
+      throw e;
     }
   }
 
@@ -528,8 +528,8 @@ export default class Ocean extends Base {
         oceanAmountWanted
       );
     } catch (e) {
-      console.error(`ERROR: ${e.message}`);
-      throw new Error(`ERROR: ${e.message}`);
+      console.error('ERROR:', e);
+      throw e;
     }
   }
 
@@ -562,8 +562,8 @@ export default class Ocean extends Base {
 
       return inputDtNeeded;
     } catch (e) {
-      console.error(`ERROR: ${e.message}`);
-      throw new Error(`ERROR: ${e.message} `);
+      console.error('ERROR:', e);
+      throw e;
     }
   }
 
@@ -709,8 +709,8 @@ export default class Ocean extends Base {
         .send({ from: account, gas: 1000000 });
       return totalAmountOut;
     } catch (e) {
-      console.error(`ERROR: ${e.message}`);
-      throw new Error(`ERROR: ${e.message}`);
+      console.error('ERROR:', e);
+      throw e;
     }
   }
 
@@ -743,8 +743,8 @@ export default class Ocean extends Base {
 
       return outputDtReceived;
     } catch (e) {
-      console.error(`ERROR: ${e.message}`);
-      throw new Error(`ERROR: ${e.message}`);
+      console.error('ERROR:', e);
+      throw e;
     }
   }
 
@@ -897,8 +897,8 @@ export default class Ocean extends Base {
         .send({ from: account, gas: estGas ? estGas : 1000000 });
       return totalAmountOut;
     } catch (e) {
-      console.error(`ERROR: ${e.message}`);
-      throw new Error(`ERROR: ${e.message}`);
+      console.error('ERROR:', e);
+      throw e;
     }
   }
 
@@ -947,17 +947,14 @@ export default class Ocean extends Base {
 
   /**
    * Returns Ocean amount received after spending poolShares
-   * @param poolAddress 
-   * @param poolShares 
-   * @returns 
+   * @param poolAddress
+   * @param poolShares
+   * @returns
    */
   public async getOceanRemovedforPoolShares(
     poolAddress: string,
     poolShares: string
-    ): Promise<string>{
-      return this.oceanPool.getOceanRemovedforPoolShares(
-        poolAddress, 
-        poolShares
-      );
+  ): Promise<string> {
+    return this.oceanPool.getOceanRemovedforPoolShares(poolAddress, poolShares);
   }
 }
