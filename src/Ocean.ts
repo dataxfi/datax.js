@@ -89,7 +89,7 @@ export default class Ocean extends Base {
       let balance = await datatoken.balance(tokenAddress, account);
       return balance;
     } catch (e) {
-      console.error('ERROR:', e);
+      console.error("ERROR:", e);
       throw e;
     }
   }
@@ -121,7 +121,7 @@ export default class Ocean extends Base {
         return true;
       }
     } catch (e) {
-      console.error('ERROR:', e);
+      console.error("ERROR:", e);
       throw e;
     }
     return false;
@@ -151,9 +151,30 @@ export default class Ocean extends Base {
 
       return await datatoken.approve(tokenAddress, spender, amount, account);
     } catch (e) {
-      console.error('ERROR:', e);
+      console.error("ERROR:", e);
       throw e;
     }
+  }
+
+  /**
+   * Get the DT or OCEAN reserve for a pool.
+   *
+   * @param address
+   * @param getOcean
+   * @returns DT: the max exchange based on the DT amount or OCEAN: the entire ocean reserve in a pool.
+   *
+   */
+
+  public async getMaxExchange(address, getOcean) {
+    let reserve;
+    if (getOcean) {
+      reserve = await this.oceanPool.getOceanReserve(address);
+      return reserve;
+    } else {
+      reserve = await this.oceanPool.getDTReserve(address);
+    }
+    const maxIn = Number(reserve) / 2;
+    return String(maxIn);
   }
 
   /**
@@ -254,7 +275,7 @@ export default class Ocean extends Base {
       const symbol = await datatoken.getSymbol(tokenAddress);
       return { name: name, symbol: symbol };
     } catch (e) {
-      console.error('ERROR:', e);
+      console.error("ERROR:", e);
       throw e;
     }
   }
@@ -322,7 +343,7 @@ export default class Ocean extends Base {
       let totalSupply = await poolInst.methods.totalSupply().call();
       return this.web3.utils.fromWei(totalSupply);
     } catch (e) {
-      console.error('ERROR:', e);
+      console.error("ERROR:", e);
       throw e;
     }
   }
@@ -383,7 +404,7 @@ export default class Ocean extends Base {
       let swapFee = await this.oceanPool.getSwapFee(poolAddress);
       return new Decimal(tokenInAmount).mul(swapFee).toString();
     } catch (e) {
-      console.error('ERROR:', e);
+      console.error("ERROR:", e);
       throw e;
     }
   }
@@ -418,7 +439,7 @@ export default class Ocean extends Base {
         maxOceanAmountSpentWithSlippage
       );
     } catch (e) {
-      console.error('ERROR:', e);
+      console.error("ERROR:", e);
       throw e;
     }
   }
@@ -446,6 +467,7 @@ export default class Ocean extends Base {
         "Min DT Amount received after Slippage - ",
         mindtAmountWantedWithSlippage
       );
+
       return await this.oceanPool.buyDTWithExactOcean(
         account,
         poolAddress,
@@ -453,7 +475,7 @@ export default class Ocean extends Base {
         OceanAmount
       );
     } catch (e) {
-      console.error('ERROR:', e);
+      console.error("ERROR:", e);
       throw e;
     }
   }
@@ -492,7 +514,7 @@ export default class Ocean extends Base {
         minOceanAmountWantedWithSlippage
       );
     } catch (e) {
-      console.error('ERROR:', e);
+      console.error("ERROR:", e);
       throw e;
     }
   }
@@ -528,7 +550,7 @@ export default class Ocean extends Base {
         oceanAmountWanted
       );
     } catch (e) {
-      console.error('ERROR:', e);
+      console.error("ERROR:", e);
       throw e;
     }
   }
@@ -562,7 +584,7 @@ export default class Ocean extends Base {
 
       return inputDtNeeded;
     } catch (e) {
-      console.error('ERROR:', e);
+      console.error("ERROR:", e);
       throw e;
     }
   }
@@ -709,7 +731,7 @@ export default class Ocean extends Base {
         .send({ from: account, gas: 1000000 });
       return totalAmountOut;
     } catch (e) {
-      console.error('ERROR:', e);
+      console.error("ERROR:", e);
       throw e;
     }
   }
@@ -743,7 +765,7 @@ export default class Ocean extends Base {
 
       return outputDtReceived;
     } catch (e) {
-      console.error('ERROR:', e);
+      console.error("ERROR:", e);
       throw e;
     }
   }
@@ -897,7 +919,7 @@ export default class Ocean extends Base {
         .send({ from: account, gas: estGas ? estGas : 1000000 });
       return totalAmountOut;
     } catch (e) {
-      console.error('ERROR:', e);
+      console.error("ERROR:", e);
       throw e;
     }
   }
