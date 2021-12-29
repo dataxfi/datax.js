@@ -877,7 +877,7 @@ export default class Ocean extends Base {
         );
       }
 
-      let oceanApproved = await this.checkIfApproved(
+      /*let oceanApproved = await this.checkIfApproved(
         this.oceanTokenAddress,
         account,
         routerAddress,
@@ -891,7 +891,7 @@ export default class Ocean extends Base {
           this.web3.utils.toWei(oceanReceived),
           account
         );
-      }
+      }*/
 
       //swap
       const proxyInst = new this.web3.eth.Contract(
