@@ -1,4 +1,4 @@
-import { ConfigHelper } from '@dataxfi/ocean.js'
+import { ConfigHelper } from './utils/'
 
 
 export default class Config {

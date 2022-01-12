@@ -1,4 +1,6 @@
-import { DataTokens, Logger, OceanPool } from "@dataxfi/ocean.js";
+import { OceanPool } from "./balancer";
+import { DataTokens } from "./Datatokens";
+import { Logger } from "./utils";
 import { TransactionReceipt } from "web3-core";
 import { AbiItem } from "web3-utils/types";
 import { default as DataxRouter } from "./abi/DataxRouter.json";

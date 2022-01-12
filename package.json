@@ -1,6 +1,6 @@
 {
   "name": "@dataxfi/datax.js",
-  "version": "0.1.27",
+  "version": "0.1.28",
   "description": "Javascript client for DataX",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -26,7 +26,6 @@
   },
   "homepage": "https://github.com/dataxfi/datax.js#readme",
   "dependencies": {
-    "@dataxfi/ocean.js": "^0.17.4",
     "@oceanprotocol/contracts": "^0.6.5",
     "@uniswap/token-lists": "^1.0.0-beta.25",
     "abi-decoder": "^2.4.0",
