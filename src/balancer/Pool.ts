@@ -111,6 +111,28 @@ export class Pool extends PoolFactory {
   }
 
   /**
+  * returns token balance of a given account
+  * @param {String} tokenAddress
+  * @param {String} account
+  * @returns {String} (in ETH denom)
+  */
+  public async getBalance(
+    tokenAddress: string,
+    account: string
+  ): Promise<string> {
+    try {
+      const tokenAbi = defaultDatatokensABI.abi as AbiItem[]
+      const token = new this.web3.eth.Contract(tokenAbi, tokenAddress)
+      const balance = await token.methods.balanceOf(account).call()
+      return balance;
+    } catch (e) {
+      console.error("ERROR:", e);
+      throw e;
+    }
+  }
+
+
+  /**
    * Get Alloance for both DataToken and Ocean
    * @param {String } tokenAdress
    * @param {String} owner
@@ -128,6 +150,41 @@ export class Pool extends PoolFactory {
     const trxReceipt = await datatoken.methods.allowance(owner, spender).call()
     return this.web3.utils.fromWei(trxReceipt)
   }
+
+
+  /**
+   * check if token spend allowance is approved for a given spender accounts
+   * @param {String} tokenAddress
+   * @param {String} account
+   * @param {String} spender
+   * @param {String} amount
+   * @returns {Boolean}
+   */
+  public async checkIfApproved(
+    tokenAddress: string,
+    account: string,
+    spender: string,
+    amount: string
+  ): Promise<boolean> {
+    try {
+      const tokenInst = new this.web3.eth.Contract(
+        defaultDatatokensABI.abi as AbiItem[],
+        tokenAddress
+      );
+      let allowance = await tokenInst.methods
+        .allowance(account, spender)
+        .call();
+      console.log("Allowance - ", Number(this.web3.utils.fromWei(allowance)));
+      if (new Decimal(this.web3.utils.fromWei(allowance)).gt(amount)) {
+        return true;
+      }
+    } catch (e) {
+      console.error("ERROR:", e);
+      throw e;
+    }
+    return false;
+  }
+
 
   /**
    * Approve spender to spent amount tokens

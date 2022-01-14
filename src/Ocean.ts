@@ -1,4 +1,4 @@
-import { OceanPool } from "./balancer";
+import { OceanPool, Pool } from "./balancer";
 import { DataTokens } from "./Datatokens";
 import { Logger } from "./utils";
 import { TransactionReceipt } from "web3-core";
@@ -42,6 +42,7 @@ export interface TokenDetails {
 export default class Ocean extends Base {
   private logger: any = null;
   private oceanPool: OceanPool = null;
+  private bPool: Pool = null;
   public oceanTokenAddress: string = null;
   private poolFactoryAddress: string = null;
 
@@ -67,6 +68,13 @@ export default class Ocean extends Base {
       this.poolFactoryAddress,
       this.oceanTokenAddress
     );
+    this.bPool = new Pool(
+      this.web3,
+      this.logger,
+      BFactoryABI.abi as AbiItem[],
+      poolABI.abi as AbiItem[],
+      this.poolFactoryAddress
+    )
   }
 
   /**
@@ -80,16 +88,7 @@ export default class Ocean extends Base {
     account: string
   ): Promise<string> {
     try {
-      const datatoken = new DataTokens(
-        this.config.default.factoryAddress,
-        DTFactoryABI.abi as AbiItem[],
-        datatokensABI.abi as AbiItem[],
-        this.web3,
-        this.logger
-      );
-
-      let balance = await datatoken.balance(tokenAddress, account);
-      return balance;
+      return this.bPool.getBalance(tokenAddress, account);
     } catch (e) {
       console.error("ERROR:", e);
       throw e;
@@ -111,17 +110,7 @@ export default class Ocean extends Base {
     amount: string
   ): Promise<boolean> {
     try {
-      const tokenInst = new this.web3.eth.Contract(
-        datatokensABI.abi as AbiItem[],
-        tokenAddress
-      );
-      let allowance = await tokenInst.methods
-        .allowance(account, spender)
-        .call();
-      console.log("Allowance - ", Number(this.web3.utils.fromWei(allowance)));
-      if (new Decimal(this.web3.utils.fromWei(allowance)).gt(amount)) {
-        return true;
-      }
+      return this.bPool.checkIfApproved(tokenAddress, account, spender, amount)
     } catch (e) {
       console.error("ERROR:", e);
       throw e;

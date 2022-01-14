@@ -1,10 +1,10 @@
 import Web3 from 'web3'
-import {AbiItem} from 'web3-utils/types'
-import {TransactionReceipt, Log} from 'web3-core'
-import {Pool} from './Pool'
-import {EventData, Filter} from 'web3-eth-contract'
+import { AbiItem } from 'web3-utils/types'
+import { TransactionReceipt, Log } from 'web3-core'
+import { Pool } from './Pool'
+import { EventData, Filter } from 'web3-eth-contract'
 import BigNumber from 'bignumber.js'
-import {SubscribablePromise, Logger, didNoZeroX, didPrefixed} from '../utils'
+import { SubscribablePromise, Logger, didNoZeroX, didPrefixed } from '../utils'
 import Decimal from 'decimal.js'
 
 declare type PoolTransactionType = 'swap' | 'join' | 'exit'
@@ -427,7 +427,7 @@ export class OceanPool extends Pool {
         .div(totalPoolTokens)
         .mul(oceanReserve)
         .toString()
-      return {dtAmount, oceanAmount}
+      return { dtAmount, oceanAmount }
     } catch (e) {
       this.logger.error(`ERROR: Unable to get token info. ${e.message}`)
     }
@@ -453,6 +453,14 @@ export class OceanPool extends Pool {
       this.logger.error('ERROR: undefined ocean token contract address')
       throw new Error('ERROR: undefined ocean token contract address')
     }
+
+    //OCEAN balance check
+    const oceanBalance = await super.getBalance(this.oceanAddress, account)
+    if (new Decimal(oceanBalance).lessThan(maxOceanAmount)) {
+      this.logger.error('ERROR: Not enough Ocean Balance')
+      throw new Error('ERROR: Not enough Ocean Balance')
+    }
+
     const dtAddress = await this.getDTAddress(poolAddress)
 
     const calcInGivenOut = await this.getOceanNeeded(poolAddress, dtAmountWanted)
@@ -460,17 +468,24 @@ export class OceanPool extends Pool {
       this.logger.error('ERROR: Not enough Ocean Tokens')
       throw new Error('ERROR: Not enough Ocean Tokens')
     }
-    // TODO - check balances first
-    const txid = await super.approve(
-      account,
-      this.oceanAddress,
-      poolAddress,
-      this.web3.utils.toWei(maxOceanAmount)
-    )
-    if (!txid) {
-      this.logger.error('ERROR: OCEAN approve failed')
-      throw new Error('ERROR: OCEAN approve failed')
+
+    //allowance check
+    const approved = super.checkIfApproved(this.oceanAddress, account, poolAddress, this.web3.utils.toWei(maxOceanAmount))
+
+    //only approve again if not approved already
+    if (!approved) {
+      const txid = await super.approve(
+        account,
+        this.oceanAddress,
+        poolAddress,
+        this.web3.utils.toWei(maxOceanAmount)
+      )
+      if (!txid) {
+        this.logger.error('ERROR: OCEAN approve failed')
+        throw new Error('ERROR: OCEAN approve failed')
+      }
     }
+
     const tx = await super.swapExactAmountOut(
       account,
       poolAddress,
@@ -510,17 +525,31 @@ export class OceanPool extends Pool {
       this.logger.error('ERROR: Not enough Ocean Tokens')
       throw new Error('ERROR: Not enough Ocean Tokens')
     }
-    // TODO - check balances first
-    const txid = await super.approve(
-      account,
-      this.oceanAddress,
-      poolAddress,
-      this.web3.utils.toWei(OceanAmount)
-    )
-    if (!txid) {
-      this.logger.error('ERROR: OCEAN approve failed')
-      throw new Error('ERROR: OCEAN approve failed')
+
+    //OCEAN balance check
+    const oceanBalance = await super.getBalance(this.oceanAddress, account)
+    if (new Decimal(oceanBalance).lessThan(OceanAmount)) {
+      this.logger.error('ERROR: Not enough Ocean Balance')
+      throw new Error('ERROR: Not enough Ocean Balance')
     }
+
+    //allowance check
+    const approved = super.checkIfApproved(this.oceanAddress, account, poolAddress, this.web3.utils.toWei(OceanAmount))
+
+    //only approve again if not approved already
+    if (!approved) {
+      const txid = await super.approve(
+        account,
+        this.oceanAddress,
+        poolAddress,
+        this.web3.utils.toWei(OceanAmount)
+      )
+      if (!txid) {
+        this.logger.error('ERROR: OCEAN approve failed')
+        throw new Error('ERROR: OCEAN approve failed')
+      }
+    }
+
     const tx = await super.swapExactAmountIn(
       account,
       poolAddress,
@@ -560,16 +589,32 @@ export class OceanPool extends Pool {
       this.logger.error('ERROR: Not enough datatokens')
       throw new Error('ERROR: Not enough datatokens')
     }
-    const txid = await super.approve(
-      account,
-      dtAddress,
-      poolAddress,
-      this.web3.utils.toWei(dtAmount)
-    )
-    if (!txid) {
-      this.logger.error('ERROR: DT approve failed')
-      throw new Error('ERROR: DT approve failed')
+
+    //DT balance check
+    const dtBalance = await super.getBalance(dtAddress, account)
+    if (new Decimal(dtBalance).lessThan(dtAmount)) {
+      this.logger.error('ERROR: Not enough DT Balance')
+      throw new Error('ERROR: Not enough DT Balance')
     }
+
+
+    //allowance check
+    const approved = super.checkIfApproved(dtAddress, account, poolAddress, this.web3.utils.toWei(dtAmount))
+
+    //only approve again if not approved already
+    if (!approved) {
+      const txid = await super.approve(
+        account,
+        dtAddress,
+        poolAddress,
+        this.web3.utils.toWei(dtAmount)
+      )
+      if (!txid) {
+        this.logger.error('ERROR: DT approve failed')
+        throw new Error('ERROR: DT approve failed')
+      }
+    }
+
     const tx = await super.swapExactAmountIn(
       account,
       poolAddress,
@@ -597,21 +642,35 @@ export class OceanPool extends Pool {
     const dtAddress = await this.getDTAddress(poolAddress)
     const maxAmount = await this.getMaxAddLiquidity(poolAddress, dtAddress)
 
+    //DT balance check
+    const dtBalance = await super.getBalance(dtAddress, account)
+    if (new Decimal(dtBalance).lessThan(amount)) {
+      this.logger.error('ERROR: Not enough DT Balance')
+      throw new Error('ERROR: Not enough DT Balance')
+    }
+
     if (new Decimal(amount).greaterThan(maxAmount)) {
       this.logger.error('ERROR: Too much reserve to add')
       throw new Error('ERROR: Too much reserve to add')
     }
 
-    const txid = await super.approve(
-      account,
-      dtAddress,
-      poolAddress,
-      this.web3.utils.toWei(amount)
-    )
-    if (!txid) {
-      this.logger.error('ERROR: DT approve failed')
-      throw new Error('ERROR: DT approve failed')
+    //allowance check
+    const approved = super.checkIfApproved(dtAddress, account, poolAddress, this.web3.utils.toWei(amount))
+
+    //only approve again if not approved already
+    if (!approved) {
+      const txid = await super.approve(
+        account,
+        dtAddress,
+        poolAddress,
+        this.web3.utils.toWei(amount)
+      )
+      if (!txid) {
+        this.logger.error('ERROR: DT approve failed')
+        throw new Error('ERROR: DT approve failed')
       }
+    }
+
     const result = await super.joinswapExternAmountIn(
       account,
       poolAddress,
@@ -682,7 +741,14 @@ export class OceanPool extends Pool {
   ): Promise<TransactionReceipt> {
     if (this.oceanAddress == null) {
       this.logger.error('ERROR: oceanAddress is not defined')
-      throw new Error ('ERROR: oceanAddress is not defined')
+      throw new Error('ERROR: oceanAddress is not defined')
+    }
+
+    //Ocean balance check
+    const oceanBalance = await super.getBalance(this.oceanAddress, account)
+    if (new Decimal(oceanBalance).lessThan(amount)) {
+      this.logger.error('ERROR: Not enough Ocean Balance')
+      throw new Error('ERROR: Not enough Ocean Balance')
     }
 
     const maxAmount = await this.getOceanMaxAddLiquidity(poolAddress)
@@ -691,16 +757,23 @@ export class OceanPool extends Pool {
       throw new Error('ERROR: Too much reserve to add')
     }
 
-    const txid = await super.approve(
-      account,
-      this.oceanAddress,
-      poolAddress,
-      this.web3.utils.toWei(amount)
-    )
-    if (!txid) {
-      this.logger.error('ERROR: OCEAN approve failed')
-      throw new Error('ERROR: OCEAN approve failed')
+    //allowance check
+    const approved = super.checkIfApproved(this.oceanAddress, account, poolAddress, this.web3.utils.toWei(amount))
+
+    //only approve again if not approved already
+    if (!approved) {
+      const txid = await super.approve(
+        account,
+        this.oceanAddress,
+        poolAddress,
+        this.web3.utils.toWei(amount)
+      )
+      if (!txid) {
+        this.logger.error('ERROR: OCEAN approve failed')
+        throw new Error('ERROR: OCEAN approve failed')
+      }
     }
+
     const result = await super.joinswapExternAmountIn(
       account,
       poolAddress,
@@ -795,17 +868,6 @@ export class OceanPool extends Pool {
     if (new Decimal(maximumPoolShares).lessThan(sharesRequired)) {
       this.logger.error('ERROR: Not enough poolShares')
       throw new Error('ERROR: Not enough poolShares')
-    }
-
-    const txid = await super.approve(
-      account,
-      this.oceanAddress,
-      poolAddress,
-      this.web3.utils.toWei(amount)
-    )
-    if (!txid) {
-      this.logger.error('ERROR: OCEAN approve failed')
-      throw new Error('ERROR: OCEAN approve failed')
     }
 
     // Balancer bug fix
@@ -925,7 +987,7 @@ export class OceanPool extends Pool {
     const factory = new this.web3.eth.Contract(this.factoryABI, this.factoryAddress)
 
     const events = await factory.getPastEvents('BPoolRegistered', {
-      filter: account ? {registeredBy: account} : {},
+      filter: account ? { registeredBy: account } : {},
       fromBlock: this.startBlock,
       toBlock: 'latest'
     })
@@ -1000,7 +1062,7 @@ export class OceanPool extends Pool {
    */
   public async getPoolDetails(poolAddress: string): Promise<PoolDetails> {
     const tokens = await super.getFinalTokens(poolAddress)
-    const details: PoolDetails = {poolAddress, tokens}
+    const details: PoolDetails = { poolAddress, tokens }
     return details
   }
 
