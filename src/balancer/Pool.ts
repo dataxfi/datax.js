@@ -124,7 +124,7 @@ export class Pool extends PoolFactory {
       const tokenAbi = defaultDatatokensABI.abi as AbiItem[]
       const token = new this.web3.eth.Contract(tokenAbi, tokenAddress)
       const balance = await token.methods.balanceOf(account).call()
-      return balance;
+      return this.web3.utils.fromWei(balance);
     } catch (e) {
       console.error("ERROR:", e);
       throw e;
