@@ -53,7 +53,7 @@ export default class Ocean extends Base {
     oceanTokenAddress?: string
   ) {
     super(web3, network);
-    this.logger = Logger;
+    this.logger = new Logger();
     this.poolFactoryAddress = poolFactoryAddress
       ? poolFactoryAddress
       : this.config.default.poolFactoryAddress;
