@@ -470,7 +470,7 @@ export class OceanPool extends Pool {
     }
 
     //allowance check
-    const approved = await super.checkIfApproved(this.oceanAddress, account, poolAddress, this.web3.utils.toWei(maxOceanAmount))
+    const approved = await super.checkIfApproved(this.oceanAddress, account, poolAddress, maxOceanAmount)
 
     //only approve again if not approved already
     if (!approved) {
@@ -534,8 +534,9 @@ export class OceanPool extends Pool {
     }
 
     //allowance check
-    const approved = await super.checkIfApproved(this.oceanAddress, account, poolAddress, this.web3.utils.toWei(OceanAmount))
-
+    const approved = await super.checkIfApproved(this.oceanAddress, account, poolAddress, OceanAmount)
+    console.log("Approval check in buyDtWithExactOcean:", approved);
+    
     //only approve again if not approved already
     if (!approved) {
       const txid = await super.approve(
@@ -599,7 +600,7 @@ export class OceanPool extends Pool {
 
 
     //allowance check
-    const approved = await super.checkIfApproved(dtAddress, account, poolAddress, this.web3.utils.toWei(dtAmount))
+    const approved = await super.checkIfApproved(dtAddress, account, poolAddress, dtAmount)
 
     //only approve again if not approved already
     if (!approved) {
@@ -655,7 +656,7 @@ export class OceanPool extends Pool {
     }
 
     //allowance check
-    const approved = await super.checkIfApproved(dtAddress, account, poolAddress, this.web3.utils.toWei(amount))
+    const approved = await super.checkIfApproved(dtAddress, account, poolAddress, amount)
 
     //only approve again if not approved already
     if (!approved) {
@@ -758,7 +759,7 @@ export class OceanPool extends Pool {
     }
 
     //allowance check
-    const approved = await super.checkIfApproved(this.oceanAddress, account, poolAddress, this.web3.utils.toWei(amount))
+    const approved = await super.checkIfApproved(this.oceanAddress, account, poolAddress, amount)
 
     //only approve again if not approved already
     if (!approved) {

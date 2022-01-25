@@ -74,7 +74,7 @@ export default class Ocean extends Base {
       BFactoryABI.abi as AbiItem[],
       poolABI.abi as AbiItem[],
       this.poolFactoryAddress
-    )
+    );
   }
 
   /**
@@ -110,12 +110,31 @@ export default class Ocean extends Base {
     amount: string
   ): Promise<boolean> {
     try {
-      return this.bPool.checkIfApproved(tokenAddress, account, spender, amount)
+      return this.bPool.checkIfApproved(tokenAddress, account, spender, amount);
     } catch (e) {
       console.error("ERROR:", e);
       throw e;
     }
-    return false;
+  }
+
+  /**
+   *
+   * @param tokenAddress
+   * @param account
+   * @param spender
+   * @returns user allowance for token
+   */
+  public async getAllowance(
+    tokenAddress: string,
+    account: string,
+    spender: string
+  ): Promise<string> {
+    try {
+      return this.bPool.allowance(tokenAddress, account, spender);
+    } catch (e) {
+      console.error("ERROR:", e);
+      throw e;
+    }
   }
 
   /**
