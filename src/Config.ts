@@ -71,7 +71,7 @@ export default class Config {
       "tokenList": ""
     },
     "246": {
-      "routerAddress": "",
+      "routerAddress": "0x44b89BA2796E43aF07aBeF6D3324C8273e64F0dE",
       "datatokenList": "",
       "tokenList": ""
     },
