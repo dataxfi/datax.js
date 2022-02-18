@@ -12,8 +12,8 @@ export default class Config {
     this.web3 = web3
     this.networkId = networkId
     this.default = {
-      ...new ConfigHelper().getConfig(this.getNetwork(networkId)), 
-      ...this.getCustomConfig(networkId), 
+      ...new ConfigHelper().getConfig(this.getNetwork(networkId)),
+      ...this.getCustomConfig(networkId),
       ...this.extra
     }
   }
@@ -24,7 +24,7 @@ export default class Config {
    * @returns 
    */
   public getNetwork(networkId: string): string {
-    switch(networkId){
+    switch (networkId) {
       case '1':
         return "mainnet"
       case '137':
@@ -39,14 +39,14 @@ export default class Config {
         return "moonriver"
       case "8996":
         return "development"
-      default: 
+      default:
         return "unknown"
     }
   }
 
   public custom = {
     "1": {
-      "routerAddress": "",
+      "routerAddress": "0x8d41dd706b964408f7702c8b52488023731b6748",
       "datatokenList": "Qmc8Dp1U2kW6FJbpUYGr5W6sVyJsQeQzVundT9vooCH6aX",
       "tokenList": "QmQi1sNZVP52urWq4TzLWx9dPRWNrvR4CUFgCEsocGkj5X"
     },
@@ -71,20 +71,20 @@ export default class Config {
       "tokenList": ""
     },
     "246": {
-      "routerAddress": "",
+      "routerAddress": "0x44b89BA2796E43aF07aBeF6D3324C8273e64F0dE",
       "datatokenList": "",
       "tokenList": ""
     },
   }
 
   private extra = {
-    pinataAPIBaseUrl : 'https://api.pinata.cloud',
+    pinataAPIBaseUrl: 'https://api.pinata.cloud',
     pinataRestUrl: 'https://gateway.pinata.cloud/ipfs',
-    maxUint256 :
-  '115792089237316195423570985008687907853269984665640564039457584007913129639934'
+    maxUint256:
+      '115792089237316195423570985008687907853269984665640564039457584007913129639934'
   }
 
-  private getCustomConfig(networkId){
+  private getCustomConfig(networkId) {
     return this.custom[networkId]
   }
 }
