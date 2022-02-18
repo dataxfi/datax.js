@@ -2,7 +2,6 @@ require("dotenv").config();
 import Base from "./Base";
 import { TokenList as TList } from "@uniswap/token-lists";
 import axios from "axios";
-import nJwt from "njwt";
 
 export default class TokenList extends Base {
   private pinataApiKey: string;
@@ -315,76 +314,10 @@ export default class TokenList extends Base {
    *
    */
 
-  public async fetchPreparedTokenList(
-    chainId: number,
-    CLIENT_EMAIL: string,
-    PRIVATE_KEY: string,
-    TOKEN_URI: string,
-    SCOPE: string,
-    PRIVATE_KEY_ID: string
-  ): Promise<TList> {
+  public async fetchPreparedTokenList(chainId: number): Promise<TList> {
     try {
-      const iat = Math.trunc(Date.now() / 1000);
-      const exp = Math.trunc(iat + 3600);
-
-      const claims = {
-        iss: CLIENT_EMAIL,
-        scope: SCOPE,
-        aud: TOKEN_URI,
-        exp: exp,
-        iat: iat,
-      };
-
-      const jwt = nJwt.create(claims, PRIVATE_KEY, "RS256");
-      jwt.setHeader("kid", PRIVATE_KEY_ID);
-
-      const EnJWT = jwt.compact();
-
-      const {
-        data: { access_token },
-      } = await axios.post(
-        `https://oauth2.googleapis.com/token?grant_type=urn%3Aietf%3Aparams%3Aoauth%3Agrant-type%3Ajwt-bearer&assertion=${EnJWT}`
-      );
-
-      const response = await axios.get(
-        "https://www.googleapis.com/drive/v3/files?pageSize=10&fields=nextPageToken%2C%20files%28id%2C%20name%29",
-        {
-          headers: {
-            //"Accept-Encoding": "gzip",
-            //"User-Agent": "google-api-nodejs-client/0.7.2 (gzip)",
-            Authorization: `Bearer ${access_token}`,
-            Accept: "application/json",
-          },
-        }
-      );
-
-      const files = response.data.files;
-
-      const regularFiles = files.filter((file) => file.name[0] !== "B");
-      const backupFiles = files.filter((file) => file.name[0] === "B");
-
-      let found = regularFiles.find((file) => {
-        const fileChainId = file.name.replace(/^\D+/g, "");
-        return fileChainId == chainId;
-      });
-
-      if (!found)
-        found = backupFiles.find((file) => {
-          const fileChainId = file.name.replace(/^\D+/g, "");
-          return fileChainId == chainId;
-        });
-
       const file = await axios.get(
-        `https://www.googleapis.com/drive/v3/files/${found.id}?alt=media`,
-        {
-          headers: {
-            //"Accept-Encoding": "gzip",
-            //"User-Agent": "google-api-nodejs-client/0.7.2 (gzip)",
-            Authorization: `Bearer ${access_token}`,
-            "x-goog-api-client": "gl-node/16.0.0 auth/7.10.2",
-            Accept: "application/json",
-          },
-        }
+        `https://raw.githubusercontent.com/dataxfi/scripts/master/TokenList/chain${chainId}.json`
       );
 
       return file.data;
