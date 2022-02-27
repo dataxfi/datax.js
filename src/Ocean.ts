@@ -175,14 +175,8 @@ export default class Ocean extends Base {
    *
    */
 
-  public async getMaxExchange(address, getOcean) {
-    let reserve;
-    if (getOcean) {
-      reserve = await this.oceanPool.getOceanReserve(address);
-      return reserve;
-    } else {
-      reserve = await this.oceanPool.getDTReserve(address);
-    }
+  public async getMaxExchange(address: string, getOcean: boolean = false) {
+    let reserve = await this.oceanPool.getDTReserve(address);
     const maxIn = Number(reserve) / 2;
     return String(maxIn);
   }

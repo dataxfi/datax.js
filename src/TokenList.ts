@@ -1,7 +1,15 @@
 require("dotenv").config();
 import Base from "./Base";
-import { TokenList as TList } from "@uniswap/token-lists";
+import { TokenList as Tlist, TokenInfo as TInfo } from "@uniswap/token-lists";
 import axios from "axios";
+
+export interface TokenInfo extends TInfo {
+  pool:string
+}
+
+export interface TList extends Tlist {
+  tokens: TokenInfo[]
+}
 
 export default class TokenList extends Base {
   private pinataApiKey: string;
@@ -188,7 +196,7 @@ export default class TokenList extends Base {
         },
       };
 
-      const tokensData = await Promise.all(
+      const tokensData: TokenInfo[] = await Promise.all(
         tokens.map((token) => {
           const { chainId, address, symbol, name, pool } = token;
           return {
