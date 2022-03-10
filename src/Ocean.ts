@@ -90,8 +90,11 @@ export default class Ocean extends Base {
     try {
       return this.bPool.getBalance(tokenAddress, account);
     } catch (error) {
-      
-      throw {Code: 1000, Message:"We ran into a problem, please refresh your page.", error};
+      throw {
+        Code: 1000,
+        Message: "We ran into a problem, please refresh your page.",
+        error,
+      };
     }
   }
 
@@ -112,7 +115,11 @@ export default class Ocean extends Base {
     try {
       return this.bPool.checkIfApproved(tokenAddress, account, spender, amount);
     } catch (error) {
-      throw {Code: 1000, Message:"We ran into a problem, please refresh your page.", error};
+      throw {
+        Code: 1000,
+        Message: "We ran into a problem, please refresh your page.",
+        error,
+      };
     }
   }
 
@@ -131,8 +138,11 @@ export default class Ocean extends Base {
     try {
       return this.bPool.allowance(tokenAddress, account, spender);
     } catch (error) {
-      
-      throw {Code: 1000, Message:"We ran into a problem, please refresh your page.", error};
+      throw {
+        Code: 1000,
+        Message: "We ran into a problem, please refresh your page.",
+        error,
+      };
     }
   }
 
@@ -160,8 +170,7 @@ export default class Ocean extends Base {
 
       return await datatoken.approve(tokenAddress, spender, amount, account);
     } catch (error) {
-      
-      throw {Code: 1000, Message:"We ran into a problem, please refresh your page.", error};
+      throw { Code: 1000, Message: "Failed to approve token.", error };
     }
   }
 
@@ -278,8 +287,11 @@ export default class Ocean extends Base {
       const symbol = await datatoken.getSymbol(tokenAddress);
       return { name: name, symbol: symbol };
     } catch (error) {
-      
-      throw {Code: 1000, Message:"We ran into a problem, please refresh your page.", error};
+      throw {
+        Code: 1000,
+        Message: "We ran into a problem, please refresh your page.",
+        error,
+      };
     }
   }
 
@@ -294,7 +306,19 @@ export default class Ocean extends Base {
     poolAddress: string,
     amount: string
   ): Promise<TransactionReceipt> {
-    return await this.oceanPool.addOceanLiquidity(account, poolAddress, amount);
+    try {
+      return await this.oceanPool.addOceanLiquidity(
+        account,
+        poolAddress,
+        amount
+      );
+    } catch (error) {
+      throw {
+        Code: 1000,
+        Message: "Transaction could not be processed.",
+        error,
+      };
+    }
   }
 
   /**
@@ -311,12 +335,20 @@ export default class Ocean extends Base {
     amount: string,
     maximumPoolShares: string
   ): Promise<TransactionReceipt> {
-    return await this.oceanPool.removeOceanLiquidity(
-      account,
-      poolAddress,
-      amount,
-      maximumPoolShares
-    );
+    try {
+      return await this.oceanPool.removeOceanLiquidity(
+        account,
+        poolAddress,
+        amount,
+        maximumPoolShares
+      );
+    } catch (error) {
+      throw {
+        Code: 1000,
+        Message: "Transaction could not be processed.",
+        error,
+      };
+    }
   }
 
   /**
@@ -346,8 +378,11 @@ export default class Ocean extends Base {
       let totalSupply = await poolInst.methods.totalSupply().call();
       return this.web3.utils.fromWei(totalSupply);
     } catch (error) {
-      
-      throw {Code: 1000, Message:"We ran into a problem, please refresh your page.", error};
+      throw {
+        Code: 1000,
+        Message: "We ran into a problem, please refresh your page.",
+        error,
+      };
     }
   }
 
@@ -407,8 +442,11 @@ export default class Ocean extends Base {
       let swapFee = await this.oceanPool.getSwapFee(poolAddress);
       return new Decimal(tokenInAmount).mul(swapFee).toString();
     } catch (error) {
-      
-      throw {Code: 1000, Message:"We ran into a problem, please refresh your page.", error};
+      throw {
+        Code: 1000,
+        Message: "We ran into a problem, please refresh your page.",
+        error,
+      };
     }
   }
 
@@ -442,8 +480,11 @@ export default class Ocean extends Base {
         maxOceanAmountSpentWithSlippage
       );
     } catch (error) {
-      
-      throw {Code: 1000, Message:"We ran into a problem, please refresh your page.", error};
+      throw {
+        Code: 1000,
+        Message: "Transaction could not be processed.",
+        error,
+      };
     }
   }
 
@@ -478,8 +519,11 @@ export default class Ocean extends Base {
         OceanAmount
       );
     } catch (error) {
-      
-      throw {Code: 1000, Message:"We ran into a problem, please refresh your page.", error};
+      throw {
+        Code: 1000,
+        Message: "Transaction could not be processed.",
+        error,
+      };
     }
   }
 
@@ -517,8 +561,11 @@ export default class Ocean extends Base {
         minOceanAmountWantedWithSlippage
       );
     } catch (error) {
-      
-      throw {Code: 1000, Message:"We ran into a problem, please refresh your page.", error};
+      throw {
+        Code: 1000,
+        Message: "Transaction could not be processed.",
+        error,
+      };
     }
   }
 
@@ -553,8 +600,11 @@ export default class Ocean extends Base {
         oceanAmountWanted
       );
     } catch (error) {
-      
-      throw {Code: 1000, Message:"We ran into a problem, please refresh your page.", error};
+      throw {
+        Code: 1000,
+        Message: "Transaction could not be processed.",
+        error,
+      };
     }
   }
 
@@ -587,8 +637,11 @@ export default class Ocean extends Base {
 
       return inputDtNeeded;
     } catch (error) {
-      
-      throw {Code: 1000, Message:"We ran into a problem, please refresh your page.", error};
+      throw {
+        Code: 1000,
+        Message: "We ran into a problem, please refresh your page.",
+        error,
+      };
     }
   }
 
@@ -734,8 +787,11 @@ export default class Ocean extends Base {
         .send({ from: account, gas: 1000000 });
       return totalAmountOut;
     } catch (error) {
-      
-      throw {Code: 1000, Message:"We ran into a problem, please refresh your page.", error};
+      throw {
+        Code: 1000,
+        Message: "Transaction could not be processed.",
+        error,
+      };
     }
   }
 
@@ -768,8 +824,11 @@ export default class Ocean extends Base {
 
       return outputDtReceived;
     } catch (error) {
-      
-      throw {Code: 1000, Message:"We ran into a problem, please refresh your page.", error};
+      throw {
+        Code: 1000,
+        Message: "We ran into a problem, please refresh your page.",
+        error,
+      };
     }
   }
 
@@ -922,8 +981,11 @@ export default class Ocean extends Base {
         .send({ from: account, gas: estGas ? estGas : 1000000 });
       return totalAmountOut;
     } catch (error) {
-      
-      throw {Code: 1000, Message:"We ran into a problem, please refresh your page.", error};
+      throw {
+        Code: 1000,
+        Message: "Transaction could not be processed.",
+        error,
+      };
     }
   }
 

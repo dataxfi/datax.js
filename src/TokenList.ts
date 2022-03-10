@@ -4,11 +4,11 @@ import { TokenList as Tlist, TokenInfo as TInfo } from "@uniswap/token-lists";
 import axios from "axios";
 
 export interface TokenInfo extends TInfo {
-  pool:string
+  pool: string;
 }
 
 export interface TList extends Tlist {
-  tokens: TokenInfo[]
+  tokens: TokenInfo[];
 }
 
 export default class TokenList extends Base {
@@ -42,7 +42,11 @@ export default class TokenList extends Base {
       console.log(tokenList);
       return tokenList;
     } catch (e) {
-      throw {Code: 2000, Message:"We ran into a problem, please refresh your page.", Error: e};
+      throw {
+        Code: 2000,
+        Message: "Failed to fetch token list.",
+        Error: e,
+      };
     }
   }
 
@@ -62,7 +66,11 @@ export default class TokenList extends Base {
       console.log(tokenList);
       return tokenList;
     } catch (e) {
-      throw {Code: 2000, Message:"We ran into a problem, please refresh your page.", Error: e};
+      throw {
+        Code: 2000,
+        Message: "Failed to fetch data token list.",
+        Error: e,
+      };
     }
   }
 
@@ -108,7 +116,11 @@ export default class TokenList extends Base {
       const pinataResp = await this.pinTokenListToIPFS(listname, tokenList);
       return pinataResp;
     } catch (e) {
-      throw {Code: 2000, Message:"We ran into a problem, please refresh your page.", Error: e};
+      throw {
+        Code: 2000,
+        Message: "Failed to publish token list.",
+        Error: e,
+      };
     }
   }
 
@@ -154,7 +166,11 @@ export default class TokenList extends Base {
       return pinataResp;
     } catch (e) {
       console.error(`ERROR: ${e.message}`);
-      throw {Code: 2000, Message:"We ran into a problem, please refresh your page.", Error: e};
+      throw {
+        Code: 2000,
+        Message: "Failed to publish token list.",
+        Error: e,
+      };
     }
   }
 
@@ -228,7 +244,11 @@ export default class TokenList extends Base {
 
       return listTemplate;
     } catch (e) {
-      throw {Code: 2000, Message:"We ran into a problem, please refresh your page.", Error: e};
+      throw {
+        Code: 2000,
+        Message: "Failed to prepare token list.",
+        Error: e,
+      };
     }
   }
 
@@ -302,7 +322,7 @@ export default class TokenList extends Base {
 
       return listTemplate;
     } catch (e) {
-      throw {Code: 2000, Message:"We ran into a problem, please refresh your page.", Error: e};
+      throw { Code: 2000, Message: "Failed to prepare token list.", Error: e };
     }
   }
   /**
@@ -325,7 +345,7 @@ export default class TokenList extends Base {
 
       return file.data;
     } catch (e) {
-      throw {Code: 2000, Message:"We ran into a problem, please refresh your page.", Error: e};
+      throw { Code: 2000, Message: "Failed to fetch token list.", Error: e };
     }
   }
 
@@ -358,7 +378,7 @@ export default class TokenList extends Base {
       console.log(hash);
       return hash;
     } catch (e) {
-      throw {Code: 2000, Message:"We ran into a problem, please refresh your page.", Error: e};
+      throw { Code: 2000, Message: "Failed to post token list.", Error: e };
     }
   }
 }
