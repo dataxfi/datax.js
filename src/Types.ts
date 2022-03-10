@@ -53,6 +53,7 @@ export interface ISwap {
 export interface ITokenDetails {
   name: string;
   symbol: string;
+  tokenAddress?:string
 }
 
 export interface ITokenInfo extends TInfo {
@@ -90,9 +91,6 @@ export interface IPoolDetails {
     tokenAmountOut?: string
     type: PoolTransactionType
   }
-
-
-
 
   export interface ITokensToAdd {
     address: string;

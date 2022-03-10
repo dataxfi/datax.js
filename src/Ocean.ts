@@ -183,7 +183,7 @@ export default class Ocean extends Base {
    * @param tokenAddress
    * @returns {boolean} true : token is OCEAN | false : token is not OCEAN
    */
-  public async isOCEAN(tokenAddress: string) {
+  public isOCEAN(tokenAddress: string) {
     return (
       tokenAddress.toLowerCase() ===
       this.config.default.oceanTokenAddress.toLowerCase()
