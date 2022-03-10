@@ -184,9 +184,17 @@ export default class Ocean extends Base {
    */
 
   public async getMaxExchange(address: string, getOcean: boolean = false) {
-    let reserve = await this.oceanPool.getDTReserve(address);
-    const maxIn = Number(reserve) / 2;
-    return String(maxIn);
+    try {
+      let reserve = await this.oceanPool.getDTReserve(address);
+      const maxIn = Number(reserve) / 2;
+      return String(maxIn);
+    } catch (error) {
+      throw {
+        Code: 1000,
+        Message: "Failed to get max exchange amount.",
+        error,
+      };
+    }
   }
 
   /**
@@ -195,7 +203,15 @@ export default class Ocean extends Base {
    * @returns
    */
   public async getDtPerOcean(poolAddress: string): Promise<string> {
-    return await this.oceanPool.getDTNeeded(poolAddress, "1");
+    try {
+      return await this.oceanPool.getDTNeeded(poolAddress, "1");
+    } catch (error) {
+      throw {
+        Code: 1000,
+        Message: "We ran into a problem, please refresh your page.",
+        error,
+      };
+    }
   }
 
   /**
@@ -204,7 +220,15 @@ export default class Ocean extends Base {
    * @returns
    */
   public async getOceanPerDt(poolAddress: string): Promise<string> {
-    return await this.oceanPool.getOceanNeeded(poolAddress, "1");
+    try {
+      return await this.oceanPool.getOceanNeeded(poolAddress, "1");
+    } catch (error) {
+      throw {
+        Code: 1000,
+        Message: "We ran into a problem, please refresh your page.",
+        error,
+      };
+    }
   }
 
   /**
@@ -217,7 +241,15 @@ export default class Ocean extends Base {
     poolAddress: string,
     dtAmount: string
   ): Promise<string> {
-    return await this.oceanPool.getOceanReceived(poolAddress, dtAmount);
+    try {
+      return await this.oceanPool.getOceanReceived(poolAddress, dtAmount);
+    } catch (error) {
+      throw {
+        Code: 1000,
+        Message: "We ran into a problem, please refresh your page.",
+        error,
+      };
+    }
   }
 
   /**
@@ -230,7 +262,15 @@ export default class Ocean extends Base {
     poolAddress: string,
     oceanAmount: string
   ): Promise<string> {
-    return await this.oceanPool.getDTReceived(poolAddress, oceanAmount);
+    try {
+      return await this.oceanPool.getDTReceived(poolAddress, oceanAmount);
+    } catch (error) {
+      throw {
+        Code: 1000,
+        Message: "We ran into a problem, please refresh your page.",
+        error,
+      };
+    }
   }
 
   /**
@@ -243,7 +283,15 @@ export default class Ocean extends Base {
     poolAddress: string,
     oceanAmountWanted: string
   ): Promise<string> {
-    return await this.oceanPool.getDTNeeded(poolAddress, oceanAmountWanted);
+    try {
+      return await this.oceanPool.getDTNeeded(poolAddress, oceanAmountWanted);
+    } catch (error) {
+      throw {
+        Code: 1000,
+        Message: "We ran into a problem, please refresh your page.",
+        error,
+      };
+    }
   }
 
   /**
@@ -256,7 +304,15 @@ export default class Ocean extends Base {
     poolAddress: string,
     dtAmountWanted: string
   ): Promise<string> {
-    return await this.oceanPool.getOceanNeeded(poolAddress, dtAmountWanted);
+    try {
+      return await this.oceanPool.getOceanNeeded(poolAddress, dtAmountWanted);
+    } catch (error) {
+      throw {
+        Code: 1000,
+        Message: "We ran into a problem, please refresh your page.",
+        error,
+      };
+    }
   }
 
   /** get pool details
@@ -265,7 +321,15 @@ export default class Ocean extends Base {
    */
 
   public async getPoolDetails(poolAddress: string): Promise<any> {
-    return await this.oceanPool.getPoolDetails(poolAddress);
+    try {
+      return await this.oceanPool.getPoolDetails(poolAddress);
+    } catch (error) {
+      throw {
+        Code: 1000,
+        Message: "We ran into a problem, please refresh your page.",
+        error,
+      };
+    }
   }
 
   /**
@@ -361,7 +425,15 @@ export default class Ocean extends Base {
     poolAddress: string,
     account: string
   ): Promise<string> {
-    return await this.getBalance(poolAddress, account);
+    try {
+      return await this.getBalance(poolAddress, account);
+    } catch (error) {
+      throw {
+        Code: 1000,
+        Message: "We ran into a problem, please refresh your page.",
+        error,
+      };
+    }
   }
 
   /**
@@ -396,10 +468,18 @@ export default class Ocean extends Base {
     poolAddress: string,
     poolShares: string
   ): Promise<TokensReceived> {
-    return await this.oceanPool.getTokensRemovedforPoolShares(
-      poolAddress,
-      poolShares
-    );
+    try {
+      return await this.oceanPool.getTokensRemovedforPoolShares(
+        poolAddress,
+        poolShares
+      );
+    } catch (error) {
+      throw {
+        Code: 1000,
+        Message: "We ran into a problem, please refresh your page.",
+        error,
+      };
+    }
   }
 
   /**
@@ -412,11 +492,19 @@ export default class Ocean extends Base {
     fromBlock: number,
     toBlock: number
   ): Promise<PoolShare[]> {
-    return await this.oceanPool.getPoolSharesByAddress(
-      account,
-      fromBlock,
-      toBlock
-    );
+    try {
+      return await this.oceanPool.getPoolSharesByAddress(
+        account,
+        fromBlock,
+        toBlock
+      );
+    } catch (error) {
+      throw {
+        Code: 1000,
+        Message: "We ran into a problem, please refresh your page.",
+        error,
+      };
+    }
   }
 
   /**
@@ -425,7 +513,15 @@ export default class Ocean extends Base {
    * @returns
    */
   public async getSwapFee(poolAddress: string): Promise<string> {
-    return await this.oceanPool.getSwapFee(poolAddress);
+    try {
+      return await this.oceanPool.getSwapFee(poolAddress);
+    } catch (error) {
+      throw {
+        Code: 1000,
+        Message: "We ran into a problem, please refresh your page.",
+        error,
+      };
+    }
   }
 
   /**
@@ -998,7 +1094,15 @@ export default class Ocean extends Base {
     poolAddress: string,
     tokenAddress: string
   ): Promise<string> {
-    return this.oceanPool.getMaxRemoveLiquidity(poolAddress, tokenAddress);
+    try {
+      return this.oceanPool.getMaxRemoveLiquidity(poolAddress, tokenAddress);
+    } catch (error) {
+      throw {
+        Code: 1000,
+        Message: "We ran into a problem, please refresh your page.",
+        error,
+      };
+    }
   }
 
   /**
@@ -1010,7 +1114,15 @@ export default class Ocean extends Base {
     poolAddress: string,
     tokenAddress: string
   ): Promise<string> {
-    return this.oceanPool.getMaxAddLiquidity(poolAddress, tokenAddress);
+    try {
+      return this.oceanPool.getMaxAddLiquidity(poolAddress, tokenAddress);
+    } catch (error) {
+      throw {
+        Code: 1000,
+        Message: "We ran into a problem, please refresh your page.",
+        error,
+      };
+    }
   }
 
   /**
@@ -1025,11 +1137,19 @@ export default class Ocean extends Base {
     tokenAddress: string,
     tokenAmount: string
   ): Promise<string> {
-    return this.oceanPool.calcPoolInGivenSingleOut(
-      poolAddress,
-      tokenAddress,
-      tokenAmount
-    );
+    try {
+      return this.oceanPool.calcPoolInGivenSingleOut(
+        poolAddress,
+        tokenAddress,
+        tokenAmount
+      );
+    } catch (error) {
+      throw {
+        Code: 1000,
+        Message: "We ran into a problem, please refresh your page.",
+        error,
+      };
+    }
   }
 
   /**
@@ -1042,6 +1162,17 @@ export default class Ocean extends Base {
     poolAddress: string,
     poolShares: string
   ): Promise<string> {
-    return this.oceanPool.getOceanRemovedforPoolShares(poolAddress, poolShares);
+    try {
+      return this.oceanPool.getOceanRemovedforPoolShares(
+        poolAddress,
+        poolShares
+      );
+    } catch (error) {
+      throw {
+        Code: 1000,
+        Message: "We ran into a problem, please refresh your page.",
+        error,
+      };
+    }
   }
 }
