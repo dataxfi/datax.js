@@ -42,8 +42,7 @@ export default class TokenList extends Base {
       console.log(tokenList);
       return tokenList;
     } catch (e) {
-      console.error(`ERROR: ${e.message}`);
-      throw Error(`ERROR : ${e.message}`);
+      throw {Code: 2000, Message:"We ran into a problem, please refresh your page.", Error: e};
     }
   }
 
@@ -63,8 +62,7 @@ export default class TokenList extends Base {
       console.log(tokenList);
       return tokenList;
     } catch (e) {
-      console.error(`ERROR: ${e.message}`);
-      throw Error(`ERROR : ${e.message}`);
+      throw {Code: 2000, Message:"We ran into a problem, please refresh your page.", Error: e};
     }
   }
 
@@ -110,8 +108,7 @@ export default class TokenList extends Base {
       const pinataResp = await this.pinTokenListToIPFS(listname, tokenList);
       return pinataResp;
     } catch (e) {
-      console.error(`ERROR: ${e.message}`);
-      throw Error(`ERROR : ${e.message}`);
+      throw {Code: 2000, Message:"We ran into a problem, please refresh your page.", Error: e};
     }
   }
 
@@ -157,7 +154,7 @@ export default class TokenList extends Base {
       return pinataResp;
     } catch (e) {
       console.error(`ERROR: ${e.message}`);
-      throw Error(`ERROR : ${e.message}`);
+      throw {Code: 2000, Message:"We ran into a problem, please refresh your page.", Error: e};
     }
   }
 
@@ -231,8 +228,7 @@ export default class TokenList extends Base {
 
       return listTemplate;
     } catch (e) {
-      console.error(`ERROR: ${e.message}`);
-      throw Error(`ERROR : ${e.message}`);
+      throw {Code: 2000, Message:"We ran into a problem, please refresh your page.", Error: e};
     }
   }
 
@@ -306,8 +302,7 @@ export default class TokenList extends Base {
 
       return listTemplate;
     } catch (e) {
-      console.error(`ERROR: ${e.message}`);
-      throw Error(`ERROR : ${e.message}`);
+      throw {Code: 2000, Message:"We ran into a problem, please refresh your page.", Error: e};
     }
   }
   /**
@@ -330,8 +325,7 @@ export default class TokenList extends Base {
 
       return file.data;
     } catch (e) {
-      console.error(e);
-      throw Error(`ERROR : ${e.message}`);
+      throw {Code: 2000, Message:"We ran into a problem, please refresh your page.", Error: e};
     }
   }
 
@@ -364,8 +358,7 @@ export default class TokenList extends Base {
       console.log(hash);
       return hash;
     } catch (e) {
-      console.error(`ERROR: ${e.message}`);
-      throw Error(`ERROR : ${e.message}`);
+      throw {Code: 2000, Message:"We ran into a problem, please refresh your page.", Error: e};
     }
   }
 }
