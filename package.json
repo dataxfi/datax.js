@@ -8,7 +8,8 @@
     "test": "npm run test:unit",
     "test:unit": "mocha --config=test/.mocharc.json --node-env=test --exit 'test/unit/**/*.test.ts'",
     "test:integration": "mocha --config=test/.mocharc.json --node-env=test --exit 'test/integration/**/*.test.ts'",
-    "prepublish": "tsc"
+    "prepublish": "tsc",
+    "preinstall": "npx npm-force-resolutions"
   },
   "repository": {
     "type": "git",
@@ -44,9 +45,13 @@
     "@types/chai": "^4.2.21",
     "@types/mocha": "^9.0.0",
     "chai": "^4.3.4",
+    "lodash.template": "^4.5.0",
     "mocha": "^9.1.3",
     "source-map-support": "^0.5.19",
     "ts-node": "^10.1.0",
     "ts-node-register": "^1.0.0"
+  },
+  "resolutions": {
+      "lodash.template": "^4.2.5"
   }
 }
