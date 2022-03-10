@@ -1,15 +1,8 @@
 require("dotenv").config();
 import Base from "./Base";
-import { TokenList as Tlist, TokenInfo as TInfo } from "@uniswap/token-lists";
+import { ITokenInfo, ITList} from "./Types";
 import axios from "axios";
 
-export interface TokenInfo extends TInfo {
-  pool: string;
-}
-
-export interface TList extends Tlist {
-  tokens: TokenInfo[];
-}
 
 export default class TokenList extends Base {
   private pinataApiKey: string;
@@ -30,7 +23,7 @@ export default class TokenList extends Base {
    * fetch global token list with all ERC20 tokens + Datatokens
    * @returns
    */
-  public async fetchGlobalTokenList(chainId: number): Promise<TList> {
+  public async fetchGlobalTokenList(chainId: number): Promise<ITList> {
     try {
       let apiResp = await axios(
         `https://gateway.pinata.cloud/ipfs/${
@@ -54,7 +47,7 @@ export default class TokenList extends Base {
    * fetch list of all Datatokens
    * @returns
    */
-  public async fetchDataTokenList(chainId: number): Promise<TList> {
+  public async fetchDataTokenList(chainId: number): Promise<ITList> {
     try {
       let apiResp = await axios(
         `https://gateway.pinata.cloud/ipfs/${
@@ -111,7 +104,7 @@ export default class TokenList extends Base {
 
       let tokenList = await this.fetchDataTokenList(chainId);
       // console.log(fetchedList)
-      //let tokenList: TList = await this.prepareDataTokenList(tokens, chainId);
+      //let tokenList: ITList = await this.prepareDataTokenList(tokens, chainId);
 
       const pinataResp = await this.pinTokenListToIPFS(listname, tokenList);
       return pinataResp;
@@ -159,8 +152,8 @@ export default class TokenList extends Base {
           })
       );
 
-      //let tokenList: TList = await this.prepareGlobalTokenList(tokens, chainId);
-      let tokenList: TList = await this.fetchDataTokenList(chainId);
+      //let tokenList: ITList = await this.prepareGlobalTokenList(tokens, chainId);
+      let tokenList: ITList = await this.fetchDataTokenList(chainId);
 
       const pinataResp = await this.pinTokenListToIPFS(listname, tokenList);
       return pinataResp;
@@ -182,7 +175,7 @@ export default class TokenList extends Base {
   private async prepareGlobalTokenList(
     tokens: any,
     chainId: any
-  ): Promise<TList> {
+  ): Promise<ITList> {
     try {
       let listTemplate = {
         name: "Datax",
@@ -209,7 +202,7 @@ export default class TokenList extends Base {
         },
       };
 
-      const tokensData: TokenInfo[] = await Promise.all(
+      const tokensData: ITokenInfo[] = await Promise.all(
         tokens.map((token) => {
           const { chainId, address, symbol, name, pool } = token;
           return {
@@ -260,7 +253,7 @@ export default class TokenList extends Base {
   private async prepareDataTokenList(
     tokens: any,
     chainId: any
-  ): Promise<TList> {
+  ): Promise<ITList> {
     try {
       let listTemplate = {
         name: "Datax",
@@ -337,7 +330,7 @@ export default class TokenList extends Base {
    *
    */
 
-  public async fetchPreparedTokenList(chainId: number): Promise<TList> {
+  public async fetchPreparedTokenList(chainId: number): Promise<ITList> {
     try {
       const file = await axios.get(
         `https://raw.githubusercontent.com/dataxfi/scripts/master/TokenList/chain${chainId}.json`
@@ -357,7 +350,7 @@ export default class TokenList extends Base {
    */
   private async pinTokenListToIPFS(
     listname: string,
-    list: TList
+    list: ITList
   ): Promise<string> {
     try {
       let pinata: object = {};

@@ -11,33 +11,8 @@ import Decimal from "decimal.js";
 import BigNumber from "bignumber.js";
 import DTFactoryABI from "@oceanprotocol/contracts/artifacts/DTFactory.json";
 import Base from "./Base";
-
+import { ITokensReceived, IPoolShare, ITokenDetails } from "./Types";
 const SLIPPAGE_TOLERANCE = 0.01;
-
-export interface TokensReceived {
-  dtAmount: string;
-  oceanAmount: string;
-}
-
-export interface PoolShare {
-  poolAddress: string;
-  shares: string;
-  did: string;
-}
-
-export interface Swap {
-  poolAddress: string;
-  tokenInAddress: string;
-  tokenOutAddress: string;
-  swapAmount: string; // tokenInAmount / tokenOutAmount
-  limitReturnAmount: string; // minAmountOut / maxAmountIn
-  maxPrice: string;
-}
-
-export interface TokenDetails {
-  name: string;
-  symbol: string;
-}
 
 export default class Ocean extends Base {
   private logger: any = null;
@@ -197,6 +172,185 @@ export default class Ocean extends Base {
     }
   }
 
+  // public async getMaxExchange(
+  //   signal?: AbortSignal,
+  //   token1Balance?: BigNumber | null
+  // ): Promise<IMaxExchange> {
+  //   const balance = token1Balance ? token1Balance : token1?.balance;
+  //   return new Promise<IMaxExchange>(async (resolve, reject) => {
+  //     signal?.addEventListener("abort", (e) => {
+  //       reject(new Error("aborted"));
+  //     });
+
+  //     if (balance.lt(0.00001)) {
+  //       console.log("REsolveing 0");
+
+  //       resolve({
+  //         maxPercent: new BigNumber(100),
+  //         maxSell: new BigNumber(0),
+  //         maxBuy: new BigNumber(0),
+  //         postExchange: new BigNumber(0),
+  //       });
+  //     }
+
+  //     let maxBuy: BigNumber;
+  //     let maxSell: BigNumber;
+  //     let maxPercent: BigNumber;
+  //     try {
+  //       if (
+  //         ocean &&
+  //         token1?.info &&
+  //         token2?.info &&
+  //         !isOCEAN(token1.info.address, ocean) &&
+  //         !isOCEAN(token2.info.address, ocean)
+  //       ) {
+  //         // try {
+  //         // } catch (error) {}
+  //         maxSell = new BigNumber(
+  //           await ocean?.getMaxExchange(token1.info.pool)
+  //         ).dp(0);
+  //         console.log("Max Sell", maxSell.toString());
+
+  //         let DtReceivedForMaxSell: BigNumber = new BigNumber(
+  //           await ocean?.getDtReceivedForExactDt(
+  //             maxSell.toString(),
+  //             token1.info.pool,
+  //             token2.info.pool
+  //           )
+  //         );
+  //         console.log(
+  //           "Dt Received for max sell",
+  //           DtReceivedForMaxSell.toString()
+  //         );
+  //         const oceanNeededForSellResponse = await ocean?.getOceanNeeded(
+  //           token1.info.pool,
+  //           maxSell.toString()
+  //         );
+  //         const oceanNeededForMaxSell = new BigNumber(
+  //           oceanNeededForSellResponse || 0
+  //         );
+
+  //         maxBuy = new BigNumber(
+  //           await ocean?.getMaxExchange(token2.info.pool)
+  //         ).dp(0);
+  //         console.log("Max Buy", maxBuy.toString());
+  //         const oceanNeededForBuyResponse = await ocean?.getOceanNeeded(
+  //           token2.info.pool,
+  //           maxBuy.toString()
+  //         );
+  //         const oceanNeededForMaxBuy = new BigNumber(
+  //           oceanNeededForBuyResponse || 0
+  //         );
+
+  //         console.log(
+  //           `Ocean needed for max sell: ${oceanNeededForMaxSell} \n Ocean Needed for max buy: ${oceanNeededForMaxBuy}`
+  //         );
+
+  //         let DtNeededForMaxBuy: BigNumber;
+  //         //limited by buy token
+  //         if (oceanNeededForMaxSell.gt(oceanNeededForMaxBuy)) {
+  //           // If the ocean needed for the maxSell is greater than the ocean needed for the max buy, then the maxSell can be left as is
+  //           // and the maxBuy is set to the the DT received for the max sell
+  //           DtNeededForMaxBuy = new BigNumber(
+  //             await ocean?.getDtNeededForExactDt(
+  //               maxBuy.toString(),
+  //               token1.info.pool,
+  //               token2.info.pool
+  //             )
+  //           );
+  //           maxSell = DtNeededForMaxBuy;
+  //         } else {
+  //           // If the ocean needed for the maxSell is less than the ocean needed for the max buy, then the maxSell needs to be set
+  //           // to the Dt needed for the maxBuy, and the max buy can stay as is
+  //           // limited by sell token
+  //           maxBuy = DtReceivedForMaxSell;
+  //         }
+  //       } else if (
+  //         ocean &&
+  //         token1?.info &&
+  //         token2?.info &&
+  //         isOCEAN(token2.info.address, ocean)
+  //       ) {
+  //         // DT to OCEAN
+  //         // Max sell is the max amount of DT that can be traded
+  //         maxSell = new BigNumber(
+  //           await ocean?.getMaxExchange(token1.info.pool)
+  //         );
+  //         maxSell = new BigNumber(maxSell || 0);
+  //         // console.log("Exact max sell:", maxSell.toString());
+  //         // Max buy is the amount of OCEAN bought from max sell
+  //         maxBuy = new BigNumber(await calculateExchange(true, maxSell));
+  //       } else if (ocean && token1?.info && token2?.info) {
+  //         // OCEAN to DT
+  //         // Max buy is the max amount of DT that can be traded
+  //         maxBuy = new BigNumber(await ocean?.getMaxExchange(token2.info.pool));
+  //         maxBuy = new BigNumber(maxBuy || 0);
+  //         // console.log("Exact max buy:", maxBuy.toString());
+  //         if (maxBuy.minus(maxBuy.dp(0)).gte(0.05)) {
+  //           maxBuy = maxBuy.dp(0);
+  //         } else {
+  //           maxBuy = maxBuy.minus(0.05);
+  //         }
+  //         //Max sell is the amount of OCEAN sold for maxBuy
+  //         maxSell = await calculateExchange(false, maxBuy);
+  //         // console.log("Max Sell:", maxSell.toString());
+  //       } else {
+  //         maxPercent = new BigNumber(100);
+  //         maxBuy = new BigNumber(18e10);
+  //         maxSell = new BigNumber(18e10);
+  //       }
+
+  //       //Max percent is the percent of the max sell out of token 1 balance
+  //       //if balance is 0 max percent should be 0
+  //       if (balance?.eq(0)) {
+  //         maxPercent = new BigNumber(0);
+  //       } else {
+  //         // console.log("Max Sell:", maxSell.toString());
+  //         maxPercent = maxSell.div(balance).multipliedBy(100);
+  //       }
+
+  //       //if maxPercent is greater than 100, max buy and sell is determined by the balance of token1
+  //       // console.log("Max percent", Number(maxPercent));
+
+  //       if (maxPercent.gt(100)) {
+  //         maxPercent = new BigNumber(100);
+  //         if (balance?.dp(5).gt(0.00001)) {
+  //           maxSell = balance.dp(5);
+  //           maxBuy = await calculateExchange(true, maxSell);
+  //         }
+  //       }
+
+  //       const postExchange = maxBuy.div(maxSell);
+
+  //       const maxExchange: IMaxExchange = {
+  //         maxPercent,
+  //         maxBuy: maxBuy.dp(5),
+  //         maxSell: maxSell.dp(5),
+  //         postExchange,
+  //       };
+  //       console.log(
+  //         "Max Buy:",
+  //         maxBuy.toString(),
+  //         "Max Sell:",
+  //         maxSell.toString(),
+  //         "Max Percent:",
+  //         maxPercent.toString()
+  //       );
+
+  //       resolve(maxExchange);
+  //     } catch (error) {
+  //       console.error(error);
+  //     }
+  //     //This is here to not restict the user from attempting a trade if the max exchange could not be determined.
+  //     resolve({
+  //       maxPercent: new BigNumber(100),
+  //       maxBuy: new BigNumber(18e10),
+  //       maxSell: new BigNumber(18e10),
+  //       postExchange: new BigNumber(0.01234),
+  //     });
+  //   });
+  // }
+
   /**
    * get Dt price per OCEAN
    * @param poolAddress
@@ -337,7 +491,7 @@ export default class Ocean extends Base {
    * @param tokenAddress
    * @returns
    */
-  public async getTokenDetails(tokenAddress: string): Promise<TokenDetails> {
+  public async getTokenDetails(tokenAddress: string): Promise<ITokenDetails> {
     try {
       const datatoken = new DataTokens(
         this.config.default.factoryAddress,
@@ -467,7 +621,7 @@ export default class Ocean extends Base {
   public async getTokensRemovedforPoolShares(
     poolAddress: string,
     poolShares: string
-  ): Promise<TokensReceived> {
+  ): Promise<ITokensReceived> {
     try {
       return await this.oceanPool.getTokensRemovedforPoolShares(
         poolAddress,
@@ -491,7 +645,7 @@ export default class Ocean extends Base {
     account: string,
     fromBlock: number,
     toBlock: number
-  ): Promise<PoolShare[]> {
+  ): Promise<IPoolShare[]> {
     try {
       return await this.oceanPool.getPoolSharesByAddress(
         account,
