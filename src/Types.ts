@@ -63,6 +63,15 @@ export interface ITList extends Tlist {
   tokens: ITokenInfo[];
 }
 
+export interface IToken {
+    balance: BigNumber;
+    value: BigNumber;
+    info: ITokenInfo | null;
+    loading: boolean;
+    percentage: BigNumber;
+    allowance?: BigNumber;
+  }
+
 export interface IPoolDetails {
     poolAddress: string
     tokens: string[]
