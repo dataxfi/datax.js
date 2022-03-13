@@ -36,7 +36,6 @@ export default class Trader extends Base {
         * @params refFees
         * @params refAddress
         * @params deadline
-        * @params slippage  
         * @returns 
      */
     public async swapETHforExactDatatokens(
@@ -47,7 +46,6 @@ export default class Trader extends Base {
         refFees: string,
         refAddress: string,
         deadline: string,
-        slippage: string
     ){}
 
     /**
@@ -56,8 +54,7 @@ export default class Trader extends Base {
         * @params path
         * @params refFees
         * @params refAddress
-        * @params deadline
-        * @params slippage  
+        * @params deadline  
         * @returns 
      */
     public async swapExactETHforDataTokens(
@@ -67,7 +64,6 @@ export default class Trader extends Base {
         refFees: string,
         refAddress: string,
         deadline: string,
-        slippage: string
     ){}
     /**
         * @params account
@@ -76,8 +72,7 @@ export default class Trader extends Base {
         * @params path
         * @params refFees
         * @params refAddress
-        * @params deadline
-        * @params slippage  
+        * @params deadline  
         * @returns  
      */
     public async swapExactDatatokensforETH(
@@ -87,8 +82,7 @@ export default class Trader extends Base {
         path: string[],
         refFees: string,
         refAddress: string,
-        deadline: string,
-        slippage: string
+        deadline: string
     ){}
     /**
         * @params account
@@ -98,7 +92,6 @@ export default class Trader extends Base {
         * @params refFees
         * @params refAddress
         * @params deadline
-        * @params slippage  
         * @returns  
      */
 
@@ -109,8 +102,7 @@ export default class Trader extends Base {
         path: string[],
         refFees: string,
         refAddress: string,
-        deadline: string,
-        slippage: string
+        deadline: string
     ){}
     /**
          * Swaps exact no. of datatokens to Ocean tokens
@@ -121,7 +113,6 @@ export default class Trader extends Base {
          * @param refFees
          * @param refAddress
          * @param deadline
-         * @param slippage
          * @returns
     */
     public async swapExactTokensforDataTokens(
@@ -130,8 +121,7 @@ export default class Trader extends Base {
         amountOutMin: string,
         refFees: string,
         refAddress: string,
-        deadline: string,
-        slippage: string
+        deadline: string
     ){}
     /**
          * Swaps exact no. of datatokens to Ocean tokens
@@ -142,7 +132,6 @@ export default class Trader extends Base {
          * @param refFees
          * @param refAddress
          * @param deadline
-         * @param slippage
          * @returns
     */
     public async swapExactDatatokensforDatatokens(
@@ -151,8 +140,7 @@ export default class Trader extends Base {
         amountOutMin: string,
         refFees: string,
         refAddress: string,
-        deadline: string,
-        slippage: string
+        deadline: string
     ){}
     /**
          * Swaps exact no. of datatokens to Ocean tokens
@@ -163,7 +151,6 @@ export default class Trader extends Base {
          * @param refFees
          * @param refAddress
          * @param deadline
-         * @param slippage
          * @returns
     */
     public async swapDatatokensforExactDatatokens(
@@ -172,6 +159,63 @@ export default class Trader extends Base {
         amountOut: string,
         refFees: string,
         refAddress: string,
-        deadline: string,
-        slippage: string
+        deadline: string
+    ){}
+    
+
+    /** 
+        * @param amountOutMin 
+        * @param path
+        * @param to 
+        * @param deadline 
+        * @returns
+    */
+    public async swapExactETHForTokens(
+        amountOutMin: string,
+        path: string,
+        to: string,
+        deadline: string
+    ){}
+    /** 
+        * @param amountOut  
+        * @param path
+        * @param to 
+        * @param deadline 
+        * @returns
+    */
+    public async swapETHtoExactTokens(
+        amountOut: string,
+        path: string,
+        to: string,
+        deadline: string
+    ){}
+    /** 
+        * @param amountIn 
+        * @param amountOut  
+        * @param path
+        * @param to 
+        * @param deadline 
+        * @returns
+    */
+    public async swapExactTokensForTokens(
+        amountIn: string,
+        amountOutMin: string,
+        path: string,
+        to: string,
+        deadline: string
+    ){}
+    /** 
+        * @param amountInMax
+        * @param amountOut
+        * @param path
+        * @param to 
+        * @param deadline 
+        * @returns
+    */
+     public async swapTokensForExactTokens(
+        amountInMax: string,
+        amountOut: string,
+        path: string,
+        to: string,
+        deadline: string
     ){}
