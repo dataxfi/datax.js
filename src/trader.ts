@@ -119,6 +119,7 @@ export default class Trader extends Base {
         account: string,
         amountIn: string,
         amountOutMin: string,
+        path: string[],
         refFees: string,
         refAddress: string,
         deadline: string
@@ -138,6 +139,7 @@ export default class Trader extends Base {
         account: string,
         amountIn: string,
         amountOutMin: string,
+        path: string[],
         refFees: string,
         refAddress: string,
         deadline: string
@@ -157,6 +159,7 @@ export default class Trader extends Base {
         account: string,
         amountInMax: string,
         amountOut: string,
+        path: string[],
         refFees: string,
         refAddress: string,
         deadline: string
@@ -172,7 +175,7 @@ export default class Trader extends Base {
     */
     public async swapExactETHForTokens(
         amountOutMin: string,
-        path: string,
+        path: string[],
         to: string,
         deadline: string
     ){}
@@ -185,7 +188,7 @@ export default class Trader extends Base {
     */
     public async swapETHtoExactTokens(
         amountOut: string,
-        path: string,
+        path: string[],,
         to: string,
         deadline: string
     ){}
@@ -200,7 +203,7 @@ export default class Trader extends Base {
     public async swapExactTokensForTokens(
         amountIn: string,
         amountOutMin: string,
-        path: string,
+        path: string[],
         to: string,
         deadline: string
     ){}
@@ -215,7 +218,7 @@ export default class Trader extends Base {
      public async swapTokensForExactTokens(
         amountInMax: string,
         amountOut: string,
-        path: string,
+        path: string[],
         to: string,
         deadline: string
     ){}
