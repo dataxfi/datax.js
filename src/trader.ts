@@ -66,7 +66,7 @@ export default class Trader extends Base {
         deadline: string,
     ){}
     /**
-        * @params account
+        * @params account 
         * @params amountIn
         * @params amountOutMin
         * @params path
