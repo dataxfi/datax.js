@@ -185,6 +185,7 @@ export default class Trader extends Base {
     ){}
     /** 
         @dev swaps ETH to Exact  DT amounts  
+        @param amountInMax is the max amount of ETH you want to spend
         @param amountOut  is the exact tokens (DT) that you want . 
         @param path  are the array of  token address whose duration is followed for liquidity
         @param to destination address for output tokens
@@ -192,6 +193,7 @@ export default class Trader extends Base {
         @returns
     */
     public async swapETHtoExactTokens(
+        amountInMax: string,
         amountOut: string,
         path: string[],
         to: string,
