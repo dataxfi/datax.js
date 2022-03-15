@@ -29,137 +29,141 @@ export default class Trader extends Base {
     public async getSwapFees(){}
     
     /**
-        * @params account
-        * @params amountInMax
-        * @params amountOut
-        * @params path
-        * @params refFees
-        * @params refAddress
-        * @params deadline
-        * @returns 
+        @dev Swaps given max amount of ETH (native token) to datatokens
+        @param amountOut is the exact amount of datatokens you want to be receive
+        @param amountInMax is the max amount of ETH you want to spend
+        @param path is the address array for the swap path based on liquidity
+        @param to is the destination address for receiving destination token
+        @param refFees is the referral fees paid to external dapps
+        @param refAddress is the address where referral fees are paid to
+        @param deadline is the max time in sec during which order must be filled
+        @returns 
      */
     public async swapETHforExactDatatokens(
-        account: string,
         amountInMax: string,
         amountOut: string,
         path: string[],
+        to: string,
         refFees: string,
         refAddress: string,
         deadline: string,
     ){}
 
     /**
-        * @params account
-        * @params amountOutMin
-        * @params path
-        * @params refFees
-        * @params refAddress
-        * @params deadline  
-        * @returns 
+        @dev Swaps exact amount of ETH (native token) to datatokens
+        @param amountOutMin is the min amount of datatokens you want to receive
+        @param path is the address array for the swap path based on liquidity
+        @param to is the destination address for receiving destination token
+        @param refFees is the referral fees paid to external dapps
+        @param refAddress is address where referral fees are paid to
+        @param deadline is the max time in sec during which order must be filled  
+        @returns 
      */
     public async swapExactETHforDataTokens(
-        account: string,
         amountOutMin: string,
         path: string[],
+        to: string,
         refFees: string,
         refAddress: string,
         deadline: string,
     ){}
     /**
-        * @params account 
-        * @params amountIn
-        * @params amountOutMin
-        * @params path
-        * @params refFees
-        * @params refAddress
-        * @params deadline  
-        * @returns  
+        @dev Swaps given max amount of erc20 tokens to datatokens
+        @param amountIn is the exact amount of datatokens you want to spend 
+        @param amountOutMin is the min amount of ETH you want to receive
+        @param path is the address array for the swap path based on liquidity
+        @param to is the destination address for receiving destination token
+        @param refFees is the referral fees paid to external dapps
+        @param refAddress is address where referral fees are paid to
+        @param deadline is the max time in sec during which order must be filled  
+        @returns  
      */
     public async swapExactDatatokensforETH(
-        account: string,
         amountIn: string,
         amountOutMin: string,
         path: string[],
+        to: string,
         refFees: string,
         refAddress: string,
         deadline: string
     ){}
     /**
-        * @params account
-        * @params amountInMax
-        * @params amountOut
-        * @params path
-        * @params refFees
-        * @params refAddress
-        * @params deadline
-        * @returns  
+        @dev Swaps given max amount of erc20 tokens to datatokens
+        @param amountOut is the exact amount of Datatokens you want to be receive
+        @param amountInMax is the max amount of erc20 tokens you want to spend
+        @param path is the address array for the swap path based on liquidity
+        @param to is the destination address for receiving destination token
+        @param refFees is the referral fees paid to external dapps
+        @param refAddress is the address where referral fees are paid to
+        @param deadline is the max time in sec during which order must be filled
+        @returns  
      */
 
     public async swapTokensforExactDatatokens(
-        account: string,
         amountInMax: string,
         amountOut: string,
         path: string[],
+        to: string,
         refFees: string,
         refAddress: string,
         deadline: string
     ){}
-    /**
-         * Swaps exact no. of datatokens to Ocean tokens
-         * @param account
-         * @param amountIn
-         * @param amountOutMin
-         * @param path
-         * @param refFees
-         * @param refAddress
-         * @param deadline
-         * @returns
+     /** 
+        @dev Swaps exact amount of erc20 tokens to datatokens
+        @param amountIn is the exact amount of erc20 tokens you want to spend 
+        @param amountOutMin is the min amount of datatokens you want to receive
+        @param path is the address array for the swap path based on liquidity
+        @param to is the destination address for receiving destination token
+        @param refFees is the referral fees paid to external dapps
+        @param refAddress is address where referral fees are paid to
+        @param deadline is the max time in sec during which order must be filled
+        @returns
     */
     public async swapExactTokensforDataTokens(
-        account: string,
         amountIn: string,
         amountOutMin: string,
         path: string[],
+        to: string,
         refFees: string,
         refAddress: string,
         deadline: string
     ){}
     /**
-         * Swaps exact no. of datatokens to Ocean tokens
-         * @param account
-         * @param amountIn
-         * @param amountOutMin
-         * @param path
-         * @param refFees
-         * @param refAddress
-         * @param deadline
-         * @returns
+        @dev Swaps exact amount of datatokens to erc20 tokens
+        @param amountIn is the exact amount of datatokens you want to spend 
+        @param amountOutMin is the min amount of erc20 tokens you want to receive
+        @param path is the address array for the swap path based on liquidity
+        @param to is the destination address for receiving destination token
+        @param refFees is the referral fees paid to external dapps
+        @param refAddress is address where referral fees are paid to
+        @param deadline is the max time in sec during which order must be filled
+        @returns
     */
     public async swapExactDatatokensforDatatokens(
-        account: string,
         amountIn: string,
         amountOutMin: string,
         path: string[],
+        to: string,
         refFees: string,
         refAddress: string,
         deadline: string
     ){}
     /**
-         * Swaps exact no. of datatokens to Ocean tokens
-         * @param account
-         * @param amountInMax
-         * @param amountOut
-         * @param path
-         * @param refFees
-         * @param refAddress
-         * @param deadline
-         * @returns
+        @dev Swaps given max amount of datatokens to exact datatokens
+        @param amountInMax is the max amount of datatokens you want to spend
+        @param amountOut is the exact amount of datatokens you want to be receive
+        @param path is the address array for the swap path based on liquidity
+        @param to is the destination address for receiving destination token
+        @param refFees is the referral fees paid to external dapps
+        @param refAddress is the address where referral fees are paid to
+        @param deadline is the max time in sec during which order must be filled
+        @returns
     */
     public async swapDatatokensforExactDatatokens(
-        account: string,
         amountInMax: string,
         amountOut: string,
         path: string[],
+        to: string,
         refFees: string,
         refAddress: string,
         deadline: string
@@ -167,11 +171,11 @@ export default class Trader extends Base {
     
 
     /** 
-        * @param amountOutMin 
-        * @param path
-        * @param to 
-        * @param deadline 
-        * @returns
+        @dev swaps Exact ETH to Tokens (as DT in tradeRouter).
+        @param amountOutMin minimum output amount
+        @param path array of address of tokens used for swapping.
+        @param to destination address for output tokens
+        @param deadline transaction deadline
     */
     public async swapExactETHForTokens(
         amountOutMin: string,
@@ -180,25 +184,27 @@ export default class Trader extends Base {
         deadline: string
     ){}
     /** 
-        * @param amountOut  
-        * @param path
-        * @param to 
-        * @param deadline 
-        * @returns
+        @dev swaps ETH to Exact  DT amounts  
+        @param amountOut  is the exact tokens (DT) that you want . 
+        @param path  are the array of  token address whose duration is followed for liquidity
+        @param to destination address for output tokens
+        @param deadline is the transaction  deadline till then amountOut exact tokens are swapped  
+        @returns
     */
     public async swapETHtoExactTokens(
         amountOut: string,
-        path: string[],,
+        path: string[],
         to: string,
         deadline: string
     ){}
     /** 
-        * @param amountIn 
-        * @param amountOut  
-        * @param path
-        * @param to 
-        * @param deadline 
-        * @returns
+        @dev swaps Exact Tokens (DT/ERC20) for Tokens(DT/ERC20) , 
+        @param amountIn exact token input amount
+        @param amountOutMin minimum expected output amount
+        @param path path of tokens
+        @param to destination address for output tokens
+        @param deadline transaction deadline 
+        @returns
     */
     public async swapExactTokensForTokens(
         amountIn: string,
@@ -208,11 +214,12 @@ export default class Trader extends Base {
         deadline: string
     ){}
     /** 
-        * @param amountInMax
-        * @param amountOut
-        * @param path
-        * @param to 
-        * @param deadline 
+        @dev swaps Tokens (DT / ERC20) for Exact tokens  (DT / ERC20)
+        @param amountInMax maximum input amount
+        @param amountOut expected output amount
+        @param path path of tokens
+        @param to destination address for output tokens
+        @param deadline transaction deadline 
         * @returns
     */
      public async swapTokensForExactTokens(
