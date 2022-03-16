@@ -57,7 +57,7 @@ export interface ITokenDetails {
 }
 
 export interface ITokenInfo extends TInfo {
-  pool: string;
+  pool?: string;
 }
 
 export interface ITList extends Tlist {
