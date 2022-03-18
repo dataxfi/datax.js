@@ -20,13 +20,13 @@ export default class Trader extends Base {
          * get current version  number for the contract
          * @returns string
      */
-    public async getCurrentVersion(){}
+    public async getCurrentVersion(): Promise<string>{}
     
     /**
         * get the constant fees being transferred to the collector after the swap.
         * @returns string 
      */
-    public async getSwapFees(){}
+    public async getSwapFees(): Promise<string>{}
     
     /**
         @dev Swaps given max amount of ETH (native token) to datatokens
@@ -47,7 +47,7 @@ export default class Trader extends Base {
         refFees: string,
         refAddress: string,
         deadline: string,
-    ){}
+    ): Promise<TransactionReceipt>{}
 
     /**
         @dev Swaps exact amount of ETH (native token) to datatokens
@@ -66,7 +66,7 @@ export default class Trader extends Base {
         refFees: string,
         refAddress: string,
         deadline: string,
-    ){}
+    ): Promise<TransactionReceipt>{}
     /**
         @dev Swaps given max amount of erc20 tokens to datatokens
         @param amountIn is the exact amount of datatokens you want to spend 
@@ -86,7 +86,7 @@ export default class Trader extends Base {
         refFees: string,
         refAddress: string,
         deadline: string
-    ){}
+    ): Promise<TransactionReceipt>{}
     /**
         @dev Swaps given max amount of erc20 tokens to datatokens
         @param amountOut is the exact amount of Datatokens you want to be receive
@@ -107,7 +107,7 @@ export default class Trader extends Base {
         refFees: string,
         refAddress: string,
         deadline: string
-    ){}
+    ): Promise<TransactionReceipt>{}
      /** 
         @dev Swaps exact amount of erc20 tokens to datatokens
         @param amountIn is the exact amount of erc20 tokens you want to spend 
@@ -127,7 +127,7 @@ export default class Trader extends Base {
         refFees: string,
         refAddress: string,
         deadline: string
-    ){}
+    ): Promise<TransactionReceipt>{}
     /**
         @dev Swaps exact amount of datatokens to erc20 tokens
         @param amountIn is the exact amount of datatokens you want to spend 
@@ -147,7 +147,7 @@ export default class Trader extends Base {
         refFees: string,
         refAddress: string,
         deadline: string
-    ){}
+    ): Promise<TransactionReceipt>{}
     /**
         @dev Swaps given max amount of datatokens to exact datatokens
         @param amountInMax is the max amount of datatokens you want to spend
@@ -167,7 +167,7 @@ export default class Trader extends Base {
         refFees: string,
         refAddress: string,
         deadline: string
-    ){}
+    ): Promise<TransactionReceipt>{}
     
 
     /** 
@@ -182,7 +182,7 @@ export default class Trader extends Base {
         path: string[],
         to: string,
         deadline: string
-    ){}
+    ): Promise<TransactionReceipt>{}
     /** 
         @dev swaps ETH to Exact  DT amounts  
         @param amountInMax is the max amount of ETH you want to spend
@@ -198,7 +198,7 @@ export default class Trader extends Base {
         path: string[],
         to: string,
         deadline: string
-    ){}
+    ): Promise<TransactionReceipt>{}
     /** 
         @dev swaps Exact Tokens (DT/ERC20) for Tokens(DT/ERC20) , 
         @param amountIn exact token input amount
@@ -214,7 +214,7 @@ export default class Trader extends Base {
         path: string[],
         to: string,
         deadline: string
-    ){}
+    ): Promise<TransactionReceipt>{}
     /** 
         @dev swaps Tokens (DT / ERC20) for Exact tokens  (DT / ERC20)
         @param amountInMax maximum input amount
@@ -222,7 +222,7 @@ export default class Trader extends Base {
         @param path path of tokens
         @param to destination address for output tokens
         @param deadline transaction deadline 
-        * @returns
+        @returns
     */
      public async swapTokensForExactTokens(
         amountInMax: string,
@@ -230,4 +230,4 @@ export default class Trader extends Base {
         path: string[],
         to: string,
         deadline: string
-    ){}
+    ): Promise<TransactionReceipt>{}

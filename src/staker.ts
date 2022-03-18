@@ -19,7 +19,7 @@ export default class Trader extends Base {
     /* 
         get current version of the contract
     */
-    public async getCurrentVersion(){}
+    public async getCurrentVersion(): Promise<string>{}
     /** takes  the  token amount from any supported ERC20 <> DT lp pair and stakes it to the base pair.
         @param dtpoolAddress address of dtpool where user wants to stake token 
         @param tokenAmountsOut is the amount of exact dataToken that you want to be staked in the balancer pool (excl the fees).
@@ -37,7 +37,7 @@ export default class Trader extends Base {
        deadline: string,
        refStakingAddress: string,
        refStakingFees: string
-   ){}
+   ): Promise<TransactionReceipt>{}
 
    /**  takes the given amount of ETH from user and stakes into the corresponding basetoken datapool
         @param dtpoolAddress address of dtpool where user wants to stake token 
@@ -57,12 +57,13 @@ export default class Trader extends Base {
         deadline: string,
         refStakingAddress: string,
         refStakingFees: string
-    ){}
+    ): Promise<TransactionReceipt>{}
     /** allows to stake any data token holded by the user into the specific basetoken of the given pools hosted by dataX.
         @param dtpoolAddress address of datapool
         @param amountDTOut defines  the  amount of the staked basedtoken of the pool .
         @param amountDTMaxIn defines the max amount of the input datatokens that you want to  swap
         @param path is the array  of addresses followed by swap and stake operation according to the available  liquidity 
+        @param datatoken is the address to the datatoken.
         @param deadline transaction deadline
         @param refStakingAddress is the address of the third party that will be paying the fees
         @param refStakingFees is the fees being extracted from the specific address for the staking operation.
@@ -76,7 +77,7 @@ export default class Trader extends Base {
         deadline: string,
         refStakingAddress: string,
         refStakingFees: string
-   ){}
+   ): Promise<TransactionReceipt>{}
 
    /** allows to unstake the baseToken from the given dataPools and return the user the given ERC20 token 
         @param dtpoolAddress is the address of the dataPool in which user wants to unstake DT.
@@ -99,7 +100,7 @@ export default class Trader extends Base {
         deadline: string,
         refStakingAddress: string,
         refStakingFees: string
-    ){}
+    ): Promise<TransactionReceipt>{}
     /** allows to unstake the DT (Data/H20) from the given dataPools and return the user in the resulting ETH
         @param dtpoolAddress is the address of datapool token that you want to  unstake from .
         @param poolAmountIn is the amount of the BaseTokens that you want to unstake to  ETH 
@@ -119,7 +120,7 @@ export default class Trader extends Base {
         deadline: string,
         refStakingAddress: string,
         refStakingFees: string
-    ){}
+    ): Promise<TransactionReceipt>{}
     /** allows unstaking of the DT from datapool (ocean/H20) to other dataTokens .
         @param dtpoolAddress is the address of datapool token that you want to  develop.
         @param poolAmountIn is the amount of the BaseTokens that you want to unstake to  ETH. 
@@ -139,4 +140,4 @@ export default class Trader extends Base {
         deadline: string,
         refStakingAddress: string,
         refStakingFees: string
-    ){}
+    ): Promise<TransactionReceipt>{}
