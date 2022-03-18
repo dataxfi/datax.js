@@ -98,8 +98,8 @@ export default class Trader extends Base {
         datatoken: string,
         to: string,
         deadline: string,
-        refStakingAddress: string,
-        refStakingFees: string
+        refUnstakingAddress: string,
+        refUnstakingFees: string
     ): Promise<TransactionReceipt>{}
     /** allows to unstake the DT (Data/H20) from the given dataPools and return the user in the resulting ETH
         @param dtpoolAddress is the address of datapool token that you want to  unstake from .
@@ -138,6 +138,6 @@ export default class Trader extends Base {
         path: string[],
         to: string,
         deadline: string,
-        refStakingAddress: string,
-        refStakingFees: string
+        refUnstakingAddress: string,
+        refUnstakingFees: string
     ): Promise<TransactionReceipt>{}
