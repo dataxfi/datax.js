@@ -23,6 +23,7 @@ export default class Trader extends Base {
     private tradeRouterAddress: string = this.config.default.tradeRouterAddress;
     private adapterRouterAddress: string = this.config.default.adapterRouterAddress;
     public GASLIMIT_DEFAULT = 1000000
+    public adapterVersion: string = this.config.default.adapterVersion
     
     constructor(web3:any,network:any,deafultRefAddress:string, defaultRefFees:string){
         super(web3, network);
@@ -36,6 +37,14 @@ export default class Trader extends Base {
             adapterRouterABI,
             this.adapterRouterAddress
         )
+    }
+    private splitPath(
+        path: string[]
+    ): any{
+        let length: number = path.length;
+        let path1:string[] = path.slice(0,length-1);
+        let path2:string = path[length-1]
+        return [path1,path2]
     }
     public async checkIfApproved(
         tokenAddress: string, 
@@ -65,7 +74,7 @@ export default class Trader extends Base {
         account: string,
         spender: string,
         amount: string
-    ): Promise<TransactionReceipt {
+    ): Promise<TransactionReceipt> {
         const token = new this.web3.eth.Contract(tokenABI, tokenAddress, {
             from: account
         })
@@ -115,6 +124,7 @@ export default class Trader extends Base {
         @param deadline is the max time in sec during which order must be filled
         @returns 
      */
+
     public async swapETHforExactDatatokens(
         account: string,
         amountOut: string,
@@ -122,21 +132,32 @@ export default class Trader extends Base {
         path: string[],
         to: string,
         deadline: string,
+        isFre: string,
+        exhnageId: string,
+        source: string,
         refFees?: string,
         refAddress?: string,
     ): Promise<TransactionReceipt>{
         refFees = (typeof refFees === 'undefined') ? this.refFees : refFees;
         refAddress = (typeof refAddress === 'undefined') ? this.refAddress : refAddress;
-        return await this.tradeRouter.swapETHforExactDatatokens(
-            amountOut, 
-            amountInMax, 
-            path, 
-            to, 
-            refFees, 
-            refAddress,
-            deadline
-        ).send({from: account, value: amountInMax})
+        
+        let dtAddress:string
+        [path,dtAddress] = this.splitPath(path)
+
+        let dtAmountOut: any = this.adapterRouter.getAmountsOut(amountInMax,path).call()
+
+        let meta: any = [source, dtAddress, to, refAddress, this.adapterRouterAddress];
+        let uints: any = [dtAmountOut, refFees, deadline];
+        
+        return await this.tradeRouter.swapETHforExactDatatokens({
+            meta,
+            uints,
+            path,
+            isFre,
+            exhnageId
+        }).send({from: account, value: amountInMax})
     }
+    
 
     /**
         @dev Swaps exact amount of ETH (native token) to datatokens
