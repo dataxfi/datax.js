@@ -141,13 +141,11 @@ export default class Trader extends Base {
         refFees = (typeof refFees === 'undefined') ? this.refFees : refFees;
         refAddress = (typeof refAddress === 'undefined') ? this.refAddress : refAddress;
         
-        let dtAddress:string
-        [path,dtAddress] = this.splitPath(path)
-
-        let dtAmountOut: any = this.adapterRouter.getAmountsOut(amountInMax,path).call()
+        let dtAddress:string;
+        [path,dtAddress] = this.splitPath(path);
 
         let meta: any = [source, dtAddress, to, refAddress, this.adapterRouterAddress];
-        let uints: any = [dtAmountOut, refFees, deadline];
+        let uints: any = [amountOut, refFees, deadline];
         
         return await this.tradeRouter.swapETHforExactDatatokens({
             meta,
