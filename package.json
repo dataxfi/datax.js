@@ -8,8 +8,7 @@
     "test": "npm run test:unit",
     "test:unit": "mocha --config=test/.mocharc.json --node-env=test --exit 'test/unit/**/*.test.ts'",
     "test:integration": "mocha --config=test/.mocharc.json --node-env=test --exit 'test/integration/**/*.test.ts'",
-    "prepublish": "tsc",
-    "preinstall": "npx npm-force-resolutions"
+    "prepublish": "tsc"
   },
   "repository": {
     "type": "git",
