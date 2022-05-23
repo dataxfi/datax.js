@@ -1,35 +1,23 @@
-import { LogLevel } from '../utils/Logger'
-import { AbiItem } from 'web3-utils/types'
-import fs from 'fs'
-import { homedir } from 'os'
+import { LogLevel } from "../utils/Logger";
+import { AbiItem } from "web3-utils/types";
+import fs from "fs";
+import { homedir } from "os";
 // eslint-disable-next-line import/no-named-default
-import { default as DefaultContractsAddresses } from '@oceanprotocol/contracts/artifacts/address.json'
-import Logger from './Logger'
-
-export interface ConfigHelperConfig extends Config {
-  networkId: number
-  network: string
-  subgraphUri: string
-  explorerUri: string
-  oceanTokenSymbol: string
-  transactionBlockTimeout: number
-  transactionConfirmationBlocks: number
-  transactionPollingTimeout: number
-  gasFeeMultiplier: number
-  rbacUri?: string
-}
+import { default as DefaultContractsAddresses } from "@oceanprotocol/contracts/artifacts/address.json";
+import Logger from "./Logger";
+import { ConfigHelperConfig } from "../Types";
 
 const configHelperNetworksBase: ConfigHelperConfig = {
   networkId: null,
-  network: 'unknown',
-  metadataCacheUri: 'https://aquarius.oceanprotocol.com',
-  nodeUri: 'http://localhost:8545',
-  providerUri: 'http://127.0.0.1:8030',
+  network: "unknown",
+  metadataCacheUri: "https://aquarius.oceanprotocol.com",
+  nodeUri: "http://localhost:8545",
+  providerUri: "http://127.0.0.1:8030",
   subgraphUri: null,
   explorerUri: null,
   oceanTokenAddress: null,
-  oceanTokenSymbol: 'OCEAN',
-  factoryAddress: '0x1234',
+  oceanTokenSymbol: "OCEAN",
+  factoryAddress: "0x1234",
   poolFactoryAddress: null,
   fixedRateExchangeAddress: null,
   dispenserAddress: null,
@@ -38,152 +26,152 @@ const configHelperNetworksBase: ConfigHelperConfig = {
   transactionBlockTimeout: 50,
   transactionConfirmationBlocks: 1,
   transactionPollingTimeout: 750,
-  gasFeeMultiplier: 1
-}
+  gasFeeMultiplier: 1,
+};
 
 export const configHelperNetworks: ConfigHelperConfig[] = [
   {
-    ...configHelperNetworksBase
+    ...configHelperNetworksBase,
   },
   {
     // barge
     ...configHelperNetworksBase,
     networkId: 8996,
-    network: 'development',
-    metadataCacheUri: 'http://127.0.0.1:5000',
-    rbacUri: 'http://127.0.0.1:3000'
+    network: "development",
+    metadataCacheUri: "http://127.0.0.1:5000",
+    rbacUri: "http://127.0.0.1:3000",
   },
   {
     ...configHelperNetworksBase,
     networkId: 3,
-    network: 'ropsten',
-    nodeUri: 'https://ropsten.infura.io/v3',
-    providerUri: 'https://provider.ropsten.oceanprotocol.com',
-    subgraphUri: 'https://subgraph.ropsten.oceanprotocol.com',
-    explorerUri: 'https://ropsten.etherscan.io',
-    startBlock: 9227563
+    network: "ropsten",
+    nodeUri: "https://ropsten.infura.io/v3",
+    providerUri: "https://provider.ropsten.oceanprotocol.com",
+    subgraphUri: "https://subgraph.ropsten.oceanprotocol.com",
+    explorerUri: "https://ropsten.etherscan.io",
+    startBlock: 9227563,
   },
   {
     ...configHelperNetworksBase,
     networkId: 4,
-    network: 'rinkeby',
-    nodeUri: 'https://rinkeby.infura.io/v3',
-    providerUri: 'https://provider.rinkeby.oceanprotocol.com',
-    subgraphUri: 'https://subgraph.rinkeby.oceanprotocol.com',
-    explorerUri: 'https://rinkeby.etherscan.io',
-    startBlock: 7294090
+    network: "rinkeby",
+    nodeUri: "https://rinkeby.infura.io/v3",
+    providerUri: "https://provider.rinkeby.oceanprotocol.com",
+    subgraphUri: "https://subgraph.rinkeby.oceanprotocol.com",
+    explorerUri: "https://rinkeby.etherscan.io",
+    startBlock: 7294090,
   },
   {
     ...configHelperNetworksBase,
     networkId: 1,
-    network: 'mainnet',
-    nodeUri: 'https://mainnet.infura.io/v3',
-    providerUri: 'https://provider.mainnet.oceanprotocol.com',
-    subgraphUri: 'https://subgraph.mainnet.oceanprotocol.com',
-    explorerUri: 'https://etherscan.io',
+    network: "mainnet",
+    nodeUri: "https://mainnet.infura.io/v3",
+    providerUri: "https://provider.mainnet.oceanprotocol.com",
+    subgraphUri: "https://subgraph.mainnet.oceanprotocol.com",
+    explorerUri: "https://etherscan.io",
     startBlock: 11105459,
     transactionBlockTimeout: 150,
     transactionConfirmationBlocks: 5,
     transactionPollingTimeout: 1750,
-    gasFeeMultiplier: 1.05
+    gasFeeMultiplier: 1.05,
   },
   {
     ...configHelperNetworksBase,
     networkId: 137,
-    network: 'polygon',
-    nodeUri: 'https://polygon-mainnet.infura.io/v3',
-    providerUri: 'https://provider.polygon.oceanprotocol.com',
-    subgraphUri: 'https://subgraph.polygon.oceanprotocol.com',
-    explorerUri: 'https://polygonscan.com',
-    oceanTokenSymbol: 'mOCEAN',
+    network: "polygon",
+    nodeUri: "https://polygon-mainnet.infura.io/v3",
+    providerUri: "https://provider.polygon.oceanprotocol.com",
+    subgraphUri: "https://subgraph.polygon.oceanprotocol.com",
+    explorerUri: "https://polygonscan.com",
+    oceanTokenSymbol: "mOCEAN",
     startBlock: 11005222,
-    gasFeeMultiplier: 1.05
+    gasFeeMultiplier: 1.05,
   },
   {
     ...configHelperNetworksBase,
     networkId: 1287,
-    network: 'moonbeamalpha',
-    nodeUri: 'https://rpc.testnet.moonbeam.network',
-    providerUri: 'https://provider.moonbeamalpha.oceanprotocol.com',
-    subgraphUri: 'https://subgraph.moonbeamalpha.oceanprotocol.com',
-    explorerUri: 'https://moonbase-blockscout.testnet.moonbeam.network/',
-    startBlock: 90707
+    network: "moonbeamalpha",
+    nodeUri: "https://rpc.testnet.moonbeam.network",
+    providerUri: "https://provider.moonbeamalpha.oceanprotocol.com",
+    subgraphUri: "https://subgraph.moonbeamalpha.oceanprotocol.com",
+    explorerUri: "https://moonbase-blockscout.testnet.moonbeam.network/",
+    startBlock: 90707,
   },
   {
     ...configHelperNetworksBase,
     networkId: 2021000,
-    network: 'gaiaxtestnet',
-    nodeUri: 'https://rpc.gaiaxtestnet.oceanprotocol.com',
-    providerUri: 'https://provider.gaiaxtestnet.oceanprotocol.com',
-    subgraphUri: 'https://subgraph.gaiaxtestnet.oceanprotocol.com',
-    explorerUri: 'https://blockscout.gaiaxtestnet.oceanprotocol.com'
+    network: "gaiaxtestnet",
+    nodeUri: "https://rpc.gaiaxtestnet.oceanprotocol.com",
+    providerUri: "https://provider.gaiaxtestnet.oceanprotocol.com",
+    subgraphUri: "https://subgraph.gaiaxtestnet.oceanprotocol.com",
+    explorerUri: "https://blockscout.gaiaxtestnet.oceanprotocol.com",
   },
   {
     ...configHelperNetworksBase,
     networkId: 2021001,
-    network: 'catenaxtestnet',
-    nodeUri: 'https://rpc.catenaxtestnet.oceanprotocol.com',
-    providerUri: 'https://provider.catenaxtestnet.oceanprotocol.com',
-    subgraphUri: 'https://subgraph.catenaxtestnet.oceanprotocol.com',
-    explorerUri: 'https://blockscout.catenaxtestnet.oceanprotocol.com',
-    metadataCacheUri: 'https://aquarius.catenaxtestnet.oceanprotocol.com'
+    network: "catenaxtestnet",
+    nodeUri: "https://rpc.catenaxtestnet.oceanprotocol.com",
+    providerUri: "https://provider.catenaxtestnet.oceanprotocol.com",
+    subgraphUri: "https://subgraph.catenaxtestnet.oceanprotocol.com",
+    explorerUri: "https://blockscout.catenaxtestnet.oceanprotocol.com",
+    metadataCacheUri: "https://aquarius.catenaxtestnet.oceanprotocol.com",
   },
   {
     ...configHelperNetworksBase,
     networkId: 80001,
-    network: 'mumbai',
-    nodeUri: 'https://polygon-mumbai.infura.io/v3',
-    providerUri: 'https://provider.mumbai.oceanprotocol.com',
-    subgraphUri: 'https://subgraph.mumbai.oceanprotocol.com',
-    explorerUri: 'https://mumbai.polygonscan.com'
+    network: "mumbai",
+    nodeUri: "https://polygon-mumbai.infura.io/v3",
+    providerUri: "https://provider.mumbai.oceanprotocol.com",
+    subgraphUri: "https://subgraph.mumbai.oceanprotocol.com",
+    explorerUri: "https://mumbai.polygonscan.com",
   },
   {
     ...configHelperNetworksBase,
     networkId: 56,
-    network: 'bsc',
-    nodeUri: 'https://bsc-dataseed.binance.org',
-    providerUri: 'https://provider.bsc.oceanprotocol.com',
-    subgraphUri: 'https://subgraph.bsc.oceanprotocol.com',
-    explorerUri: 'https://bscscan.com/',
+    network: "bsc",
+    nodeUri: "https://bsc-dataseed.binance.org",
+    providerUri: "https://provider.bsc.oceanprotocol.com",
+    subgraphUri: "https://subgraph.bsc.oceanprotocol.com",
+    explorerUri: "https://bscscan.com/",
     gasFeeMultiplier: 1.05,
-    startBlock: 8114772
+    startBlock: 8114772,
   },
   {
     ...configHelperNetworksBase,
     networkId: 44787,
-    network: 'celoalfajores',
-    nodeUri: 'https://alfajores-forno.celo-testnet.org',
-    providerUri: 'https://provider.celoalfajores.oceanprotocol.com',
-    subgraphUri: 'https://subgraph.celoalfajores.oceanprotocol.com',
-    explorerUri: 'https://alfajores-blockscout.celo-testnet.org'
+    network: "celoalfajores",
+    nodeUri: "https://alfajores-forno.celo-testnet.org",
+    providerUri: "https://provider.celoalfajores.oceanprotocol.com",
+    subgraphUri: "https://subgraph.celoalfajores.oceanprotocol.com",
+    explorerUri: "https://alfajores-blockscout.celo-testnet.org",
   },
   {
     ...configHelperNetworksBase,
     networkId: 246,
-    network: 'energyweb',
-    nodeUri: 'https://rpc.energyweb.org',
-    providerUri: 'https://provider.energyweb.oceanprotocol.com',
-    subgraphUri: 'https://subgraph.energyweb.oceanprotocol.com',
-    explorerUri: 'https://explorer.energyweb.org',
-    gasFeeMultiplier: 1.05
+    network: "energyweb",
+    nodeUri: "https://rpc.energyweb.org",
+    providerUri: "https://provider.energyweb.oceanprotocol.com",
+    subgraphUri: "https://subgraph.energyweb.oceanprotocol.com",
+    explorerUri: "https://explorer.energyweb.org",
+    gasFeeMultiplier: 1.05,
   },
   {
     ...configHelperNetworksBase,
     networkId: 1285,
-    network: 'moonriver',
-    nodeUri: 'https://moonriver.api.onfinality.io/public',
-    providerUri: 'https://provider.moonriver.oceanprotocol.com',
-    subgraphUri: 'https://subgraph.moonriver.oceanprotocol.com',
-    explorerUri: 'https://blockscout.moonriver.moonbeam.network',
-    gasFeeMultiplier: 1.05
-  }
-]
+    network: "moonriver",
+    nodeUri: "https://moonriver.api.onfinality.io/public",
+    providerUri: "https://provider.moonriver.oceanprotocol.com",
+    subgraphUri: "https://subgraph.moonriver.oceanprotocol.com",
+    explorerUri: "https://blockscout.moonriver.moonbeam.network",
+    gasFeeMultiplier: 1.05,
+  },
+];
 
 export class ConfigHelper {
   /* Load contract addresses from env ADDRESS_FILE (generated by ocean-contracts) */
   public getAddressesFromEnv(network: string): Partial<ConfigHelperConfig> {
     // use the defaults first
-    let configAddresses: Partial<ConfigHelperConfig>
+    let configAddresses: Partial<ConfigHelperConfig>;
     if (DefaultContractsAddresses[network]) {
       const {
         DTFactory,
@@ -193,8 +181,8 @@ export class ConfigHelper {
         Metadata,
         Ocean,
         chainId,
-        startBlock
-      } = DefaultContractsAddresses[network]
+        startBlock,
+      } = DefaultContractsAddresses[network];
       configAddresses = {
         factoryAddress: DTFactory,
         poolFactoryAddress: BFactory,
@@ -204,8 +192,10 @@ export class ConfigHelper {
         oceanTokenAddress: Ocean,
         networkId: chainId,
         startBlock: startBlock,
-        ...(process.env.AQUARIUS_URI && { metadataCacheUri: process.env.AQUARIUS_URI })
-      }
+        ...(process.env.AQUARIUS_URI && {
+          metadataCacheUri: process.env.AQUARIUS_URI,
+        }),
+      };
     }
     // try ADDRESS_FILE env
     if (fs && process.env.ADDRESS_FILE) {
@@ -214,9 +204,9 @@ export class ConfigHelper {
           fs.readFileSync(
             process.env.ADDRESS_FILE ||
               `${homedir}/.ocean/ocean-contracts/artifacts/address.json`,
-            'utf8'
+            "utf8"
           )
-        )
+        );
         const {
           DTFactory,
           BFactory,
@@ -225,8 +215,8 @@ export class ConfigHelper {
           Metadata,
           Ocean,
           chainId,
-          startBlock
-        } = data[network]
+          startBlock,
+        } = data[network];
         configAddresses = {
           factoryAddress: DTFactory,
           poolFactoryAddress: BFactory,
@@ -236,170 +226,171 @@ export class ConfigHelper {
           oceanTokenAddress: Ocean,
           networkId: chainId,
           startBlock: startBlock,
-          ...(process.env.AQUARIUS_URI && { metadataCacheUri: process.env.AQUARIUS_URI })
-        }
+          ...(process.env.AQUARIUS_URI && {
+            metadataCacheUri: process.env.AQUARIUS_URI,
+          }),
+        };
       } catch (e) {
         // console.error(`ERROR: Could not load local contract address file: ${e.message}`)
         // return null
       }
     }
-    return configAddresses
+    return configAddresses;
   }
 
   public getConfig(network: string | number, infuraProjectId?: string): Config {
-    const filterBy = typeof network === 'string' ? 'network' : 'networkId'
-    let config = configHelperNetworks.find((c) => c[filterBy] === network)
+    const filterBy = typeof network === "string" ? "network" : "networkId";
+    let config = configHelperNetworks.find((c) => c[filterBy] === network);
 
     if (!config) {
-      Logger.error(`No config found for given network '${network}'`)
-      return null
+      Logger.error(`No config found for given network '${network}'`);
+      return null;
     }
 
-    const contractAddressesConfig = this.getAddressesFromEnv(config.network)
-    config = { ...config, ...contractAddressesConfig }
+    const contractAddressesConfig = this.getAddressesFromEnv(config.network);
+    config = { ...config, ...contractAddressesConfig };
 
     const nodeUri = infuraProjectId
       ? `${config.nodeUri}/${infuraProjectId}`
-      : config.nodeUri
+      : config.nodeUri;
 
-    return { ...config, nodeUri }
+    return { ...config, nodeUri };
   }
 }
-
 
 export class Config {
   /**
    * Ethereum node URL.
    * @type {string}
    */
-  public nodeUri?: string
+  public nodeUri?: string;
 
   /**
    * Address of Provider.
    * @type {string}
    */
-  public providerAddress?: string
+  public providerAddress?: string;
 
   /**
    * Metadata Store URL.
    * @type {string}
    */
-  public metadataCacheUri?: string
+  public metadataCacheUri?: string;
 
   /**
    * Provider URL.
    * @type {string}
    */
-  public providerUri?: string
+  public providerUri?: string;
 
   /**
    * Web3 Provider.
    * @type {any}
    */
-  public web3Provider?: any
+  public web3Provider?: any;
 
   /**
    * Ocean Token address
    * @type {string}
    */
-  public oceanTokenAddress?: string
+  public oceanTokenAddress?: string;
 
   /**
    * Factory address
    * @type {string}
    */
-  public factoryAddress?: string
+  public factoryAddress?: string;
 
   /**
    * Factory ABI
    * @type {string}
    */
-  public factoryABI?: AbiItem | AbiItem[]
+  public factoryABI?: AbiItem | AbiItem[];
 
   /**
    * datatokens ABI
    * @type {string}
    */
-  public datatokensABI?: AbiItem | AbiItem[]
+  public datatokensABI?: AbiItem | AbiItem[];
 
   /**
    * Pool Factory address
    * @type {string}
    */
-  public poolFactoryAddress?: string
+  public poolFactoryAddress?: string;
 
   /**
    * Pool Factory ABI
    * @type {string}
    */
-  public poolFactoryABI?: AbiItem | AbiItem[]
+  public poolFactoryABI?: AbiItem | AbiItem[];
 
   /**
    * Pool ABI
    * @type {string}
    */
-  public poolABI?: AbiItem | AbiItem[]
+  public poolABI?: AbiItem | AbiItem[];
 
   /**
    * FixedRateExchangeAddress
    * @type {string}
    */
-  public fixedRateExchangeAddress?: string
+  public fixedRateExchangeAddress?: string;
 
   /**
    * FixedRateExchangeAddressABI
    * @type {any}
    */
-  public fixedRateExchangeAddressABI?: AbiItem | AbiItem[]
+  public fixedRateExchangeAddressABI?: AbiItem | AbiItem[];
 
   /**
    * DispenserAddress
    * @type {string}
    */
-  public dispenserAddress?: string
+  public dispenserAddress?: string;
 
   /**
    * DispenserABI
    * @type {any}
    */
-  public dispenserABI?: AbiItem | AbiItem[]
+  public dispenserABI?: AbiItem | AbiItem[];
 
   /**
    * DDOContractAddress
    * @type {string}
    */
-  public metadataContractAddress?: string
+  public metadataContractAddress?: string;
 
   /**
    * DDOContractABI
    * @type {any}
    */
-  public metadataContractABI?: AbiItem | AbiItem[]
+  public metadataContractABI?: AbiItem | AbiItem[];
   /**
    * block number of the deployment
    * @type {number}
    */
-  public startBlock?: number
+  public startBlock?: number;
   /**
    * Log level.
    * @type {boolean | LogLevel}
    */
-  public verbose?: boolean | LogLevel
+  public verbose?: boolean | LogLevel;
 
   /**
    * Message shown when the user creates its own token.
    * @type {string}
    */
-  public authMessage?: string
+  public authMessage?: string;
 
   /**
    * Token expiration time in ms.
    * @type {number}
    */
-  public authTokenExpiration?: number
+  public authTokenExpiration?: number;
 
   // Parity config
-  public parityUri?: string
+  public parityUri?: string;
 
-  public threshold?: number
+  public threshold?: number;
 }

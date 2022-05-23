@@ -1,6 +1,6 @@
 {
   "name": "@dataxfi/datax.js",
-  "version": "1.1.34",
+  "version": "1.1.36",
   "description": "Javascript client for DataX",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -8,8 +8,7 @@
     "test": "npm run test:unit",
     "test:unit": "mocha --config=test/.mocharc.json --node-env=test --exit 'test/unit/**/*.test.ts'",
     "test:integration": "mocha --config=test/.mocharc.json --node-env=test --exit 'test/integration/**/*.test.ts'",
-    "prepublish": "tsc",
-    "preinstall": "npx npm-force-resolutions"
+    "prepublish": "tsc"
   },
   "repository": {
     "type": "git",
@@ -52,6 +51,6 @@
     "ts-node-register": "^1.0.0"
   },
   "resolutions": {
-      "lodash.template": "^4.2.5"
+    "lodash.template": "^4.2.5"
   }
 }

@@ -11,33 +11,14 @@ import Decimal from "decimal.js";
 import BigNumber from "bignumber.js";
 import DTFactoryABI from "@oceanprotocol/contracts/artifacts/DTFactory.json";
 import Base from "./Base";
-
+import {
+  ITokensReceived,
+  IPoolShare,
+  ITokenDetails,
+  IMaxExchange,
+  IToken,
+} from "./Types";
 const SLIPPAGE_TOLERANCE = 0.01;
-
-export interface TokensReceived {
-  dtAmount: string;
-  oceanAmount: string;
-}
-
-export interface PoolShare {
-  poolAddress: string;
-  shares: string;
-  did: string;
-}
-
-export interface Swap {
-  poolAddress: string;
-  tokenInAddress: string;
-  tokenOutAddress: string;
-  swapAmount: string; // tokenInAmount / tokenOutAmount
-  limitReturnAmount: string; // minAmountOut / maxAmountIn
-  maxPrice: string;
-}
-
-export interface TokenDetails {
-  name: string;
-  symbol: string;
-}
 
 export default class Ocean extends Base {
   private logger: any = null;
@@ -89,9 +70,12 @@ export default class Ocean extends Base {
   ): Promise<string> {
     try {
       return this.bPool.getBalance(tokenAddress, account);
-    } catch (e) {
-      console.error("ERROR:", e);
-      throw e;
+    } catch (error) {
+      throw {
+        Code: 1000,
+        Message: "We ran into a problem, please refresh your page.",
+        error,
+      };
     }
   }
 
@@ -111,9 +95,12 @@ export default class Ocean extends Base {
   ): Promise<boolean> {
     try {
       return this.bPool.checkIfApproved(tokenAddress, account, spender, amount);
-    } catch (e) {
-      console.error("ERROR:", e);
-      throw e;
+    } catch (error) {
+      throw {
+        Code: 1000,
+        Message: "We ran into a problem, please refresh your page.",
+        error,
+      };
     }
   }
 
@@ -131,9 +118,12 @@ export default class Ocean extends Base {
   ): Promise<string> {
     try {
       return this.bPool.allowance(tokenAddress, account, spender);
-    } catch (e) {
-      console.error("ERROR:", e);
-      throw e;
+    } catch (error) {
+      throw {
+        Code: 1000,
+        Message: "We ran into a problem, please refresh your page.",
+        error,
+      };
     }
   }
 
@@ -160,25 +150,303 @@ export default class Ocean extends Base {
       );
 
       return await datatoken.approve(tokenAddress, spender, amount, account);
-    } catch (e) {
-      console.error("ERROR:", e);
-      throw e;
+    } catch (error) {
+      throw { Code: 1000, Message: "Failed to approve token.", error };
     }
   }
 
   /**
-   * Get the DT or OCEAN reserve for a pool.
+   * Get half the DT reserve for a token, used for determining maxExchange for a token pair.
    *
    * @param address
    * @param getOcean
-   * @returns DT: the max exchange based on the DT amount or OCEAN: the entire ocean reserve in a pool.
+   * @returns Half of the dt reserve
    *
    */
 
-  public async getMaxExchange(address: string, getOcean: boolean = false) {
-    let reserve = await this.oceanPool.getDTReserve(address);
-    const maxIn = Number(reserve) / 2;
-    return String(maxIn);
+  public async getHalfOfReserve(address: string) {
+    try {
+      let reserve = await this.oceanPool.getDTReserve(address);
+      const maxIn = Number(reserve) / 2;
+      return String(maxIn);
+    } catch (error) {
+      throw {
+        Code: 1000,
+        Message: "Failed to get max exchange amount.",
+        error,
+      };
+    }
+  }
+
+  /**
+   * Utility function to quickly determine whether a token is or not OCEAN.
+   * @param tokenAddress
+   * @returns {boolean} true : token is OCEAN | false : token is not OCEAN
+   */
+  public isOCEAN(tokenAddress: string) {
+    return (
+      tokenAddress.toLowerCase() ===
+      this.config.default.oceanTokenAddress.toLowerCase()
+    );
+  }
+
+  /**
+   * Calculates the exchange for a token pair and given amount.
+   * @param from Whether or not this is the token being SOLD.
+   * @param amount The amount attempting to being bought or sold.
+   * @param token1 The token being sold
+   * @param token2 The token being bought
+   * @returns The token amount required for or received from a transaction.
+   *
+   * if(from === true) amount = sell amount
+   *
+   * if(from === false) amount = buy amount
+   */
+  public async calculateExchange(
+    from: boolean,
+    amount: BigNumber,
+    token1: IToken,
+    token2: IToken
+  ): Promise<BigNumber> {
+    try {
+      if (amount.isNaN() || amount.eq(0)) {
+        return new BigNumber(0);
+      }
+      // OCEAN to DT where amount is either from sell or buy input
+      if (this.isOCEAN(token1.info.address)) {
+        if (from) {
+          return new BigNumber(
+            await this.getDtReceived(token2.info.pool, amount.dp(18).toString())
+          );
+        } else {
+          return new BigNumber(
+            await this.getOceanNeeded(
+              token2.info.pool,
+              amount.dp(18).toString()
+            )
+          );
+        }
+      }
+
+      // DT to OCEAN where amount is either from sell or buy input
+      if (this.isOCEAN(token2.info.address)) {
+        if (from) {
+          return new BigNumber(
+            await this.getOceanReceived(
+              token1.info.pool,
+              amount.dp(18).toString()
+            )
+          );
+        } else {
+          return new BigNumber(
+            await this.getDtNeeded(token1.info.pool, amount.dp(18).toString())
+          );
+        }
+      }
+
+      // DT to DT where amount is either from sell or buy input
+      if (from) {
+        return new BigNumber(
+          await this.getDtReceivedForExactDt(
+            amount.dp(18).toString(),
+            token1.info.pool,
+            token2.info.pool
+          )
+        );
+      } else if (token1?.info && token2?.info) {
+        return new BigNumber(
+          await this.getDtNeededForExactDt(
+            amount.dp(18).toString(),
+            token1.info.pool,
+            token2.info.pool
+          )
+        );
+      }
+    } catch (error) {
+      console.error(error);
+      return new BigNumber(0);
+    }
+    return new BigNumber(0);
+  }
+
+  /**
+   * Get the max exchange amount for a token pair.
+   * @param token1 The token being sold
+   * @param token2 The token being bought
+   * @param signal An optional abort signal
+   * @returns
+   * maxPercent: the max percent of a users balance
+   * 
+   * maxBuy: the max amount of token1 that can be sold
+   * 
+   * maxSell: the max amount of token2 that can be bought
+   * 
+   * postExchange: the post exchange of the token pair (1 token1 === X of token2)
+   *
+   * There are three potential limiters to this function: the users balance of token1,
+   * the max exchange for token1, or the max exchange of token2. The absolute least value
+   * of either three of the aforementioned values will be the base of the calculations
+   * on max buy, sell, and percent.
+   */
+
+  public async getMaxExchange(
+    token1: IToken,
+    token2: IToken,
+    signal?: AbortSignal
+  ): Promise<IMaxExchange> {
+    return new Promise<IMaxExchange>(async (resolve, reject) => {
+      signal?.addEventListener("abort", (e) => {
+        reject(new Error("aborted"));
+      });
+
+      if (token1.balance.lt(0.00001)) {
+        resolve({
+          maxPercent: new BigNumber(0),
+          maxSell: new BigNumber(0),
+          maxBuy: new BigNumber(0),
+          postExchange: new BigNumber(0),
+        });
+      }
+
+      let maxBuy: BigNumber;
+      let maxSell: BigNumber;
+      let maxPercent: BigNumber;
+      try {
+        if (
+          !this.isOCEAN(token1.info.address) &&
+          !this.isOCEAN(token2.info.address)
+        ) {
+          // try {
+          // } catch (error) {}
+          maxSell = new BigNumber(
+            await this.getHalfOfReserve(token1.info.pool)
+          ).dp(0);
+          console.log("Max Sell", maxSell.toString());
+
+          let DtReceivedForMaxSell: BigNumber = new BigNumber(
+            await this.getDtReceivedForExactDt(
+              maxSell.toString(),
+              token1.info.pool,
+              token2.info.pool
+            )
+          );
+          console.log(
+            "Dt Received for max sell",
+            DtReceivedForMaxSell.toString()
+          );
+          const oceanNeededForSellResponse = await this.getOceanNeeded(
+            token1.info.pool,
+            maxSell.toString()
+          );
+          const oceanNeededForMaxSell = new BigNumber(
+            oceanNeededForSellResponse || 0
+          );
+
+          maxBuy = new BigNumber(
+            await this.getHalfOfReserve(token2.info.pool)
+          ).dp(0);
+          console.log("Max Buy", maxBuy.toString());
+          const oceanNeededForBuyResponse = await this.getOceanNeeded(
+            token2.info.pool,
+            maxBuy.toString()
+          );
+          const oceanNeededForMaxBuy = new BigNumber(
+            oceanNeededForBuyResponse || 0
+          );
+
+          console.log(
+            `Ocean needed for max sell: ${oceanNeededForMaxSell} \n Ocean Needed for max buy: ${oceanNeededForMaxBuy}`
+          );
+
+          let DtNeededForMaxBuy: BigNumber;
+          //limited by buy token
+          if (oceanNeededForMaxSell.gt(oceanNeededForMaxBuy)) {
+            // If the ocean needed for the maxSell is greater than the ocean needed for the max buy, then the maxSell can be left as is
+            // and the maxBuy is set to the the DT received for the max sell
+            DtNeededForMaxBuy = new BigNumber(
+              await this.getDtNeededForExactDt(
+                maxBuy.toString(),
+                token1.info.pool,
+                token2.info.pool
+              )
+            );
+            maxSell = DtNeededForMaxBuy;
+          } else {
+            // If the ocean needed for the maxSell is less than the ocean needed for the max buy, then the maxSell needs to be set
+            // to the Dt needed for the maxBuy, and the max buy can stay as is
+            // limited by sell token
+            maxBuy = DtReceivedForMaxSell;
+          }
+        } else if (this.isOCEAN(token2.info.address)) {
+          // DT to OCEAN
+          // Max sell is the max amount of DT that can be traded
+          maxSell = new BigNumber(
+            await this.getHalfOfReserve(token1.info.pool)
+          );
+          maxSell = new BigNumber(maxSell || 0);
+          // Max buy is the amount of OCEAN bought from max sell
+          maxBuy = new BigNumber(
+            await this.calculateExchange(true, maxSell, token1, token2)
+          );
+        } else {
+          // OCEAN to DT
+          // Max buy is the max amount of DT that can be traded
+          maxBuy = new BigNumber(await this.getHalfOfReserve(token2.info.pool));
+          maxBuy = new BigNumber(maxBuy || 0);
+          if (maxBuy.minus(maxBuy.dp(0)).gte(0.05)) {
+            maxBuy = maxBuy.dp(0);
+          } else {
+            maxBuy = maxBuy.minus(0.05);
+          }
+          //Max sell is the amount of OCEAN sold for maxBuy
+          maxSell = await this.calculateExchange(false, maxBuy, token1, token2);
+          // console.log("Max Sell:", maxSell.toString());
+        }
+
+        //Max percent is the percent of the max sell out of token 1 balance
+        //if balance is 0 max percent should be 0
+        if (token1.balance?.eq(0)) {
+          maxPercent = new BigNumber(0);
+        } else {
+          maxPercent = maxSell.div(token1.balance).multipliedBy(100);
+        }
+
+        //if maxPercent is greater than 100, max buy and sell is determined by the balance of token1
+        if (maxPercent.gt(100)) {
+          maxPercent = new BigNumber(100);
+          if (token1.balance?.dp(5).gt(0.00001)) {
+            maxSell = token1.balance.dp(5);
+            maxBuy = await this.calculateExchange(
+              true,
+              maxSell,
+              token1,
+              token2
+            );
+          }
+        }
+
+        const postExchange = maxBuy.div(maxSell);
+
+        const maxExchange: IMaxExchange = {
+          maxPercent,
+          maxBuy: maxBuy.dp(5),
+          maxSell: maxSell.dp(5),
+          postExchange,
+        };
+        console.log(
+          "Max Buy:",
+          maxBuy.toString(),
+          "Max Sell:",
+          maxSell.toString(),
+          "Max Percent:",
+          maxPercent.toString()
+        );
+
+        resolve(maxExchange);
+      } catch (error) {
+        console.error(error);
+      }
+    });
   }
 
   /**
@@ -187,7 +455,15 @@ export default class Ocean extends Base {
    * @returns
    */
   public async getDtPerOcean(poolAddress: string): Promise<string> {
-    return await this.oceanPool.getDTNeeded(poolAddress, "1");
+    try {
+      return await this.oceanPool.getDTNeeded(poolAddress, "1");
+    } catch (error) {
+      throw {
+        Code: 1000,
+        Message: "We ran into a problem, please refresh your page.",
+        error,
+      };
+    }
   }
 
   /**
@@ -196,7 +472,15 @@ export default class Ocean extends Base {
    * @returns
    */
   public async getOceanPerDt(poolAddress: string): Promise<string> {
-    return await this.oceanPool.getOceanNeeded(poolAddress, "1");
+    try {
+      return await this.oceanPool.getOceanNeeded(poolAddress, "1");
+    } catch (error) {
+      throw {
+        Code: 1000,
+        Message: "We ran into a problem, please refresh your page.",
+        error,
+      };
+    }
   }
 
   /**
@@ -209,7 +493,15 @@ export default class Ocean extends Base {
     poolAddress: string,
     dtAmount: string
   ): Promise<string> {
-    return await this.oceanPool.getOceanReceived(poolAddress, dtAmount);
+    try {
+      return await this.oceanPool.getOceanReceived(poolAddress, dtAmount);
+    } catch (error) {
+      throw {
+        Code: 1000,
+        Message: "We ran into a problem, please refresh your page.",
+        error,
+      };
+    }
   }
 
   /**
@@ -222,7 +514,15 @@ export default class Ocean extends Base {
     poolAddress: string,
     oceanAmount: string
   ): Promise<string> {
-    return await this.oceanPool.getDTReceived(poolAddress, oceanAmount);
+    try {
+      return await this.oceanPool.getDTReceived(poolAddress, oceanAmount);
+    } catch (error) {
+      throw {
+        Code: 1000,
+        Message: "We ran into a problem, please refresh your page.",
+        error,
+      };
+    }
   }
 
   /**
@@ -235,7 +535,15 @@ export default class Ocean extends Base {
     poolAddress: string,
     oceanAmountWanted: string
   ): Promise<string> {
-    return await this.oceanPool.getDTNeeded(poolAddress, oceanAmountWanted);
+    try {
+      return await this.oceanPool.getDTNeeded(poolAddress, oceanAmountWanted);
+    } catch (error) {
+      throw {
+        Code: 1000,
+        Message: "We ran into a problem, please refresh your page.",
+        error,
+      };
+    }
   }
 
   /**
@@ -248,7 +556,15 @@ export default class Ocean extends Base {
     poolAddress: string,
     dtAmountWanted: string
   ): Promise<string> {
-    return await this.oceanPool.getOceanNeeded(poolAddress, dtAmountWanted);
+    try {
+      return await this.oceanPool.getOceanNeeded(poolAddress, dtAmountWanted);
+    } catch (error) {
+      throw {
+        Code: 1000,
+        Message: "We ran into a problem, please refresh your page.",
+        error,
+      };
+    }
   }
 
   /** get pool details
@@ -257,7 +573,15 @@ export default class Ocean extends Base {
    */
 
   public async getPoolDetails(poolAddress: string): Promise<any> {
-    return await this.oceanPool.getPoolDetails(poolAddress);
+    try {
+      return await this.oceanPool.getPoolDetails(poolAddress);
+    } catch (error) {
+      throw {
+        Code: 1000,
+        Message: "We ran into a problem, please refresh your page.",
+        error,
+      };
+    }
   }
 
   /**
@@ -265,7 +589,7 @@ export default class Ocean extends Base {
    * @param tokenAddress
    * @returns
    */
-  public async getTokenDetails(tokenAddress: string): Promise<TokenDetails> {
+  public async getTokenDetails(tokenAddress: string): Promise<ITokenDetails> {
     try {
       const datatoken = new DataTokens(
         this.config.default.factoryAddress,
@@ -278,9 +602,12 @@ export default class Ocean extends Base {
       const name = await datatoken.getName(tokenAddress);
       const symbol = await datatoken.getSymbol(tokenAddress);
       return { name: name, symbol: symbol };
-    } catch (e) {
-      console.error("ERROR:", e);
-      throw e;
+    } catch (error) {
+      throw {
+        Code: 1000,
+        Message: "We ran into a problem, please refresh your page.",
+        error,
+      };
     }
   }
 
@@ -295,7 +622,19 @@ export default class Ocean extends Base {
     poolAddress: string,
     amount: string
   ): Promise<TransactionReceipt> {
-    return await this.oceanPool.addOceanLiquidity(account, poolAddress, amount);
+    try {
+      return await this.oceanPool.addOceanLiquidity(
+        account,
+        poolAddress,
+        amount
+      );
+    } catch (error) {
+      throw {
+        Code: 1000,
+        Message: "Transaction could not be processed.",
+        error,
+      };
+    }
   }
 
   /**
@@ -312,12 +651,20 @@ export default class Ocean extends Base {
     amount: string,
     maximumPoolShares: string
   ): Promise<TransactionReceipt> {
-    return await this.oceanPool.removeOceanLiquidity(
-      account,
-      poolAddress,
-      amount,
-      maximumPoolShares
-    );
+    try {
+      return await this.oceanPool.removeOceanLiquidity(
+        account,
+        poolAddress,
+        amount,
+        maximumPoolShares
+      );
+    } catch (error) {
+      throw {
+        Code: 1000,
+        Message: "Transaction could not be processed.",
+        error,
+      };
+    }
   }
 
   /**
@@ -330,7 +677,15 @@ export default class Ocean extends Base {
     poolAddress: string,
     account: string
   ): Promise<string> {
-    return await this.getBalance(poolAddress, account);
+    try {
+      return await this.getBalance(poolAddress, account);
+    } catch (error) {
+      throw {
+        Code: 1000,
+        Message: "We ran into a problem, please refresh your page.",
+        error,
+      };
+    }
   }
 
   /**
@@ -346,9 +701,12 @@ export default class Ocean extends Base {
       );
       let totalSupply = await poolInst.methods.totalSupply().call();
       return this.web3.utils.fromWei(totalSupply);
-    } catch (e) {
-      console.error("ERROR:", e);
-      throw e;
+    } catch (error) {
+      throw {
+        Code: 1000,
+        Message: "We ran into a problem, please refresh your page.",
+        error,
+      };
     }
   }
 
@@ -361,11 +719,19 @@ export default class Ocean extends Base {
   public async getTokensRemovedforPoolShares(
     poolAddress: string,
     poolShares: string
-  ): Promise<TokensReceived> {
-    return await this.oceanPool.getTokensRemovedforPoolShares(
-      poolAddress,
-      poolShares
-    );
+  ): Promise<ITokensReceived> {
+    try {
+      return await this.oceanPool.getTokensRemovedforPoolShares(
+        poolAddress,
+        poolShares
+      );
+    } catch (error) {
+      throw {
+        Code: 1000,
+        Message: "We ran into a problem, please refresh your page.",
+        error,
+      };
+    }
   }
 
   /**
@@ -377,12 +743,20 @@ export default class Ocean extends Base {
     account: string,
     fromBlock: number,
     toBlock: number
-  ): Promise<PoolShare[]> {
-    return await this.oceanPool.getPoolSharesByAddress(
-      account,
-      fromBlock,
-      toBlock
-    );
+  ): Promise<IPoolShare[]> {
+    try {
+      return await this.oceanPool.getPoolSharesByAddress(
+        account,
+        fromBlock,
+        toBlock
+      );
+    } catch (error) {
+      throw {
+        Code: 1000,
+        Message: "We ran into a problem, please refresh your page.",
+        error,
+      };
+    }
   }
 
   /**
@@ -391,7 +765,15 @@ export default class Ocean extends Base {
    * @returns
    */
   public async getSwapFee(poolAddress: string): Promise<string> {
-    return await this.oceanPool.getSwapFee(poolAddress);
+    try {
+      return await this.oceanPool.getSwapFee(poolAddress);
+    } catch (error) {
+      throw {
+        Code: 1000,
+        Message: "We ran into a problem, please refresh your page.",
+        error,
+      };
+    }
   }
 
   /**
@@ -407,9 +789,12 @@ export default class Ocean extends Base {
     try {
       let swapFee = await this.oceanPool.getSwapFee(poolAddress);
       return new Decimal(tokenInAmount).mul(swapFee).toString();
-    } catch (e) {
-      console.error("ERROR:", e);
-      throw e;
+    } catch (error) {
+      throw {
+        Code: 1000,
+        Message: "We ran into a problem, please refresh your page.",
+        error,
+      };
     }
   }
 
@@ -442,9 +827,12 @@ export default class Ocean extends Base {
         dtAmountWanted,
         maxOceanAmountSpentWithSlippage
       );
-    } catch (e) {
-      console.error("ERROR:", e);
-      throw e;
+    } catch (error) {
+      throw {
+        Code: 1000,
+        Message: "Transaction could not be processed.",
+        error,
+      };
     }
   }
 
@@ -478,9 +866,12 @@ export default class Ocean extends Base {
         mindtAmountWantedWithSlippage,
         OceanAmount
       );
-    } catch (e) {
-      console.error("ERROR:", e);
-      throw e;
+    } catch (error) {
+      throw {
+        Code: 1000,
+        Message: "Transaction could not be processed.",
+        error,
+      };
     }
   }
 
@@ -517,9 +908,12 @@ export default class Ocean extends Base {
         dtAmount,
         minOceanAmountWantedWithSlippage
       );
-    } catch (e) {
-      console.error("ERROR:", e);
-      throw e;
+    } catch (error) {
+      throw {
+        Code: 1000,
+        Message: "Transaction could not be processed.",
+        error,
+      };
     }
   }
 
@@ -553,9 +947,12 @@ export default class Ocean extends Base {
         maxDTAmountWithSlippage,
         oceanAmountWanted
       );
-    } catch (e) {
-      console.error("ERROR:", e);
-      throw e;
+    } catch (error) {
+      throw {
+        Code: 1000,
+        Message: "Transaction could not be processed.",
+        error,
+      };
     }
   }
 
@@ -587,9 +984,12 @@ export default class Ocean extends Base {
       console.log("input Dt needed - ", inputDtNeeded);
 
       return inputDtNeeded;
-    } catch (e) {
-      console.error("ERROR:", e);
-      throw e;
+    } catch (error) {
+      throw {
+        Code: 1000,
+        Message: "We ran into a problem, please refresh your page.",
+        error,
+      };
     }
   }
 
@@ -734,9 +1134,12 @@ export default class Ocean extends Base {
         )
         .send({ from: account, gas: 1000000 });
       return totalAmountOut;
-    } catch (e) {
-      console.error("ERROR:", e);
-      throw e;
+    } catch (error) {
+      throw {
+        Code: 1000,
+        Message: "Transaction could not be processed.",
+        error,
+      };
     }
   }
 
@@ -768,9 +1171,12 @@ export default class Ocean extends Base {
       console.log("Output Dt Received - ", outputDtReceived);
 
       return outputDtReceived;
-    } catch (e) {
-      console.error("ERROR:", e);
-      throw e;
+    } catch (error) {
+      throw {
+        Code: 1000,
+        Message: "We ran into a problem, please refresh your page.",
+        error,
+      };
     }
   }
 
@@ -922,9 +1328,12 @@ export default class Ocean extends Base {
         )
         .send({ from: account, gas: estGas ? estGas : 1000000 });
       return totalAmountOut;
-    } catch (e) {
-      console.error("ERROR:", e);
-      throw e;
+    } catch (error) {
+      throw {
+        Code: 1000,
+        Message: "Transaction could not be processed.",
+        error,
+      };
     }
   }
 
@@ -937,7 +1346,15 @@ export default class Ocean extends Base {
     poolAddress: string,
     tokenAddress: string
   ): Promise<string> {
-    return this.oceanPool.getMaxRemoveLiquidity(poolAddress, tokenAddress);
+    try {
+      return this.oceanPool.getMaxRemoveLiquidity(poolAddress, tokenAddress);
+    } catch (error) {
+      throw {
+        Code: 1000,
+        Message: "We ran into a problem, please refresh your page.",
+        error,
+      };
+    }
   }
 
   /**
@@ -949,7 +1366,15 @@ export default class Ocean extends Base {
     poolAddress: string,
     tokenAddress: string
   ): Promise<string> {
-    return this.oceanPool.getMaxAddLiquidity(poolAddress, tokenAddress);
+    try {
+      return this.oceanPool.getMaxAddLiquidity(poolAddress, tokenAddress);
+    } catch (error) {
+      throw {
+        Code: 1000,
+        Message: "We ran into a problem, please refresh your page.",
+        error,
+      };
+    }
   }
 
   /**
@@ -964,11 +1389,19 @@ export default class Ocean extends Base {
     tokenAddress: string,
     tokenAmount: string
   ): Promise<string> {
-    return this.oceanPool.calcPoolInGivenSingleOut(
-      poolAddress,
-      tokenAddress,
-      tokenAmount
-    );
+    try {
+      return this.oceanPool.calcPoolInGivenSingleOut(
+        poolAddress,
+        tokenAddress,
+        tokenAmount
+      );
+    } catch (error) {
+      throw {
+        Code: 1000,
+        Message: "We ran into a problem, please refresh your page.",
+        error,
+      };
+    }
   }
 
   /**
@@ -981,6 +1414,17 @@ export default class Ocean extends Base {
     poolAddress: string,
     poolShares: string
   ): Promise<string> {
-    return this.oceanPool.getOceanRemovedforPoolShares(poolAddress, poolShares);
+    try {
+      return this.oceanPool.getOceanRemovedforPoolShares(
+        poolAddress,
+        poolShares
+      );
+    } catch (error) {
+      throw {
+        Code: 1000,
+        Message: "We ran into a problem, please refresh your page.",
+        error,
+      };
+    }
   }
 }

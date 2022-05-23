@@ -7,17 +7,13 @@ import jsonpoolABI from "@oceanprotocol/contracts/artifacts/BPool.json";
 import defaultDatatokensABI from "@oceanprotocol/contracts/artifacts/DataTokenTemplate.json";
 import { PoolFactory } from "./PoolFactory";
 import Decimal from "decimal.js";
-
+import { ITokensToAdd } from "../Types";
 const MaxUint256 =
   "115792089237316195423570985008687907853269984665640564039457584007913129639934";
+
 /**
  * Provides an interface to Balancer BPool & BFactory
  */
-export interface TokensToAdd {
-  address: string;
-  amount: string;
-  weight: string;
-}
 
 export class Pool extends PoolFactory {
   public poolABI: AbiItem | AbiItem[];
@@ -187,7 +183,6 @@ export class Pool extends PoolFactory {
     return false;
   }
 
-
   /**
    * Approve spender to spent amount tokens
    * @param {String} account
@@ -298,7 +293,7 @@ export class Pool extends PoolFactory {
   async addToPool(
     account: string,
     poolAddress: string,
-    tokens: TokensToAdd[]
+    tokens: ITokensToAdd[]
   ): Promise<void> {
     const pool = new this.web3.eth.Contract(this.poolABI, poolAddress, {
       from: account,

@@ -1,5 +1,5 @@
 import Web3 from 'web3'
-import { Contract } from 'web3-eth-contract'
+import { Contract } from 'web3-eth/node_modules/web3-eth-contract/types/index'
 import { AbiItem } from 'web3-utils/types'
 
 const communityCollector = '0xeE9300b7961e0a01d9f0adb863C7A227A07AaD75'
