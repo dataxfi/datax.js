@@ -122,6 +122,7 @@ export default class Trader extends Base {
         @param refFees is the referral fees paid to external dapps
         @param refAddress is the address where referral fees are paid to
         @param deadline is the max time in sec during which order must be filled
+        @param isFre is the datatoken fixed rate exhange or 
         @returns 
      */
 
@@ -145,7 +146,7 @@ export default class Trader extends Base {
         [path,dtAddress] = this.splitPath(path);
 
         let meta: any = [source, dtAddress, to, refAddress, this.adapterRouterAddress];
-        let uints: any = [amountOut, refFees, deadline];
+        let uints: any = [amountOut, refFees, deadline, amountInMax];
         
         return await this.tradeRouter.swapETHforExactDatatokens({
             meta,
@@ -175,19 +176,28 @@ export default class Trader extends Base {
         path: string[],
         to: string,
         deadline: string,
+        isFre: string,
+        exhnageId: string,
+        source: string,
         refFees?: string,
         refAddress?: string,
     ): Promise<TransactionReceipt>{
         refFees = (typeof refFees === 'undefined') ? this.refFees : refFees;
         refAddress = (typeof refAddress === 'undefined') ? this.refAddress : refAddress;
-        return await this.tradeRouter.swapExactETHforDataTokens(
-            amountOutMin, 
-            path, 
-            to, 
-            refFees, 
-            refAddress, 
-            deadline
-        ).send({from: account, value: amountIn})
+
+        let dtAddress:string;
+        [path,dtAddress] = this.splitPath(path);
+
+        let meta: any = [source, dtAddress, to, refAddress, this.adapterRouterAddress];
+        let uints: any = [amountOutMin, refFees, deadline, amountIn];
+        
+        return await this.tradeRouter.swapExactETHforDataTokens({
+            meta,
+            uints,
+            path,
+            isFre,
+            exhnageId
+        }).send({from: account, value: amountIn})
     }
     /**
         @dev Swaps given max amount of erc20 tokens to datatokens
@@ -207,6 +217,9 @@ export default class Trader extends Base {
         path: string[],
         to: string,
         deadline: string,
+        isFre: string,
+        exhnageId: string,
+        source: string,
         refFees?: string,
         refAddress?: string,
     ): Promise<TransactionReceipt>{
@@ -226,15 +239,20 @@ export default class Trader extends Base {
                 this.web3.utils.toWei(amountIn)
               );
         }
-        return await this.tradeRouter.swapExactDatatokensforETH(
-            amountIn, 
-            amountOutMin, 
-            path, 
-            to, 
-            refFees, 
-            refAddress,
-            deadline
-        ).send({from: account})
+
+        let dtAddress:string;
+        [path,dtAddress] = this.splitPath(path);
+
+        let meta: any = [source, dtAddress, to, refAddress, this.adapterRouterAddress];
+        let uints: any = [amountOutMin, refFees, deadline, amountIn];
+
+        return await this.tradeRouter.swapExactDatatokensforETH({
+            meta,
+            uints,
+            path,
+            isFre,
+            exhnageId
+        }).send({from: account})
     }
     /**
         @dev Swaps given max amount of erc20 tokens to datatokens
@@ -255,6 +273,9 @@ export default class Trader extends Base {
         path: string[],
         to: string,
         deadline: string,
+        isFre: string,
+        exhnageId: string,
+        source: string,
         refFees?: string,
         refAddress?: string,
     ): Promise<TransactionReceipt>{
@@ -274,15 +295,20 @@ export default class Trader extends Base {
                 this.web3.utils.toWei(amountInMax)
               );
         }
-        return await this.tradeRouter.swapTokensforExactDatatokens(
-            amountOut, 
-            amountInMax, 
-            path, 
-            to, 
-            refFees, 
-            refAddress,
-            deadline
-        ).send({from: account})
+
+        let dtAddress:string;
+        [path,dtAddress] = this.splitPath(path);
+
+        let meta: any = [source, dtAddress, to, refAddress, this.adapterRouterAddress];
+        let uints: any = [amountOut, refFees, deadline, amountInMax];
+
+        return await this.tradeRouter.swapTokensforExactDatatokens({
+            meta,
+            uints,
+            path,
+            isFre,
+            exhnageId
+        }).send({from: account})
     }
      /** 
         @dev Swaps exact amount of erc20 tokens to datatokens
@@ -302,6 +328,9 @@ export default class Trader extends Base {
         path: string[],
         to: string,
         deadline: string,
+        isFre: string,
+        exhnageId: string,
+        source: string,
         refFees?: string,
         refAddress?: string,
     ): Promise<TransactionReceipt>{
@@ -321,15 +350,20 @@ export default class Trader extends Base {
                 this.web3.utils.toWei(amountIn)
               );
         }
-        return await this.tradeRouter.swapExactTokensforDataTokens(
-            amountIn, 
-            amountOutMin, 
-            path, 
-            to, 
-            refFees, 
-            refAddress,
-            deadline
-        ).send({from: account})
+
+        let dtAddress:string;
+        [path,dtAddress] = this.splitPath(path);
+
+        let meta: any = [source, dtAddress, to, refAddress, this.adapterRouterAddress];
+        let uints: any = [amountOutMin, refFees, deadline, amountIn];
+
+        return await this.tradeRouter.swapExactTokensforDataTokens({
+            meta,
+            uints,
+            path,
+            isFre,
+            exhnageId
+        }).send({from: account})
     }
     /**
         @dev Swaps exact amount of datatokens to erc20 tokens
@@ -349,6 +383,9 @@ export default class Trader extends Base {
         path: string[],
         to: string,
         deadline: string,
+        isFre: string,
+        exhnageId: string,
+        source: string,
         refFees?: string,
         refAddress?: string,
     ): Promise<TransactionReceipt>{
@@ -368,15 +405,20 @@ export default class Trader extends Base {
                 this.web3.utils.toWei(amountIn)
               );
         }
-        return await this.tradeRouter.swapExactDatatokensforDatatokens(
-            amountIn, 
-            amountOutMin, 
-            path, 
-            to, 
-            refFees, 
-            refAddress,
-            deadline
-        ).send({from: account})
+
+        let dtAddress:string;
+        [path,dtAddress] = this.splitPath(path);
+
+        let meta: any = [source, dtAddress, to, refAddress, this.adapterRouterAddress];
+        let uints: any = [amountOutMin, refFees, deadline, amountIn];
+
+        return await this.tradeRouter.swapExactDatatokensforDatatokens({
+            meta,
+            uints,
+            path,
+            isFre,
+            exhnageId
+        }).send({from: account})
     }
     /**
         @dev Swaps given max amount of datatokens to exact datatokens
@@ -386,7 +428,7 @@ export default class Trader extends Base {
         @param to is the destination address for receiving destination token
         @param refFees is the referral fees paid to external dapps
         @param refAddress is the address where referral fees are paid to
-        @param deadline is the max time in sec during which order must be filled
+        @param deadline is the max time in sec during wchich order must be filled
         @returns
     */
     public async swapDatatokensforExactDatatokens(
@@ -396,6 +438,9 @@ export default class Trader extends Base {
         path: string[],
         to: string,
         deadline: string,
+        isFre: string,
+        exhnageId: string,
+        source: string,
         refFees?: string,
         refAddress?: string,
     ): Promise<TransactionReceipt>{
@@ -415,15 +460,18 @@ export default class Trader extends Base {
                 this.web3.utils.toWei(amountInMax)
               );
         }
-        return await this.tradeRouter.swapDatatokensforExactDatatokens(
-            amountOut, 
-            amountInMax, 
-            path, 
-            to, 
-            refFees, 
-            refAddress,
-            deadline
-        ).send({from: account})
+        let dtAddress:string;
+        [path,dtAddress] = this.splitPath(path);
+
+        let meta: any = [source, dtAddress, to, refAddress, this.adapterRouterAddress];
+        let uints: any = [amountOut, refFees, deadline, amountInMax];
+        return await this.tradeRouter.swapDatatokensforExactDatatokens({
+            meta,
+            uints,
+            path,
+            isFre,
+            exhnageId
+        }).send({from: account})
     }
     
 
