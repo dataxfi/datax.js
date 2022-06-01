@@ -276,11 +276,11 @@ export default class Ocean extends Base {
    * @param signal An optional abort signal
    * @returns
    * maxPercent: the max percent of a users balance
-   * 
+   *
    * maxBuy: the max amount of token1 that can be sold
-   * 
+   *
    * maxSell: the max amount of token2 that can be bought
-   * 
+   *
    * postExchange: the post exchange of the token pair (1 token1 === X of token2)
    *
    * There are three potential limiters to this function: the users balance of token1,
@@ -615,18 +615,20 @@ export default class Ocean extends Base {
    * stake OCEAN tokens in a pool
    * @param account
    * @param poolAddress
-   * @param amount
+   * @param tokenAmountIn
    */
   public async stakeOcean(
     account: string,
     poolAddress: string,
-    amount: string
+    tokenAmountIn: string, 
+    minAmountOut: string
   ): Promise<TransactionReceipt> {
     try {
       return await this.oceanPool.addOceanLiquidity(
         account,
         poolAddress,
-        amount
+        tokenAmountIn, 
+        minAmountOut
       );
     } catch (error) {
       throw {
@@ -638,21 +640,21 @@ export default class Ocean extends Base {
   }
 
   /**
-   * unstake OCEAN tokens from pool
+   * Unstake OCEAN tokens from a pool specifying maximum amount of shares to be spent.
    * @param account
    * @param poolAddress
    * @param amount
    * @param maximumPoolShares
    * @returns
    */
-  public async unstakeOcean(
+  public async ustakeOcean(
     account: string,
     poolAddress: string,
     amount: string,
     maximumPoolShares: string
   ): Promise<TransactionReceipt> {
     try {
-      return await this.oceanPool.removeOceanLiquidity(
+      return await this.oceanPool.removeOceanLiquidityWithMax(
         account,
         poolAddress,
         amount,
@@ -668,7 +670,7 @@ export default class Ocean extends Base {
   }
 
   /**
-   * returns pool shares of a given pool for a given account
+   * Returns pool shares of a given pool for a given account.
    * @param poolAddress
    * @param account
    * @returns
@@ -689,7 +691,7 @@ export default class Ocean extends Base {
   }
 
   /**
-   * returns total shares of a given pool
+   * Returns total shares of a given pool.
    * @param poolAddress
    * @returns
    */
@@ -735,7 +737,7 @@ export default class Ocean extends Base {
   }
 
   /**
-   * Returns all staked pools for a given account
+   * Returns all staked pools for a given account.
    * @param account
    * @returns
    */
@@ -760,7 +762,7 @@ export default class Ocean extends Base {
   }
 
   /**
-   * returns swap fee for a given pool
+   * Returns swap fee for a given pool.
    * @param poolAddress
    * @returns
    */
@@ -1423,6 +1425,29 @@ export default class Ocean extends Base {
       throw {
         Code: 1000,
         Message: "We ran into a problem, please refresh your page.",
+        error,
+      };
+    }
+  }
+
+  /**
+   * Returns pool shares received for adding tokens to a pool
+   */
+  public async getSharesReceivedForTokenIn(
+    poolAddress: string,
+    tokenInAddress: string,
+    tokenInAmount: string
+  ): Promise<string> {
+    try {
+      return this.oceanPool.calcPoolOutGivenSingleIn(
+        poolAddress,
+        tokenInAddress,
+        tokenInAmount
+      );
+    } catch (error) {
+      throw {
+        code: 1000,
+        message: "We ran into a problem, please refresh your page.",
         error,
       };
     }

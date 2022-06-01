@@ -50,12 +50,14 @@ export default class Config {
     "4": {
       routerAddress: "0x0B9376Ae7203657fEab7108cfe83e328e7a99ABf",
       datatokenList: "QmUcsbmbYT6sFTAzsoH1jtgzwi9B3RhBsZzFHjbs6igoQg",
-      tokenList: "https://raw.githubusercontent.com/Uniswap/default-token-list/main/src/tokens/rinkeby.json",
+      tokenList:
+        "https://raw.githubusercontent.com/Uniswap/default-token-list/main/src/tokens/rinkeby.json",
     },
     "137": {
       routerAddress: "0xf2E1cf99b69C7c1152EF273217Adb62F5dAe3886",
       datatokenList: "",
-      tokenList: "https://unpkg.com/quickswap-default-token-list@1.2.26/build/quickswap-default.tokenlist.json",
+      tokenList:
+        "https://unpkg.com/quickswap-default-token-list@1.2.26/build/quickswap-default.tokenlist.json",
     },
     "56": {
       routerAddress: "",
@@ -65,12 +67,14 @@ export default class Config {
     "1285": {
       routerAddress: "",
       datatokenList: "",
-      tokenList: "https://raw.githubusercontent.com/solarbeamio/solarbeam-tokenlist/main/solarbeam.tokenlist.json",
+      tokenList:
+        "https://raw.githubusercontent.com/solarbeamio/solarbeam-tokenlist/main/solarbeam.tokenlist.json",
     },
     "246": {
       routerAddress: "0x44b89BA2796E43aF07aBeF6D3324C8273e64F0dE",
       datatokenList: "",
-      tokenList: "https://raw.githubusercontent.com/carbonswap/assets/master/carbonswap/Carbonswap_List.json",
+      tokenList:
+        "https://raw.githubusercontent.com/carbonswap/assets/master/carbonswap/Carbonswap_List.json",
     },
   };
 

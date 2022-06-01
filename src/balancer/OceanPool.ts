@@ -248,7 +248,7 @@ export class OceanPool extends Pool {
   }
 
   /**
-   * Returns no of shares receved for adding a token to the pool
+   * Returns no. of shares received for adding a token to the pool
    * @param poolAddress
    * @param tokenInAddress
    * @param tokenInAmount
@@ -271,7 +271,7 @@ export class OceanPool extends Pool {
   }
 
   /**
-   * Returns no of tokens required to get a specific no of poolShares
+   * Returns no of tokens required to get a specific no. of poolShares
    * @param poolAddress
    * @param tokenInAddress
    * @param poolShares
@@ -755,13 +755,14 @@ export class OceanPool extends Pool {
    * Add Ocean Token amount to pool liquidity
    * @param {String} account
    * @param {String} poolAddress
-   * @param {String} amount Ocean Token amount in OCEAN
+   * @param {String} tokenAmountIn Ocean Token amount in OCEAN
    * @return {TransactionReceipt}
    */
   public async addOceanLiquidity(
     account: string,
     poolAddress: string,
-    amount: string
+    tokenAmountIn: string,
+    minAmountOut: string
   ): Promise<TransactionReceipt> {
     if (this.oceanAddress == null) {
       this.logger.error("ERROR: oceanAddress is not defined");
@@ -770,13 +771,13 @@ export class OceanPool extends Pool {
 
     //Ocean balance check
     const oceanBalance = await super.getBalance(this.oceanAddress, account);
-    if (new Decimal(oceanBalance).lessThan(amount)) {
+    if (new Decimal(oceanBalance).lessThan(tokenAmountIn)) {
       this.logger.error("ERROR: Not enough Ocean Balance");
       throw new Error("ERROR: Not enough Ocean Balance");
     }
 
     const maxAmount = await this.getOceanMaxAddLiquidity(poolAddress);
-    if (new Decimal(amount).greaterThan(maxAmount)) {
+    if (new Decimal(tokenAmountIn).greaterThan(maxAmount)) {
       this.logger.error("ERROR: Too much reserve to add");
       throw new Error("ERROR: Too much reserve to add");
     }
@@ -786,7 +787,7 @@ export class OceanPool extends Pool {
       this.oceanAddress,
       account,
       poolAddress,
-      amount
+      tokenAmountIn
     );
 
     //only approve again if not approved already
@@ -795,7 +796,7 @@ export class OceanPool extends Pool {
         account,
         this.oceanAddress,
         poolAddress,
-        this.web3.utils.toWei(amount)
+        this.web3.utils.toWei(tokenAmountIn)
       );
       if (!txid) {
         this.logger.error("ERROR: OCEAN approve failed");
@@ -807,9 +808,10 @@ export class OceanPool extends Pool {
       account,
       poolAddress,
       this.oceanAddress,
-      amount,
-      "0"
+      tokenAmountIn,
+      minAmountOut
     );
+    
     return result;
   }
 
@@ -863,7 +865,7 @@ export class OceanPool extends Pool {
    * @param {String} maximumPoolShares maximum pool shares allowed to be spent
    * @return {TransactionReceipt}
    */
-  public async removeOceanLiquidity(
+  public async removeOceanLiquidityWithMax(
     account: string,
     poolAddress: string,
     amount: string,
