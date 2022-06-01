@@ -8,7 +8,7 @@
     "test": "npm run test:unit",
     "test:unit": "mocha --config=test/.mocharc.json --node-env=test --exit 'test/unit/**/*.test.ts'",
     "test:integration": "mocha --config=test/.mocharc.json --node-env=test --exit 'test/integration/**/*.test.ts'",
-    "prepublish": "tsc"
+    "prepublish": "yarn tsc"
   },
   "repository": {
     "type": "git",
