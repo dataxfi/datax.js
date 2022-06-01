@@ -647,7 +647,7 @@ export default class Ocean extends Base {
    * @param maximumPoolShares
    * @returns
    */
-  public async ustakeOcean(
+  public async unstakeOcean(
     account: string,
     poolAddress: string,
     amount: string,
