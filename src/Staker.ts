@@ -17,6 +17,11 @@ export default class Staker extends Base {
   private stakeRouterAddress: string = this.config.default.stakeRouterAddress;
   private stakeRouter: any;
   private GASLIMIT_DEFAULT = 1000000;
+  private stakeFailureMessage =
+    "ERROR: Failed to pay tokens in order to \
+  join the pool";
+  private unstakeFailureMessage =
+    "ERROR: Failed to pay pool shares into the pool";
 
   constructor(web3: Web3, networkId: string, ocean?: Ocean) {
     super(web3, networkId);
@@ -84,6 +89,32 @@ export default class Staker extends Base {
       throw new Error("Transaction amount is greater than max.");
   }
 
+  private async constructTxFunction(
+    stakeInfo: IStakeInfo,
+    stakeFunction: Function,
+    errorMessage: string
+  ) {
+    let estGas;
+    try {
+      estGas = await stakeFunction(stakeInfo).estimateGas(
+        { from: stakeInfo.address[1] },
+        (err, estGas) => (err ? this.GASLIMIT_DEFAULT : estGas)
+      );
+    } catch (error) {
+      estGas = this.GASLIMIT_DEFAULT;
+    }
+
+    try {
+      return await stakeFunction(stakeInfo).send({
+        from: stakeInfo.address[1],
+        gas: estGas + 1,
+        gasPrice: await getFairGasPrice(this.web3),
+      });
+    } catch (error) {
+      throw new Error(`${errorMessage} : ${error.message}`);
+    }
+  }
+
   /**
    * Uses a chains native coin to stake into a datatoken pool. The native coin is internally swapped to the pool's base token, then staked.
    * @param stakeInfo
@@ -92,38 +123,20 @@ export default class Staker extends Base {
   public async stakeETHInDTPool(
     stakeInfo: IStakeInfo
   ): Promise<TransactionReceipt> {
-
     // checks balance, approval, and max
     await this.preStakeChecks(
-      stakeInfo.path[0], 
+      stakeInfo.path[0],
       stakeInfo.address[1],
       stakeInfo.uint256[2],
       stakeInfo.address[3],
       stakeInfo.address[0]
     );
 
-    let estGas;
-
-    try {
-      estGas = await this.stakeRouter.methods
-        .stakeETHInDTPool(stakeInfo)
-        .estimateGas({ from: stakeInfo.address[1] }, (err, estGas) =>
-          err ? this.GASLIMIT_DEFAULT : estGas
-        );
-    } catch (error) {
-      estGas = this.GASLIMIT_DEFAULT;
-    }
-
-    try {
-      return await this.stakeRouter.methods.stakeETHInDTPool(stakeInfo).send({
-        from: stakeInfo.address[1],
-        gas: estGas + 1,
-        gasPrice: await getFairGasPrice(this.web3),
-      });
-    } catch (error) {
-      throw new Error(`ERROR: Failed to pay tokens in order to \
-        join the pool: ${error.message}`);
-    }
+    return await this.constructTxFunction(
+      stakeInfo,
+      this.stakeRouter.methods.stakeETHInDTPool,
+      this.stakeFailureMessage
+    );
   }
 
   /**
@@ -139,9 +152,16 @@ export default class Staker extends Base {
       stakeInfo.address[3],
       stakeInfo.address[0]
     );
+
+    return await this.constructTxFunction(
+      stakeInfo,
+      this.stakeRouter.methods.unstakeETHFromDTPool,
+      this.unstakeFailureMessage
+    );
   }
 
   /**
+   *
    * Use any ERC20 token to stake into a datatoken pool. ERC20 tokens are internally swapped to pool base token, then staked.
    * @param stakeInfo
    * @returns {string} The pool token amount received from the transaction.
@@ -153,6 +173,12 @@ export default class Staker extends Base {
       stakeInfo.uint256[2],
       stakeInfo.address[3],
       stakeInfo.address[0]
+    );
+
+    return await this.constructTxFunction(
+      stakeInfo,
+      this.stakeRouter.methods.stakeTokenInDTPool,
+      this.stakeFailureMessage
     );
   }
 
@@ -169,27 +195,32 @@ export default class Staker extends Base {
       stakeInfo.address[3],
       stakeInfo.address[0]
     );
+
+    return await this.constructTxFunction(
+      stakeInfo,
+      this.stakeRouter.methods.unstakeTokenFromDTPool,
+      this.unstakeFailureMessage
+    );
   }
 
   /**
-   * This is a stake Calculation.
-   * Calculates the pool amount out for an exact token amount in.
+   * This is a stake calculation. Calculates the pool amount out for an exact token amount in.
    * @param stakeInfo
    * @returns {string[]} [baseAmountOut, dataxFee, refFee]
    */
-  public async calcPoolOutGivenTokenIn(stakeInfo: IStakeInfo) {}
+  public async calcPoolOutGivenTokenIn(stakeInfo: IStakeInfo) {
+
+  }
 
   /**
-   * This is an unstake calculation.
-   * Calculates the pool amount in needed for an exact token amount out.
+   * This is an unstake calculation. Calculates the pool amount in needed for an exact token amount out.
    * @param stakeInfo
    * @returns {string[]} [baseAmountOut, dataxFee, refFee]
    */
   public async calcPoolInGivenTokenOut(stakeInfo: IStakeInfo) {}
 
   /**
-   * This is an unstake calculation.
-   * Calculates the amount of token out from an exact pool amount in.
+   * This is an unstake calculation. Calculates the amount of token out from an exact pool amount in.
    * @param stakeInfo
    * @returns {string[]} [baseAmountOut, dataxFee, refFee]
    */
