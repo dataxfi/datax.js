@@ -2,6 +2,10 @@ import Base from "./Base";
 import BigNumber from "bignumber.js";
 import Ocean from "./Ocean";
 import Web3 from "web3";
+import stakeRouterAbi from "./abi/stakeRouter.json";
+import { getFairGasPrice } from "./utils";
+import { TransactionReceipt } from "web3-core";
+
 interface IStakeInfo {
   address: string[]; //[pool, to, refAddress, adapterAddress]
   uint256: string[]; //[amountOut/minAmountOut, refFees, amountIn/maxAmountIn]
@@ -10,12 +14,20 @@ interface IStakeInfo {
 
 export default class Staker extends Base {
   private ocean: Ocean;
+  private stakeRouterAddress: string = this.config.default.stakeRouterAddress;
+  private stakeRouter: any;
+  private GASLIMIT_DEFAULT = 1000000;
 
   constructor(web3: Web3, networkId: string, ocean?: Ocean) {
     super(web3, networkId);
     ocean
       ? (this.ocean = ocean)
       : (this.ocean = new Ocean(web3, this.networkId));
+
+    this.stakeRouter = this.web3.eth.Contract(
+      stakeRouterAbi,
+      this.stakeRouterAddress
+    );
   }
 
   /**
@@ -77,14 +89,41 @@ export default class Staker extends Base {
    * @param stakeInfo
    * @returns {string} The pool token amount received from the transaction.
    */
-  public async stakeEthInDTPool(stakeInfo: IStakeInfo) {
+  public async stakeETHInDTPool(
+    stakeInfo: IStakeInfo
+  ): Promise<TransactionReceipt> {
+
+    // checks balance, approval, and max
     await this.preStakeChecks(
-      stakeInfo.path[0],
+      stakeInfo.path[0], 
       stakeInfo.address[1],
       stakeInfo.uint256[2],
       stakeInfo.address[3],
       stakeInfo.address[0]
     );
+
+    let estGas;
+
+    try {
+      estGas = await this.stakeRouter.methods
+        .stakeETHInDTPool(stakeInfo)
+        .estimateGas({ from: stakeInfo.address[1] }, (err, estGas) =>
+          err ? this.GASLIMIT_DEFAULT : estGas
+        );
+    } catch (error) {
+      estGas = this.GASLIMIT_DEFAULT;
+    }
+
+    try {
+      return await this.stakeRouter.methods.stakeETHInDTPool(stakeInfo).send({
+        from: stakeInfo.address[1],
+        gas: estGas + 1,
+        gasPrice: await getFairGasPrice(this.web3),
+      });
+    } catch (error) {
+      throw new Error(`ERROR: Failed to pay tokens in order to \
+        join the pool: ${error.message}`);
+    }
   }
 
   /**
@@ -92,7 +131,7 @@ export default class Staker extends Base {
    * @param stakeInfo
    * @returns {string} The token amount received from the transaction.
    */
-  public async unstakeEthFromDTPool(stakeInfo: IStakeInfo) {
+  public async unstakeETHFromDTPool(stakeInfo: IStakeInfo) {
     await this.preStakeChecks(
       stakeInfo.path[0],
       stakeInfo.address[1],
