@@ -36,7 +36,9 @@ export default class Staker extends Base {
   }
 
   /**
-   * Conducts preliminary checks to be made before a stake transaction is emitted. Checks wether transaction amount is less than user balance, that the user is approved to spend the transaction amount, and if the max stake/unstake is greater than the transaction amount.
+   * Conducts preliminary checks to be made before a stake transaction is emitted. Checks wether
+   * transaction amount is less than user balance, that the user is approved to spend the
+   * transaction amount, and if the max stake/unstake is greater than the transaction amount.
    * @param inAddress - The token in address.
    * @param account - The account the transaction will be made in behalf of.
    * @param amount - The token in amount.
@@ -89,11 +91,21 @@ export default class Staker extends Base {
       throw new Error("Transaction amount is greater than max.");
   }
 
+  /**
+   * Constructs the standard format of calling a stake or unstake transaction function: fist calls
+   * estimate gas, then sends the transaction. Built in error handling will pass errorMessage
+   * along with the origional error message.
+   * @param stakeInfo
+   * @param stakeFunction - The stake or unstake transaction function to be executed.
+   * @param errorMessage - A custom error message to pass into the error thrown if an error occurs.
+   * @return {TransactionReceipt} The transaction receipt.
+   */
+
   private async constructTxFunction(
     stakeInfo: IStakeInfo,
     stakeFunction: Function,
     errorMessage: string
-  ) {
+  ): Promise<TransactionReceipt> {
     let estGas;
     try {
       estGas = await stakeFunction(stakeInfo).estimateGas(
@@ -116,7 +128,8 @@ export default class Staker extends Base {
   }
 
   /**
-   * Uses a chains native coin to stake into a datatoken pool. The native coin is internally swapped to the pool's base token, then staked.
+   * Uses a chains native coin to stake into a datatoken pool. The native coin is internally
+   * swapped to the pool's base token, then staked.
    * @param stakeInfo
    * @returns {string} The pool token amount received from the transaction.
    */
@@ -140,7 +153,8 @@ export default class Staker extends Base {
   }
 
   /**
-   * Unstakes from a datatoken pool into a chains native coin. The pool's base token is unstaked then internally swapped to the native coin.
+   * Unstakes from a datatoken pool into a chains native coin. The pool's base token is
+   * unstaked then internally swapped to the native coin.
    * @param stakeInfo
    * @returns {string} The token amount received from the transaction.
    */
@@ -162,7 +176,8 @@ export default class Staker extends Base {
 
   /**
    *
-   * Use any ERC20 token to stake into a datatoken pool. ERC20 tokens are internally swapped to pool base token, then staked.
+   * Use any ERC20 token to stake into a datatoken pool. ERC20 tokens are
+   * internally swapped to pool base token, then staked.
    * @param stakeInfo
    * @returns {string} The pool token amount received from the transaction.
    */
@@ -183,7 +198,8 @@ export default class Staker extends Base {
   }
 
   /**
-   * Unstakes from a datatoken pool into any ERC20 token. The pool's base token is unstaked, then internally swapped to desired ERC20 token out.
+   * Unstakes from a datatoken pool into any ERC20 token. The pool's base token is
+   * unstaked, then internally swapped to desired ERC20 token out.
    * @param stakeInfo
    * @returns {string} The token amount received from the transaction.
    */
@@ -204,12 +220,47 @@ export default class Staker extends Base {
   }
 
   /**
+   * Constructs the standard way to call a calculation function. Converts all amounts in the uint256 array to wei,
+   * then calls the passed transaction function with the updated stakeInfo. Built in error handling will pass the
+   * provided errorMessage to the thrown error if an error occurs.
+   * @param stakeInfo
+   * @param calcFunction
+   * @param errorMessage
+   * @returns
+   */
+  private async constructCalcFunction(
+    stakeInfo: IStakeInfo,
+    calcFunction: Function,
+    errorMessage: string
+  ): Promise<string> {
+    const toWei = (amount) => this.web3.utils.toWei(amount);
+    const newStakeInfo = {
+      ...stakeInfo,
+      uint256: [
+        toWei(stakeInfo.uint256[0]),
+        toWei(stakeInfo.uint256[1]),
+        toWei(stakeInfo.uint256[2]),
+      ],
+    };
+    try {
+      const resultInWei = await calcFunction(newStakeInfo).call();
+      return this.web3.utils.fromWei(resultInWei);
+    } catch (error) {
+      throw new Error(`${errorMessage}: ${error.message}`);
+    }
+  }
+
+  /**
    * This is a stake calculation. Calculates the pool amount out for an exact token amount in.
    * @param stakeInfo
    * @returns {string[]} [baseAmountOut, dataxFee, refFee]
    */
   public async calcPoolOutGivenTokenIn(stakeInfo: IStakeInfo) {
-
+    return await this.constructCalcFunction(
+      stakeInfo,
+      this.stakeRouter.methods.calcPoolOutGivenTokenIn,
+      "Failed to calculate pool out given token in"
+    );
   }
 
   /**
@@ -217,14 +268,26 @@ export default class Staker extends Base {
    * @param stakeInfo
    * @returns {string[]} [baseAmountOut, dataxFee, refFee]
    */
-  public async calcPoolInGivenTokenOut(stakeInfo: IStakeInfo) {}
+  public async calcPoolInGivenTokenOut(stakeInfo: IStakeInfo) {
+    return await this.constructCalcFunction(
+      stakeInfo,
+      this.stakeRouter.methods.calcPoolInGivenTokenOut,
+      "Failed to calculate pool in given token out"
+    );
+  }
 
   /**
    * This is an unstake calculation. Calculates the amount of token out from an exact pool amount in.
    * @param stakeInfo
    * @returns {string[]} [baseAmountOut, dataxFee, refFee]
    */
-  public async calcTokenOutGivenPoolIn(stakeInfo: IStakeInfo) {}
+  public async calcTokenOutGivenPoolIn(stakeInfo: IStakeInfo) {
+    return this.constructCalcFunction(
+      stakeInfo,
+      this.stakeRouter.methods.calcTokenOutGivenPoolIn,
+      "Failed to calculate token out given pool in"
+    );
+  }
 
   /**
    * Calculates stake fee
@@ -239,7 +302,13 @@ export default class Staker extends Base {
     baseAmount: string,
     feeType: string,
     refFeeRate: string
-  ) {}
+  ) {
+      try {
+        return await this.stakeRouter.methods.calcFees(baseAmount, feeType, (refFeeRate) )
+      } catch (error) {
+          
+      }
+  }
 
   /**
    * Claim collected referral fees
