@@ -6,6 +6,48 @@ import stakeRouterAbi from "./abi/stakeRouter.json";
 import { getFairGasPrice } from "./utils";
 import { TransactionReceipt } from "web3-core";
 
+/** IStakeInfo parameters
+ * 
+ * stakeInfo.address - An array of all the addresses relevant to the transaction to be made.
+ * 
+ * address[0] = pool - The pool hash address involved in the transaction. 
+ * 
+ * address[1] = to - The account to be credited with the output of the transaction.
+ * 
+ * address[2] = refAddress - The address to associate collected refferer fees with. These 
+ * fees can then be collected by this address when calling claimRefFees() from this address.
+ * 
+ * address[3] = adapterAddress - The address of the adapter contract to be called in the 
+ * transaction. This is the address in which token approval will be made to. 
+ * 
+ * stakeInfo.uint256 - An array of all the numerical amounts relevent to the transaction to
+ * be made.
+ * 
+ * uint256[0] = amountOut/minAmountOut - The amount to come out of the transaction. This value 
+ * is considered minAmountOut when slippage is to be applied to the token out, and amountOut 
+ * when slippage is applied the token in. 
+ * 
+ * uint256[1] = refFees - This fee charged by the third pary dApp using datax.js, collected 
+ * in the base token of the stake pool involved in the stake transaction. 
+ * 
+ * uint256[2] = amountIn/maxAmountIn - The amount going into the transaction. This value is 
+ * considered maxAmountIn when slippage is applied to the amount in, and amountIn when slippage 
+ * is applied to the amount out. 
+ * 
+ * stakeInfo.path - An array of the path in which the token should be swapped to get to the
+ * desired destination token. If using an extraneous token to add stake to a pool, the path is
+ * comprised of all the token addresses to be swapped through ending with the token that can be 
+ * directly staked. 
+ * 
+ * A hypothetical path example to stake USDT into a datatoken/OCEAN pool:
+ * 
+ * [USDT,WETH,OCEAN]
+ * 
+ * Signifying in order to use USDT to stake into a pool, it must first be swapped to WETH, then 
+ * to OCEAN, then OCEAN can be staked into the datatoken/OCEAN pool. There are utilities available
+ * that search for paths between tokens.
+ */
+
 interface IStakeInfo {
   address: string[]; //[pool, to, refAddress, adapterAddress]
   uint256: string[]; //[amountOut/minAmountOut, refFees, amountIn/maxAmountIn]
@@ -102,14 +144,15 @@ export default class Staker extends Base {
    */
 
   private async constructTxFunction(
-    stakeInfo: IStakeInfo,
+    senderAccount: string,
+    stakeInfo: IStakeInfo | string,
     stakeFunction: Function,
     errorMessage: string
   ): Promise<TransactionReceipt> {
     let estGas;
     try {
       estGas = await stakeFunction(stakeInfo).estimateGas(
-        { from: stakeInfo.address[1] },
+        { from: senderAccount },
         (err, estGas) => (err ? this.GASLIMIT_DEFAULT : estGas)
       );
     } catch (error) {
@@ -118,7 +161,7 @@ export default class Staker extends Base {
 
     try {
       return await stakeFunction(stakeInfo).send({
-        from: stakeInfo.address[1],
+        from: senderAccount,
         gas: estGas + 1,
         gasPrice: await getFairGasPrice(this.web3),
       });
@@ -130,11 +173,13 @@ export default class Staker extends Base {
   /**
    * Uses a chains native coin to stake into a datatoken pool. The native coin is internally
    * swapped to the pool's base token, then staked.
-   * @param stakeInfo
-   * @returns {string} The pool token amount received from the transaction.
+   * @param {IStakeInfo} stakeInfo - The stake information for the transaction.
+   * @param {string} senderAccount - The account 0xhash of the transaction sender
+   * @returns {string} - The pool token amount received from the transaction.
    */
   public async stakeETHInDTPool(
-    stakeInfo: IStakeInfo
+    stakeInfo: IStakeInfo,
+    senderAccount: string
   ): Promise<TransactionReceipt> {
     // checks balance, approval, and max
     await this.preStakeChecks(
@@ -146,6 +191,7 @@ export default class Staker extends Base {
     );
 
     return await this.constructTxFunction(
+      senderAccount,
       stakeInfo,
       this.stakeRouter.methods.stakeETHInDTPool,
       this.stakeFailureMessage
@@ -158,7 +204,10 @@ export default class Staker extends Base {
    * @param stakeInfo
    * @returns {string} The token amount received from the transaction.
    */
-  public async unstakeETHFromDTPool(stakeInfo: IStakeInfo) {
+  public async unstakeETHFromDTPool(
+    stakeInfo: IStakeInfo,
+    senderAccount: string
+  ): Promise<TransactionReceipt> {
     await this.preStakeChecks(
       stakeInfo.path[0],
       stakeInfo.address[1],
@@ -168,6 +217,7 @@ export default class Staker extends Base {
     );
 
     return await this.constructTxFunction(
+      senderAccount,
       stakeInfo,
       this.stakeRouter.methods.unstakeETHFromDTPool,
       this.unstakeFailureMessage
@@ -181,7 +231,10 @@ export default class Staker extends Base {
    * @param stakeInfo
    * @returns {string} The pool token amount received from the transaction.
    */
-  public async stakeTokenInDTPool(stakeInfo: IStakeInfo) {
+  public async stakeTokenInDTPool(
+    stakeInfo: IStakeInfo,
+    senderAccount: string
+  ): Promise<TransactionReceipt> {
     await this.preStakeChecks(
       stakeInfo.path[0],
       stakeInfo.address[1],
@@ -191,6 +244,7 @@ export default class Staker extends Base {
     );
 
     return await this.constructTxFunction(
+      senderAccount,
       stakeInfo,
       this.stakeRouter.methods.stakeTokenInDTPool,
       this.stakeFailureMessage
@@ -203,7 +257,10 @@ export default class Staker extends Base {
    * @param stakeInfo
    * @returns {string} The token amount received from the transaction.
    */
-  public async unstakeTokenFromDTPool(stakeInfo: IStakeInfo) {
+  public async unstakeTokenFromDTPool(
+    stakeInfo: IStakeInfo,
+    senderAccount: string
+  ): Promise<TransactionReceipt> {
     await this.preStakeChecks(
       stakeInfo.path[0],
       stakeInfo.address[1],
@@ -213,6 +270,7 @@ export default class Staker extends Base {
     );
 
     return await this.constructTxFunction(
+      senderAccount,
       stakeInfo,
       this.stakeRouter.methods.unstakeTokenFromDTPool,
       this.unstakeFailureMessage
@@ -290,30 +348,17 @@ export default class Staker extends Base {
   }
 
   /**
-   * Calculates stake fee
-   * @param baseAmount
-   * @param feeType
-   * @param refFeeRate
-   *
-   * @returns {string[]} [dataxFee, refFee]
-   *
+   * Claim collected referral fees for a particular token. Referrer fees charged by third party dApps in
+   * multiple tokens should be collected per token, by calling this function with the token address.
+   * @param tokenAddress - The token to claim collected fees for.
+   * @returns {string} Claim amount collected for the token passed.
    */
-  public async calcFees(
-    baseAmount: string,
-    feeType: string,
-    refFeeRate: string
-  ) {
-      try {
-        return await this.stakeRouter.methods.calcFees(baseAmount, feeType, (refFeeRate) )
-      } catch (error) {
-          
-      }
+  public async claimRefFees(tokenAddress: string, senderAccount: string) {
+    return await this.constructTxFunction(
+      senderAccount,
+      tokenAddress,
+      this.stakeRouter.methods.claimRefFees,
+      "Failed to claim refferer fees for this token"
+    );
   }
-
-  /**
-   * Claim collected referral fees
-   * @param tokenAddress
-   * @returns {string} Claim amount
-   */
-  public async claimRefFees(tokenAddress: string) {}
 }
