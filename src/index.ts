@@ -1,4 +1,4 @@
-import Ocean from "./Ocean";
+import Utils from "./Utils";
 import TokenList from "./TokenList";
 import Config from "./Config";
 import Watcher from "./Watcher";
@@ -18,7 +18,7 @@ import {
 } from "./Types";
 
 export {
-  Ocean,
+  Utils as Ocean,
   TokenList,
   Watcher,
   Config,
