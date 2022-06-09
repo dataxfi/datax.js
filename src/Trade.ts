@@ -340,7 +340,10 @@ export default class Trade extends Base {
    * @param amountIn
    * @param path
    */
-  public async getAmountsOut(amountIn: string, path: string[]) {
+  public async getAmountsOut(
+    amountIn: string,
+    path: string[]
+  ): Promise<string[]> {
     return await this.adapter.methods.getAmountsOut(amountIn, path);
   }
 
@@ -349,7 +352,10 @@ export default class Trade extends Base {
    * @param amountOut
    * @param path
    */
-  public async getAmountsIn(amountOut: string, path: string[]) {
+  public async getAmountsIn(
+    amountOut: string,
+    path: string[]
+  ): Promise<string[]> {
     return await this.adapter.methods.getAmountsIn(amountOut, path);
   }
 }
