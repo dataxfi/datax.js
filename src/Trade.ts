@@ -5,7 +5,7 @@ import { Contract } from "web3-eth-contract";
 import adapterABI from "./abi/UniV2AdapterAbi.json";
 import { getFairGasPrice } from "./utils";
 import { TransactionReceipt } from "web3-core";
-
+import BigNumber from "bignumber.js";
 export default class Trade extends Base {
   private ocean: Ocean;
   private adapterAddress: string = this.config.default.uniV2AdapterAddress;
@@ -23,11 +23,67 @@ export default class Trade extends Base {
   }
 
   /**
-   * Constract and execute a swap transaction function in a standard way. The 
+   * Conducts preliminary checks to be made before a swap transaction is emitted. Checks wether
+   * transaction amount is less than user balance, that the user is approved to spend the
+   * transaction amount, and if the max exchange is greater than the transaction amount.
+   * @param inAddress - The token in address.
+   * @param outAddress - The token out address.
+   * @param senderAddress - The sender of the transaction.
+   * @param amount - The token in amount.
+   * @param spender - The contract the transaction will be sent to.
+   */
+
+  private async preSwapChecks(
+    inAddress: string,
+    outAddress: string,
+    senderAddress: string,
+    amountIn: string,
+    spender: string
+  ) {
+    const txAmtBigNum = new BigNumber(amount);
+    const balance = new BigNumber(
+      await this.ocean.getBalance(inAddress, senderAddress)
+    );
+
+    if (balance.lt(txAmtBigNum)) {
+      throw new Error("ERROR: Not Enough Balance");
+    }
+
+    //check approval limit vs tx amount
+    const isApproved = await this.ocean.checkIfApproved(
+      inAddress,
+      senderAddress,
+      spender,
+      amountIn
+    );
+
+    //approve if not approved
+    if (!isApproved)
+      try {
+        await this.ocean.approve(inAddress, spender, amountIn, senderAddress);
+      } catch (error) {
+        throw {
+          Code: 1000,
+          Message: "Transaction could not be processed.",
+          error,
+        };
+      }
+
+    //check max stake/unstake vs tx amount
+    const max = new BigNumber(
+      await this.ocean.getMaxExchange(poolAddress, inAddress)
+    );
+
+    if (max.lt(txAmtBigNum))
+      throw new Error("Transaction amount is greater than max.");
+  }
+
+  /**
+   * Construct and execute a swap transaction function in a standard way. The
    * will call estimateGas, then call the transaction. This function assumes the
    * transaction will be successful, and does not make any pre tx checks. Built in
    * error handling will pass errorMessage along with the origional error message.
-   * 
+   *
    * @param senderAddress - Sender of the transaction.
    * @param params - Params to spread into transaction function. The
    * params in the array need to be in the exact order as the transaction
@@ -68,7 +124,8 @@ export default class Trade extends Base {
   // TODO: needs pre tx checks
   /**
    * Swap native coin for an exact amount of tokens (not datatokens).
-   * 
+   *
+   * @param maxAmountIn - The max amount of native coin to be spent.
    * @param amountOut - The exact amount of tokens expected out.
    * @param path - The path between tokens.
    * @param to - The address to be credited with token out.
@@ -77,12 +134,21 @@ export default class Trade extends Base {
    * @returns {TransactionReceipt} The receipt from the transaction.
    */
   public async swapETHForExactTokens(
+    maxAmountIn: string,
     amountOut: string,
     path: string[],
     to: string,
     refundTo: string,
     senderAddress: string
   ): Promise<TransactionReceipt> {
+    await this.preSwapChecks(
+      path[0],
+      path[path.length],
+      senderAddress,
+      maxAmountIn,
+      this.adapterAddress
+    );
+
     return await this.constructTxFunction(
       senderAddress,
       [amountOut, path, to, refundTo],
@@ -92,11 +158,12 @@ export default class Trade extends Base {
   }
 
   // should this need deadline?
-  // should this need amount in?
+  // should this need amount in (exact)?
   // TODO: needs pre tx checks
   /**
    * Swap an exact amount of native coin for tokens (not datatokens).
-   * 
+   *
+   * @param amountIn - The exact amount of tokens to be spent. 
    * @param amountOutMin - The minimum amount of expected tokens out.
    * @param path - The path between tokens.
    * @param to - The address to be credited with token out.
@@ -104,11 +171,19 @@ export default class Trade extends Base {
    * @returns
    */
   public async swapExactETHForTokens(
+    amountIn: string,
     amountOutMin: string,
     path: string[],
     to: string,
     senderAddress: string
   ): Promise<TransactionReceipt> {
+    await this.preSwapChecks(
+      path[0],
+      path[path.length],
+      senderAddress,
+      amountIn,
+      this.adapterAddress
+    );
     return await this.constructTxFunction(
       senderAddress,
       [amountOutMin, path, to],
@@ -116,10 +191,10 @@ export default class Trade extends Base {
       "Failed to swap exact native coin for tokens"
     );
   }
-  
+
   /**
    * Swap tokens for an exact amount of native coin.
-   * 
+   *
    * @param amountOut - The exact amount of tokens expected out.
    * @param amountInMax - The max amount of token in to be spent.
    * @param path - The path between tokens.
@@ -138,6 +213,13 @@ export default class Trade extends Base {
     refundTo: string,
     senderAddress: string
   ): Promise<TransactionReceipt> {
+    await this.preSwapChecks(
+      path[0],
+      path[path.length],
+      senderAddress,
+      amountInMax,
+      this.adapterAddress
+    );
     return await this.constructTxFunction(
       senderAddress,
       [amountOut, amountInMax, path, to, refundTo],
@@ -148,7 +230,7 @@ export default class Trade extends Base {
 
   /**
    * Swap an exact amount of tokens for native coin.
-   * 
+   *
    * @param amountIn - The exact amount of token in to be spent.
    * @param amountOutMin - The minimum amount of token out expected.
    * @param path - The path between tokens.
@@ -165,6 +247,13 @@ export default class Trade extends Base {
     to: string,
     senderAddress: string
   ): Promise<TransactionReceipt> {
+    await this.preSwapChecks(
+      path[0],
+      path[path.length],
+      senderAddress,
+      amountIn,
+      this.adapterAddress
+    );
     return await this.constructTxFunction(
       senderAddress,
       [amountIn, amountOutMin, path, to],
@@ -175,7 +264,7 @@ export default class Trade extends Base {
 
   /**
    * Swap an exact amount of tokens for tokens.
-   * 
+   *
    * @param amountIn - The exact amount of token in to be spent.
    * @param amountOutMin - The minimum amount of token out expected.
    * @param path - The path between tokens.
@@ -192,6 +281,13 @@ export default class Trade extends Base {
     to: string,
     senderAddress: string
   ): Promise<TransactionReceipt> {
+    await this.preSwapChecks(
+      path[0],
+      path[path.length],
+      senderAddress,
+      amountIn,
+      this.adapterAddress
+    );
     return await this.constructTxFunction(
       senderAddress,
       [amountIn, amountOutMin, path, to],
@@ -201,8 +297,8 @@ export default class Trade extends Base {
   }
 
   /**
-   * Swap tokens for an exact amount of tokens. 
-   * 
+   * Swap tokens for an exact amount of tokens.
+   *
    * @param amountOut - The exact amount of tokens expected out.
    * @param amountInMax - The max amount of token in to be spent.
    * @param path - The path between tokens.
@@ -220,6 +316,13 @@ export default class Trade extends Base {
     refundTo: string,
     senderAddress: string
   ): Promise<TransactionReceipt> {
+    await this.preSwapChecks(
+      path[0],
+      path[path.length],
+      senderAddress,
+      amountInMax,
+      this.adapterAddress
+    );
     return await this.constructTxFunction(
       senderAddress,
       [amountOut, amountInMax, path, to, refundTo],

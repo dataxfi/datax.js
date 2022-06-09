@@ -84,7 +84,7 @@ export default class Stake extends Base {
    * transaction amount is less than user balance, that the user is approved to spend the
    * transaction amount, and if the max stake/unstake is greater than the transaction amount.
    * @param inAddress - The token in address.
-   * @param account - The account the transaction will be made in behalf of.
+   * @param senderAddress - The sender of the transaction.
    * @param amount - The token in amount.
    * @param spender - The contract the transaction will be sent to.
    * @param poolAddress - The datatoken pool being staked in or unstaked from.
@@ -92,14 +92,14 @@ export default class Stake extends Base {
 
   private async preStakeChecks(
     inAddress: string,
-    account: string,
+    senderAddress: string,
     amount: string,
     spender: string,
     poolAddress: string
   ) {
     const txAmtBigNum = new BigNumber(amount);
     const balance = new BigNumber(
-      await this.ocean.getBalance(inAddress, account)
+      await this.ocean.getBalance(inAddress, senderAddress)
     );
 
     if (balance.lt(txAmtBigNum)) {
@@ -109,7 +109,7 @@ export default class Stake extends Base {
     //check approval limit vs tx amount
     const isApproved = await this.ocean.checkIfApproved(
       inAddress,
-      account,
+      senderAddress,
       spender,
       amount
     );
@@ -117,7 +117,7 @@ export default class Stake extends Base {
     //approve if not approved
     if (!isApproved)
       try {
-        await this.ocean.approve(inAddress, spender, amount, account);
+        await this.ocean.approve(inAddress, spender, amount, senderAddress);
       } catch (error) {
         throw {
           Code: 1000,
