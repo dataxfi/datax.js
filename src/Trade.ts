@@ -38,14 +38,16 @@ export default class Trade extends Base {
     outAddress: string,
     senderAddress: string,
     amountIn: string,
+    amountOut: string,
     spender: string
   ) {
-    const txAmtBigNum = new BigNumber(amount);
+    const inBigNum = new BigNumber(amountIn);
+    const outBigNum = new BigNumber(amountOut);
     const balance = new BigNumber(
       await this.ocean.getBalance(inAddress, senderAddress)
     );
 
-    if (balance.lt(txAmtBigNum)) {
+    if (balance.lt(inBigNum)) {
       throw new Error("ERROR: Not Enough Balance");
     }
 
@@ -69,12 +71,14 @@ export default class Trade extends Base {
         };
       }
 
-    //check max stake/unstake vs tx amount
-    const max = new BigNumber(
-      await this.ocean.getMaxExchange(poolAddress, inAddress)
+    //check max exchange vs tx amount
+    const max = await this.ocean.getMaxExchange(
+      inAddress,
+      outAddress,
+      senderAddress
     );
 
-    if (max.lt(txAmtBigNum))
+    if (max.maxSell.lt(inBigNum) || max.maxBuy.lt(outBigNum))
       throw new Error("Transaction amount is greater than max.");
   }
 
@@ -146,6 +150,7 @@ export default class Trade extends Base {
       path[path.length],
       senderAddress,
       maxAmountIn,
+      amountOut,
       this.adapterAddress
     );
 
@@ -163,7 +168,7 @@ export default class Trade extends Base {
   /**
    * Swap an exact amount of native coin for tokens (not datatokens).
    *
-   * @param amountIn - The exact amount of tokens to be spent. 
+   * @param amountIn - The exact amount of tokens to be spent.
    * @param amountOutMin - The minimum amount of expected tokens out.
    * @param path - The path between tokens.
    * @param to - The address to be credited with token out.
@@ -182,6 +187,7 @@ export default class Trade extends Base {
       path[path.length],
       senderAddress,
       amountIn,
+      amountOutMin,
       this.adapterAddress
     );
     return await this.constructTxFunction(
@@ -218,6 +224,7 @@ export default class Trade extends Base {
       path[path.length],
       senderAddress,
       amountInMax,
+      amountOut,
       this.adapterAddress
     );
     return await this.constructTxFunction(
@@ -252,6 +259,7 @@ export default class Trade extends Base {
       path[path.length],
       senderAddress,
       amountIn,
+      amountOutMin,
       this.adapterAddress
     );
     return await this.constructTxFunction(
@@ -286,6 +294,7 @@ export default class Trade extends Base {
       path[path.length],
       senderAddress,
       amountIn,
+      amountOutMin,
       this.adapterAddress
     );
     return await this.constructTxFunction(
@@ -321,6 +330,7 @@ export default class Trade extends Base {
       path[path.length],
       senderAddress,
       amountInMax,
+      amountOut,
       this.adapterAddress
     );
     return await this.constructTxFunction(
