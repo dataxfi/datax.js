@@ -62,6 +62,15 @@ export default class Trade extends Base {
   // should this need deadline?
   // should this need amount in max?
   // TODO: needs pre tx checks
+  /**
+   * Swap native coin for an exact amount of tokens (not datatokens).
+   * @param amountOut - The exact amount of tokens expected out.
+   * @param path - The path between tokens.
+   * @param to - The address to be credited with token out.
+   * @param refundTo - The address to refund credit with remaining token in.
+   * @param senderAddress - The address of the sender.
+   * @returns {TransactionReceipt} The receipt from the transaction.
+   */
   public async swapETHForExactTokens(
     amountOut: string,
     path: string[],
@@ -80,6 +89,14 @@ export default class Trade extends Base {
   // should this need deadline?
   // should this need amount in?
   // TODO: needs pre tx checks
+  /**
+   * Swap an exact amount of native coin for tokens (not datatokens).
+   * @param amountOutMin - The minimum amount of expected tokens out.
+   * @param path - The path between tokens.
+   * @param to - The address to be credited with token out.
+   * @param senderAddress - The address of the sender.
+   * @returns
+   */
   public async swapExactETHForTokens(
     amountOutMin: string,
     path: string[],
@@ -93,7 +110,16 @@ export default class Trade extends Base {
       "Failed to swap exact native coin for tokens"
     );
   }
-
+  /**
+   *
+   * @param amountOut - The exact amount of tokens expected out.
+   * @param amountInMax - The max amount of token in to be spent.
+   * @param path - The path between tokens.
+   * @param to - The address to be credited with token out.
+   * @param refundTo - The address to refund credit with remaining token in.
+   * @param senderAddress - The address of the sender.
+   * @returns
+   */
   // should this need deadline?
   // TODO: needs pre tx checks
   public async swapTokensForExactETH(
@@ -111,7 +137,15 @@ export default class Trade extends Base {
       "Failed to swap tokens for exact native coin"
     );
   }
-
+  /**
+   *
+   * @param amountIn - The exact amount of token in to be spent.
+   * @param amountOutMin - The minimum amount of token out expected.
+   * @param path - The path between tokens.
+   * @param to - The address to be credited with token out.
+   * @param senderAddress - The address of the sender.
+   * @returns
+   */
   // should this need deadline?
   // TODO: needs pre tx checks
   public async swapExactTokensForETH(
@@ -128,7 +162,15 @@ export default class Trade extends Base {
       "Failed to swap exact tokens for native coin"
     );
   }
-
+  /**
+   *
+   * @param amountIn - The exact amount of token in to be spent.
+   * @param amountOutMin - The minimum amount of token out expected.
+   * @param path - The path between tokens.
+   * @param to - The address to be credited with token out.
+   * @param senderAddress - The address of the sender.
+   * @returns
+   */
   // should this need deadline?\
   // TODO: needs pre tx checks
   public async swapExactTokensForTokens(
@@ -145,7 +187,16 @@ export default class Trade extends Base {
       "Failed to swap exact tokens for tokens"
     );
   }
-
+  /**
+   *
+   * @param amountOut - The exact amount of tokens expected out.
+   * @param amountInMax - The max amount of token in to be spent.
+   * @param path - The path between tokens.
+   * @param to - The address to be credited with token out.
+   * @param refundTo The address to refund credit with remaining token in.
+   * @param senderAddress - The address of the sender.
+   * @returns
+   */
   // TODO: needs pre tx checks
   public async swapTokensForExactTokens(
     amountOut: string,
