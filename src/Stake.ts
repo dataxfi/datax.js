@@ -1,6 +1,6 @@
 import Base from "./Base";
 import BigNumber from "bignumber.js";
-import Utils from "./Utils";
+import Ocean from "./Ocean";
 import Web3 from "web3";
 import stakeRouterAbi from "./abi/stakeRouter.json";
 import { getFairGasPrice } from "./utils/";
@@ -54,8 +54,8 @@ interface IStakeInfo {
   path: string[]; // swap path between tokens e.g. USDT -> ETH -> OCEAN
 }
 
-export default class Staker extends Base {
-  private ocean: Utils;
+export default class Stake extends Base {
+  private ocean: Ocean;
   private stakeRouterAddress: string = this.config.default.stakeRouterAddress;
   private stakeRouter: any;
   private GASLIMIT_DEFAULT = 1000000;
@@ -65,11 +65,11 @@ export default class Staker extends Base {
   private unstakeFailureMessage =
     "ERROR: Failed to pay pool shares into the pool";
 
-  constructor(web3: Web3, networkId: string, ocean?: Utils) {
+  constructor(web3: Web3, networkId: string, ocean?: Ocean) {
     super(web3, networkId);
     ocean
       ? (this.ocean = ocean)
-      : (this.ocean = new Utils(web3, this.networkId));
+      : (this.ocean = new Ocean(web3, this.networkId));
 
     this.stakeRouter = this.web3.eth.Contract(
       stakeRouterAbi,

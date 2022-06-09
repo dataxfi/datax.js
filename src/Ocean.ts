@@ -1,6 +1,6 @@
 import { OceanPool, Pool } from "./balancer";
 import { DataTokens } from "./Datatokens";
-import { Logger } from "./utils/";
+import { Logger } from "./utils";
 import { TransactionReceipt } from "web3-core";
 import { AbiItem } from "web3-utils/types";
 import { default as DataxRouter } from "./abi/DataxRouter.json";
@@ -20,7 +20,7 @@ import {
 } from "./Types";
 const SLIPPAGE_TOLERANCE = 0.01;
 
-export default class Utils extends Base {
+export default class Ocean extends Base {
   private logger: any = null;
   private oceanPool: OceanPool = null;
   private bPool: Pool = null;
