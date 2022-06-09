@@ -138,7 +138,8 @@ export default class Stake extends Base {
   /**
    * Constructs the standard format of calling a stake or unstake transaction function: fist calls
    * estimate gas, then sends the transaction. Built in error handling will pass errorMessage
-   * along with the origional error message.
+   * along with the origional error message. This function assumes the
+   * transaction will be successful, and does not make any pre tx checks.
    * @param senderAddress - The address which the transaction will be sent from.
    * @param stakeInfo
    * @param stakeFunction - The stake or unstake transaction function to be executed.

@@ -23,7 +23,11 @@ export default class Trade extends Base {
   }
 
   /**
-   *
+   * Constract and execute a swap transaction function in a standard way. The 
+   * will call estimateGas, then call the transaction. This function assumes the
+   * transaction will be successful, and does not make any pre tx checks. Built in
+   * error handling will pass errorMessage along with the origional error message.
+   * 
    * @param senderAddress - Sender of the transaction.
    * @param params - Params to spread into transaction function. The
    * params in the array need to be in the exact order as the transaction
@@ -64,6 +68,7 @@ export default class Trade extends Base {
   // TODO: needs pre tx checks
   /**
    * Swap native coin for an exact amount of tokens (not datatokens).
+   * 
    * @param amountOut - The exact amount of tokens expected out.
    * @param path - The path between tokens.
    * @param to - The address to be credited with token out.
@@ -91,6 +96,7 @@ export default class Trade extends Base {
   // TODO: needs pre tx checks
   /**
    * Swap an exact amount of native coin for tokens (not datatokens).
+   * 
    * @param amountOutMin - The minimum amount of expected tokens out.
    * @param path - The path between tokens.
    * @param to - The address to be credited with token out.
@@ -110,8 +116,10 @@ export default class Trade extends Base {
       "Failed to swap exact native coin for tokens"
     );
   }
+  
   /**
-   *
+   * Swap tokens for an exact amount of native coin.
+   * 
    * @param amountOut - The exact amount of tokens expected out.
    * @param amountInMax - The max amount of token in to be spent.
    * @param path - The path between tokens.
@@ -137,8 +145,10 @@ export default class Trade extends Base {
       "Failed to swap tokens for exact native coin"
     );
   }
+
   /**
-   *
+   * Swap an exact amount of tokens for native coin.
+   * 
    * @param amountIn - The exact amount of token in to be spent.
    * @param amountOutMin - The minimum amount of token out expected.
    * @param path - The path between tokens.
@@ -162,8 +172,10 @@ export default class Trade extends Base {
       "Failed to swap exact tokens for native coin"
     );
   }
+
   /**
-   *
+   * Swap an exact amount of tokens for tokens.
+   * 
    * @param amountIn - The exact amount of token in to be spent.
    * @param amountOutMin - The minimum amount of token out expected.
    * @param path - The path between tokens.
@@ -187,8 +199,10 @@ export default class Trade extends Base {
       "Failed to swap exact tokens for tokens"
     );
   }
+
   /**
-   *
+   * Swap tokens for an exact amount of tokens. 
+   * 
    * @param amountOut - The exact amount of tokens expected out.
    * @param amountInMax - The max amount of token in to be spent.
    * @param path - The path between tokens.
