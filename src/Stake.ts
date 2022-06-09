@@ -2,9 +2,11 @@ import Base from "./Base";
 import BigNumber from "bignumber.js";
 import Ocean from "./Ocean";
 import Web3 from "web3";
-import stakeRouterAbi from "./abi/stakeRouter.json";
+import stakeRouterAbi from "./abi/StakeRouterAbi.json";
 import { getFairGasPrice } from "./utils/";
 import { TransactionReceipt } from "web3-core";
+import { Contract } from "web3-eth-contract";
+
 
 /** IStakeInfo parameters
  *
@@ -57,7 +59,7 @@ interface IStakeInfo {
 export default class Stake extends Base {
   private ocean: Ocean;
   private stakeRouterAddress: string = this.config.default.stakeRouterAddress;
-  private stakeRouter: any;
+  private stakeRouter: Contract;
   private GASLIMIT_DEFAULT = 1000000;
   private stakeFailureMessage =
     "ERROR: Failed to pay tokens in order to \
