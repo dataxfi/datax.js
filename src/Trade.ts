@@ -125,7 +125,6 @@ export default class Trade extends Base {
 
   // should this need deadline?
   // should this need amount in max?
-  // TODO: needs pre tx checks
   /**
    * Swap native coin for an exact amount of tokens (not datatokens).
    *
@@ -164,7 +163,6 @@ export default class Trade extends Base {
 
   // should this need deadline?
   // should this need amount in (exact)?
-  // TODO: needs pre tx checks
   /**
    * Swap an exact amount of native coin for tokens (not datatokens).
    *
@@ -210,7 +208,6 @@ export default class Trade extends Base {
    * @returns
    */
   // should this need deadline?
-  // TODO: needs pre tx checks
   public async swapTokensForExactETH(
     amountOut: string,
     amountInMax: string,
@@ -246,7 +243,6 @@ export default class Trade extends Base {
    * @returns
    */
   // should this need deadline?
-  // TODO: needs pre tx checks
   public async swapExactTokensForETH(
     amountIn: string,
     amountOutMin: string,
@@ -280,8 +276,7 @@ export default class Trade extends Base {
    * @param senderAddress - The address of the sender.
    * @returns
    */
-  // should this need deadline?\
-  // TODO: needs pre tx checks
+  // should this need deadline?
   public async swapExactTokensForTokens(
     amountIn: string,
     amountOutMin: string,
@@ -316,7 +311,6 @@ export default class Trade extends Base {
    * @param senderAddress - The address of the sender.
    * @returns
    */
-  // TODO: needs pre tx checks
   public async swapTokensForExactTokens(
     amountOut: string,
     amountInMax: string,
@@ -339,5 +333,23 @@ export default class Trade extends Base {
       this.adapter.methods.swapTokensForExactTokens,
       "Failed to swap tokens for exact tokens"
     );
+  }
+
+  /**
+   * Given an input asset amount and an array of token addresses, calculates all subsequent maximum output token amounts.
+   * @param amountIn
+   * @param path
+   */
+  public async getAmountsOut(amountIn: string, path: string[]) {
+    return await this.adapter.methods.getAmountsOut(amountIn, path);
+  }
+
+  /**
+   * Given an output asset amount and an array of token addresses, calculates all preceding minimum input token amounts.
+   * @param amountOut
+   * @param path
+   */
+  public async getAmountsIn(amountOut: string, path: string[]) {
+    return await this.adapter.methods.getAmountsIn(amountOut, path);
   }
 }
