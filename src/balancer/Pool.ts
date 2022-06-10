@@ -7,7 +7,7 @@ import jsonpoolABI from "@oceanprotocol/contracts/artifacts/BPool.json";
 import defaultDatatokensABI from "@oceanprotocol/contracts/artifacts/DataTokenTemplate.json";
 import { PoolFactory } from "./PoolFactory";
 import Decimal from "decimal.js";
-import { ITokensToAdd } from "../Types";
+import { ITokensToAdd } from "../@types/datax-types";
 const MaxUint256 =
   "115792089237316195423570985008687907853269984665640564039457584007913129639934";
 

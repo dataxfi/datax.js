@@ -1,6 +1,6 @@
 require("dotenv").config();
 import Base from "./Base";
-import { ITokenInfo, ITList} from "./Types";
+import { ITokenInfo, ITList} from "./@types/datax-types";
 import axios from "axios";
 
 

@@ -12,7 +12,7 @@ import {
   ITokensReceived,
   IPoolTransaction,
   PoolTransactionType
-} from "../Types";
+} from "../@types/datax-types";
 
 const POOL_MAX_AMOUNT_IN_LIMIT = 0.5; // maximum 1/2 of the pool reserve
 const POOL_MAX_AMOUNT_OUT_LIMIT = 0.34; // maximum 1/3 of the pool reserve

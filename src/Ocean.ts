@@ -18,7 +18,7 @@ import {
   ITokenDetails,
   IMaxExchange,
   IToken,
-} from "./Types";
+} from "./@types/datax-types";
 const SLIPPAGE_TOLERANCE = 0.01;
 
 export default class Ocean extends Base {
@@ -265,6 +265,8 @@ export default class Ocean extends Base {
     }
     return new BigNumber(0);
   }
+
+  
 
   /**
    * Get the max exchange amount for a token pair.

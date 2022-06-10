@@ -15,7 +15,7 @@ import {
   IPoolDetails,
   IPoolTransaction,
   ITokensToAdd,
-} from "./Types";
+} from "./@types/datax-types";
 
 export {
   Utils as Ocean,

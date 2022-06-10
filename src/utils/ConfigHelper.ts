@@ -5,7 +5,7 @@ import { homedir } from "os";
 // eslint-disable-next-line import/no-named-default
 import { default as DefaultContractsAddresses } from "@oceanprotocol/contracts/artifacts/address.json";
 import Logger from "./Logger";
-import { ConfigHelperConfig } from "../Types";
+import { ConfigHelperConfig } from "../@types/datax-types";
 
 const configHelperNetworksBase: ConfigHelperConfig = {
   networkId: null,
