@@ -48,6 +48,8 @@ export default class Config {
       tokenList: "https://tokens.uniswap.org/",
     },
     "4": {
+      stakeRouterAddress: "0x580DE256179B0F8BEe9A4d882E354967d30a0ef6",
+      uniV2AdapterAddress: "0x5B7ca74D5D806Ade232e17656935B65E36dC6F6a",
       routerAddress: "0x0B9376Ae7203657fEab7108cfe83e328e7a99ABf",
       datatokenList: "QmUcsbmbYT6sFTAzsoH1jtgzwi9B3RhBsZzFHjbs6igoQg",
       tokenList: "https://raw.githubusercontent.com/Uniswap/default-token-list/main/src/tokens/rinkeby.json",

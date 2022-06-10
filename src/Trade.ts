@@ -1,25 +1,27 @@
 import Web3 from "web3";
 import Base from "./Base";
 import Ocean from "./Ocean";
-import { Contract } from "web3-eth-contract";
-import adapterABI from "./abi/UniV2AdapterAbi.json";
+import { Contract } from "web3-eth/node_modules/web3-eth-contract";
+import adapterABI from "./abi/rinkeby/UniV2Adapter-abi.json";
 import { getFairGasPrice } from "./utils";
 import { TransactionReceipt } from "web3-core";
 import BigNumber from "bignumber.js";
+import { AbiItem } from "web3-utils";
 export default class Trade extends Base {
   private ocean: Ocean;
-  private adapterAddress: string = this.config.default.uniV2AdapterAddress;
+  private adapterAddress: string 
   private adapter: Contract;
   private GASLIMIT_DEFAULT = 1000000;
 
   constructor(web3: Web3, networkId: string, ocean?: Ocean) {
     super(web3, networkId);
+    this.adapterAddress = this.config.custom[4].uniV2AdapterAddress
 
     ocean
       ? (this.ocean = ocean)
       : (this.ocean = new Ocean(this.web3, this.networkId));
 
-    this.adapter = this.web3.eth.Conract(adapterABI, this.adapterAddress);
+    this.adapter = new this.web3.eth.Contract(adapterABI as AbiItem[], this.adapterAddress);
   }
 
   /**

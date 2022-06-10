@@ -2,11 +2,11 @@ import Base from "./Base";
 import BigNumber from "bignumber.js";
 import Ocean from "./Ocean";
 import Web3 from "web3";
-import stakeRouterAbi from "./abi/StakeRouterAbi.json";
+import stakeRouterAbi from "./abi/rinkeby/StakeRouter-abi.json";
 import { getFairGasPrice } from "./utils/";
 import { TransactionReceipt } from "web3-core";
-import { Contract } from "web3-eth-contract";
-
+import { Contract } from "web3-eth/node_modules/web3-eth-contract";
+import { AbiItem } from "web3-utils";
 
 /** IStakeInfo parameters
  *
@@ -73,8 +73,8 @@ export default class Stake extends Base {
       ? (this.ocean = ocean)
       : (this.ocean = new Ocean(web3, this.networkId));
 
-    this.stakeRouter = this.web3.eth.Contract(
-      stakeRouterAbi,
+    this.stakeRouter = new this.web3.eth.Contract(
+      stakeRouterAbi as AbiItem[],
       this.stakeRouterAddress
     );
   }
