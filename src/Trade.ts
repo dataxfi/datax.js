@@ -9,19 +9,22 @@ import BigNumber from "bignumber.js";
 import { AbiItem } from "web3-utils";
 export default class Trade extends Base {
   private ocean: Ocean;
-  private adapterAddress: string 
+  private adapterAddress: string;
   private adapter: Contract;
   private GASLIMIT_DEFAULT = 1000000;
 
   constructor(web3: Web3, networkId: string, ocean?: Ocean) {
     super(web3, networkId);
-    this.adapterAddress = this.config.custom[4].uniV2AdapterAddress
+    this.adapterAddress = this.config.custom[4].uniV2AdapterAddress;
 
     ocean
       ? (this.ocean = ocean)
       : (this.ocean = new Ocean(this.web3, this.networkId));
 
-    this.adapter = new this.web3.eth.Contract(adapterABI as AbiItem[], this.adapterAddress);
+    this.adapter = new this.web3.eth.Contract(
+      adapterABI as AbiItem[],
+      this.adapterAddress
+    );
   }
 
   /**
@@ -29,15 +32,15 @@ export default class Trade extends Base {
    * transaction amount is less than user balance, that the user is approved to spend the
    * transaction amount, and if the max exchange is greater than the transaction amount.
    * @param inAddress - The token in address.
-   * @param outAddress - The token out address.
+   * @param tokenOut - The token out address.
    * @param senderAddress - The sender of the transaction.
    * @param amount - The token in amount.
    * @param spender - The contract the transaction will be sent to.
    */
 
   private async preSwapChecks(
-    inAddress: string,
-    outAddress: string,
+    tokenIn: { address: string; pool?: string },
+    tokenOut: { address: string; pool?: string },
     senderAddress: string,
     amountIn: string,
     amountOut: string,
@@ -46,7 +49,7 @@ export default class Trade extends Base {
     const inBigNum = new BigNumber(amountIn);
     const outBigNum = new BigNumber(amountOut);
     const balance = new BigNumber(
-      await this.ocean.getBalance(inAddress, senderAddress)
+      await this.ocean.getBalance(tokenIn.address, senderAddress)
     );
 
     if (balance.lt(inBigNum)) {
@@ -55,7 +58,7 @@ export default class Trade extends Base {
 
     //check approval limit vs tx amount
     const isApproved = await this.ocean.checkIfApproved(
-      inAddress,
+      tokenIn.address,
       senderAddress,
       spender,
       amountIn
@@ -64,29 +67,35 @@ export default class Trade extends Base {
     //approve if not approved
     if (!isApproved)
       try {
-        await this.ocean.approve(inAddress, spender, amountIn, senderAddress);
+        await this.ocean.approve(
+          tokenIn.address,
+          spender,
+          amountIn,
+          senderAddress
+        );
       } catch (error) {
         throw {
           Code: 1000,
-          Message: "Transaction could not be processed.",
+          Message: "Failed to approve tokens.",
           error,
         };
       }
 
-    //check max exchange vs tx amount
-    const max = await this.ocean.getMaxExchange(
-      inAddress,
-      outAddress,
-      senderAddress
-    );
+    // //check max exchange vs tx amount
+    // if (tokenIn.pool && tokenOut.pool) {
+    //   const { maxIn, maxOut } = await this.ocean.getMaxInAndOut(
+    //     tokenIn,
+    //     tokenOut
+    //   );
 
-    if (max.maxSell.lt(inBigNum) || max.maxBuy.lt(outBigNum))
-      throw new Error("Transaction amount is greater than max.");
+    //   if (maxIn.lt(inBigNum) || maxOut.lt(outBigNum))
+    //     throw new Error("Transaction amount is greater than max.");
+    // }
   }
 
   /**
-   * Construct and execute a swap transaction function in a standard way. The
-   * will call estimateGas, then call the transaction. This function assumes the
+   * Construct and execute a swap transaction function in a standard way. Will
+   * call estimateGas, then call the transaction. This function assumes the
    * transaction will be successful, and does not make any pre tx checks. Built in
    * error handling will pass errorMessage along with the origional error message.
    *
@@ -147,8 +156,8 @@ export default class Trade extends Base {
     senderAddress: string
   ): Promise<TransactionReceipt> {
     await this.preSwapChecks(
-      path[0],
-      path[path.length],
+      { address: path[0] },
+      { address: path[path.length] },
       senderAddress,
       maxAmountIn,
       amountOut,
@@ -183,8 +192,8 @@ export default class Trade extends Base {
     senderAddress: string
   ): Promise<TransactionReceipt> {
     await this.preSwapChecks(
-      path[0],
-      path[path.length],
+      { address: path[0] },
+      { address: path[path.length] },
       senderAddress,
       amountIn,
       amountOutMin,
@@ -219,8 +228,8 @@ export default class Trade extends Base {
     senderAddress: string
   ): Promise<TransactionReceipt> {
     await this.preSwapChecks(
-      path[0],
-      path[path.length],
+      { address: path[0] },
+      { address: path[path.length] },
       senderAddress,
       amountInMax,
       amountOut,
@@ -253,8 +262,8 @@ export default class Trade extends Base {
     senderAddress: string
   ): Promise<TransactionReceipt> {
     await this.preSwapChecks(
-      path[0],
-      path[path.length],
+      { address: path[0] },
+      { address: path[path.length] },
       senderAddress,
       amountIn,
       amountOutMin,
@@ -287,8 +296,8 @@ export default class Trade extends Base {
     senderAddress: string
   ): Promise<TransactionReceipt> {
     await this.preSwapChecks(
-      path[0],
-      path[path.length],
+      { address: path[0] },
+      { address: path[path.length] },
       senderAddress,
       amountIn,
       amountOutMin,
@@ -322,8 +331,8 @@ export default class Trade extends Base {
     senderAddress: string
   ): Promise<TransactionReceipt> {
     await this.preSwapChecks(
-      path[0],
-      path[path.length],
+      { address: path[0] },
+      { address: path[path.length] },
       senderAddress,
       amountInMax,
       amountOut,

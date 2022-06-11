@@ -32,7 +32,6 @@ export async function getMaxAddLiquidity(
   tokenAddress: string
 ): Promise<BigNumber> {
   const reserve = await poolInstance.getReserve(poolAddress, tokenAddress);
-
   return calcMaxExactIn(reserve);
 }
 
@@ -42,6 +41,5 @@ export async function getMaxRemoveLiquidity(
   tokenAddress: string
 ): Promise<BigNumber> {
   const reserve = await poolInstance.getReserve(poolAddress, tokenAddress);
-
   return calcMaxExactIn(reserve);
 }

@@ -1,4 +1,4 @@
-import Utils from "./Utils";
+import Ocean from "./Ocean";
 import TokenList from "./TokenList";
 import Config from "./Config";
 import Watcher from "./Watcher";
@@ -18,7 +18,7 @@ import {
 } from "./@types/datax-types";
 
 export {
-  Utils as Ocean,
+  Ocean,
   TokenList,
   Watcher,
   Config,
