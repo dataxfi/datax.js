@@ -29,9 +29,9 @@ export default class Trade extends Base {
 
   /**
    * Conducts preliminary checks to be made before a swap transaction is emitted. Checks wether
-   * transaction amount is less than user balance, that the user is approved to spend the
+   * transaction amount is less than user balance and that the user is approved to spend the
    * transaction amount. Route mapping should filter out pools without enough liquidity rendering
-   * max exchange checks unecessary.
+   * max exchange checks unecessary when the swap path is predetermined.
    * @param inAddress - The token in address.
    * @param tokenOut - The token out address.
    * @param senderAddress - The sender of the transaction.
