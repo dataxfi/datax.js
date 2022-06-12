@@ -30,7 +30,8 @@ export default class Trade extends Base {
   /**
    * Conducts preliminary checks to be made before a swap transaction is emitted. Checks wether
    * transaction amount is less than user balance, that the user is approved to spend the
-   * transaction amount, and if the max exchange is greater than the transaction amount.
+   * transaction amount. Route mapping should filter out pools without enough liquidity rendering
+   * max exchange checks unecessary.
    * @param inAddress - The token in address.
    * @param tokenOut - The token out address.
    * @param senderAddress - The sender of the transaction.
@@ -39,8 +40,7 @@ export default class Trade extends Base {
    */
 
   private async preSwapChecks(
-    tokenIn: { address: string; pool?: string },
-    tokenOut: { address: string; pool?: string },
+    tokenIn: string,
     senderAddress: string,
     amountIn: string,
     amountOut: string,
@@ -49,7 +49,7 @@ export default class Trade extends Base {
     const inBigNum = new BigNumber(amountIn);
     const outBigNum = new BigNumber(amountOut);
     const balance = new BigNumber(
-      await this.ocean.getBalance(tokenIn.address, senderAddress)
+      await this.ocean.getBalance(tokenIn, senderAddress)
     );
 
     if (balance.lt(inBigNum)) {
@@ -58,7 +58,7 @@ export default class Trade extends Base {
 
     //check approval limit vs tx amount
     const isApproved = await this.ocean.checkIfApproved(
-      tokenIn.address,
+      tokenIn,
       senderAddress,
       spender,
       amountIn
@@ -67,12 +67,7 @@ export default class Trade extends Base {
     //approve if not approved
     if (!isApproved)
       try {
-        await this.ocean.approve(
-          tokenIn.address,
-          spender,
-          amountIn,
-          senderAddress
-        );
+        await this.ocean.approve(tokenIn, spender, amountIn, senderAddress);
       } catch (error) {
         throw {
           Code: 1000,
@@ -80,18 +75,6 @@ export default class Trade extends Base {
           error,
         };
       }
-
-      //TODO: The pathfinder needs to return the first and last pool
-    // //check max exchange vs tx amount
-    // if (tokenIn.pool && tokenOut.pool) {
-    //   const { maxIn, maxOut } = await this.ocean.getMaxInAndOut(
-    //     tokenIn,
-    //     tokenOut
-    //   );
-
-    //   if (maxIn.lt(inBigNum) || maxOut.lt(outBigNum))
-    //     throw new Error("Transaction amount is greater than max.");
-    // }
   }
 
   /**
@@ -157,8 +140,7 @@ export default class Trade extends Base {
     senderAddress: string
   ): Promise<TransactionReceipt> {
     await this.preSwapChecks(
-      { address: path[0] },
-      { address: path[path.length] },
+      path[0],
       senderAddress,
       maxAmountIn,
       amountOut,
@@ -193,8 +175,7 @@ export default class Trade extends Base {
     senderAddress: string
   ): Promise<TransactionReceipt> {
     await this.preSwapChecks(
-      { address: path[0] },
-      { address: path[path.length] },
+      path[0],
       senderAddress,
       amountIn,
       amountOutMin,
@@ -229,8 +210,7 @@ export default class Trade extends Base {
     senderAddress: string
   ): Promise<TransactionReceipt> {
     await this.preSwapChecks(
-      { address: path[0] },
-      { address: path[path.length] },
+      path[0],
       senderAddress,
       amountInMax,
       amountOut,
@@ -263,8 +243,7 @@ export default class Trade extends Base {
     senderAddress: string
   ): Promise<TransactionReceipt> {
     await this.preSwapChecks(
-      { address: path[0] },
-      { address: path[path.length] },
+      path[0],
       senderAddress,
       amountIn,
       amountOutMin,
@@ -297,8 +276,7 @@ export default class Trade extends Base {
     senderAddress: string
   ): Promise<TransactionReceipt> {
     await this.preSwapChecks(
-      { address: path[0] },
-      { address: path[path.length] },
+      path[0],
       senderAddress,
       amountIn,
       amountOutMin,
@@ -332,8 +310,7 @@ export default class Trade extends Base {
     senderAddress: string
   ): Promise<TransactionReceipt> {
     await this.preSwapChecks(
-      { address: path[0] },
-      { address: path[path.length] },
+      path[0],
       senderAddress,
       amountInMax,
       amountOut,
