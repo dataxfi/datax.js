@@ -78,7 +78,7 @@ export default class TokenList extends Base {
     chainId: number
   ): Promise<any> {
     try {
-      const aquariusUrl = this.config.defaultConfig.metadataCacheUri;
+      const aquariusUrl = this.config.default.metadataCacheUri;
       let resp = await axios(aquariusUrl + "/api/v1/aquarius/assets/ddo");
       let ddos = resp.data;
 
@@ -128,7 +128,7 @@ export default class TokenList extends Base {
     chainId: number
   ): Promise<any> {
     try {
-      const aquariusUrl = this.config.defaultConfig.metadataCacheUri;
+      const aquariusUrl = this.config.default.metadataCacheUri;
       let resp = await axios(aquariusUrl + "/api/v1/aquarius/assets/ddo");
       let ddos = resp.data;
 
@@ -297,7 +297,7 @@ export default class TokenList extends Base {
       let oceantoken = [
         {
           chainId,
-          address: this.config.defaultConfig.oceanTokenAddress,
+          address: this.config.default.oceanTokenAddress,
           symbol: "OCEAN",
           name: "Ocean Token",
           decimals: 18,

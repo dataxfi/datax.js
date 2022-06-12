@@ -81,6 +81,7 @@ export default class Trade extends Base {
         };
       }
 
+      //TODO: The pathfinder needs to return the first and last pool
     // //check max exchange vs tx amount
     // if (tokenIn.pool && tokenOut.pool) {
     //   const { maxIn, maxOut } = await this.ocean.getMaxInAndOut(
