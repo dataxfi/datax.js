@@ -3,7 +3,7 @@ import { AbiItem } from 'web3-utils/types'
 
 import defaultFactoryABI from '@oceanprotocol/contracts/artifacts/DTFactory.json'
 import defaultDatatokensABI from '@oceanprotocol/contracts/artifacts/DataTokenTemplate.json'
-import { Logger, getFairGasPrice } from './utils'
+import { Logger, getFairGasPrice } from './utils/'
 import { TransactionReceipt } from 'web3-core'
 import BigNumber from 'bignumber.js'
 import Decimal from 'decimal.js'

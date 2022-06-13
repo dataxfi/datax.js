@@ -1,6 +1,6 @@
 import Web3 from 'web3'
 import { AbiItem } from 'web3-utils/types'
-import { Logger } from '../utils'
+import { Logger } from '../utils/'
 import jsonFactoryABI from '@oceanprotocol/contracts/artifacts/BFactory.json'
 import { TransactionReceipt } from 'web3-core'
 

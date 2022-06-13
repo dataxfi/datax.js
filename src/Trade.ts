@@ -2,11 +2,11 @@ import Web3 from "web3";
 import Base from "./Base";
 import Ocean from "./Ocean";
 import { Contract } from "web3-eth/node_modules/web3-eth-contract";
-import { getFairGasPrice } from "./utils";
 import { TransactionReceipt } from "web3-core";
 import BigNumber from "bignumber.js";
 import { AbiItem } from "web3-utils";
 import adapterABI from "./abi/rinkeby/UniV2Adapter-abi.json";
+import { getFairGasPrice } from "./utils/";
 
 export default class Trade extends Base {
   private ocean: Ocean;
