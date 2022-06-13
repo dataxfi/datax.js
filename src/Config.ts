@@ -43,6 +43,8 @@ export default class Config {
 
   public custom = {
     "1": {
+      stakeRouterAddress: "",
+      uniV2AdapterAddress: "",
       routerAddress: "0x8d41dd706b964408f7702c8b52488023731b6748",
       datatokenList: "Qmc8Dp1U2kW6FJbpUYGr5W6sVyJsQeQzVundT9vooCH6aX",
       tokenList: "https://tokens.uniswap.org/",
@@ -58,6 +60,8 @@ export default class Config {
       nativeAddress: "0xc778417E063141139Fce010982780140Aa0cD5Ab",
     },
     "137": {
+      stakeRouterAddress: "",
+      uniV2AdapterAddress: "",
       routerAddress: "0xf2E1cf99b69C7c1152EF273217Adb62F5dAe3886",
       datatokenList: "",
       tokenList:
@@ -65,12 +69,16 @@ export default class Config {
       nativeAddress: "0x0000000000000000000000000000000000001010",
     },
     "56": {
+      stakeRouterAddress: "",
+      uniV2AdapterAddress: "",
       routerAddress: "",
       datatokenList: "",
       tokenList: "https://tokens.pancakeswap.finance/pancakeswap-extended.json",
       nativeAddress: "0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c",
     },
     "1285": {
+      stakeRouterAddress: "",
+      uniV2AdapterAddress: "",
       routerAddress: "",
       datatokenList: "",
       tokenList:
@@ -78,6 +86,8 @@ export default class Config {
       nativeAddress: "0x98878B06940aE243284CA214f92Bb71a2b032B8A",
     },
     "246": {
+      stakeRouterAddress: "",
+      uniV2AdapterAddress: "",
       routerAddress: "0x44b89BA2796E43aF07aBeF6D3324C8273e64F0dE",
       datatokenList: "",
       tokenList:
