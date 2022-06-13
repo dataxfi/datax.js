@@ -46,33 +46,43 @@ export default class Config {
       routerAddress: "0x8d41dd706b964408f7702c8b52488023731b6748",
       datatokenList: "Qmc8Dp1U2kW6FJbpUYGr5W6sVyJsQeQzVundT9vooCH6aX",
       tokenList: "https://tokens.uniswap.org/",
+      nativeAddress: "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2",
     },
     "4": {
       stakeRouterAddress: "0x580DE256179B0F8BEe9A4d882E354967d30a0ef6",
       uniV2AdapterAddress: "0x5B7ca74D5D806Ade232e17656935B65E36dC6F6a",
       routerAddress: "0x0B9376Ae7203657fEab7108cfe83e328e7a99ABf",
       datatokenList: "QmUcsbmbYT6sFTAzsoH1jtgzwi9B3RhBsZzFHjbs6igoQg",
-      tokenList: "https://raw.githubusercontent.com/Uniswap/default-token-list/main/src/tokens/rinkeby.json",
+      tokenList:
+        "https://raw.githubusercontent.com/Uniswap/default-token-list/main/src/tokens/rinkeby.json",
+      nativeAddress: "0xc778417E063141139Fce010982780140Aa0cD5Ab",
     },
     "137": {
       routerAddress: "0xf2E1cf99b69C7c1152EF273217Adb62F5dAe3886",
       datatokenList: "",
-      tokenList: "https://unpkg.com/quickswap-default-token-list@1.2.26/build/quickswap-default.tokenlist.json",
+      tokenList:
+        "https://unpkg.com/quickswap-default-token-list@1.2.26/build/quickswap-default.tokenlist.json",
+      nativeAddress: "0x0000000000000000000000000000000000001010",
     },
     "56": {
       routerAddress: "",
       datatokenList: "",
       tokenList: "https://tokens.pancakeswap.finance/pancakeswap-extended.json",
+      nativeAddress: "0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c",
     },
     "1285": {
       routerAddress: "",
       datatokenList: "",
-      tokenList: "https://raw.githubusercontent.com/solarbeamio/solarbeam-tokenlist/main/solarbeam.tokenlist.json",
+      tokenList:
+        "https://raw.githubusercontent.com/solarbeamio/solarbeam-tokenlist/main/solarbeam.tokenlist.json",
+      nativeAddress: "0x98878B06940aE243284CA214f92Bb71a2b032B8A",
     },
     "246": {
       routerAddress: "0x44b89BA2796E43aF07aBeF6D3324C8273e64F0dE",
       datatokenList: "",
-      tokenList: "https://raw.githubusercontent.com/carbonswap/assets/master/carbonswap/Carbonswap_List.json",
+      tokenList:
+        "https://raw.githubusercontent.com/carbonswap/assets/master/carbonswap/Carbonswap_List.json",
+      nativeAddress: "0x6b3bd0478DF0eC4984b168Db0E12A539Cc0c83cd",
     },
   };
 
