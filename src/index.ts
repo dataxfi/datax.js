@@ -2,6 +2,7 @@ import Ocean from "./Ocean";
 import TokenList from "./TokenList";
 import Config from "./Config";
 import Watcher from "./Watcher";
+import Trade from "./Trade"
 import {
   PoolTransactionType,
   IMaxUnstake,
@@ -34,4 +35,5 @@ export {
   IPoolDetails,
   IPoolTransaction,
   ITokensToAdd,
+  Trade
 };
