@@ -318,11 +318,27 @@ export default class Stake extends Base {
    * @returns {string} Claim amount collected for the token passed.
    */
   public async claimRefFees(tokenAddress: string, senderAddress: string) {
-    return await this.constructTxFunction(
-      senderAddress,
-      tokenAddress,
-      this.stakeRouter.methods.claimRefFees,
-      "Failed to claim refferer fees for this token"
-    );
+    let estGas;
+    try {
+      estGas = await this.stakeRouter.methods
+        .claimRefFees(tokenAddress)
+        .estimateGas({ from: senderAddress }, (err, estGas) =>
+          err ? this.GASLIMIT_DEFAULT : estGas
+        );
+    } catch (error) {
+      estGas = this.GASLIMIT_DEFAULT;
+    }
+
+    try {
+      return await this.stakeRouter.methods.claimRefFees(tokenAddress).send({
+        from: senderAddress,
+        gas: estGas + 1,
+        gasPrice: await getFairGasPrice(this.web3),
+      });
+    } catch (error) {
+      throw new Error(
+        `${"Failed to claim refferer fees for this token"} : ${error.message}`
+      );
+    }
   }
 }
