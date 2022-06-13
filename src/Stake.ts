@@ -51,8 +51,8 @@ import { AbiItem } from "web3-utils";
  */
 
 interface IStakeInfo {
-  address: string[]; //[pool, to, refAddress, adapterAddress]
-  uint256: string[]; //[amountOut/minAmountOut, refFees, amountIn/maxAmountIn]
+  meta: string[]; //[pool, to, refAddress, adapterAddress]
+  uints: string[]; //[amountOut/minAmountOut, refFees, amountIn/maxAmountIn]
   path: string[]; // swap path between tokens e.g. USDT -> ETH -> OCEAN
 }
 
@@ -188,10 +188,10 @@ export default class Stake extends Base {
     // checks balance, approval, and max
     await this.preStakeChecks(
       stakeInfo.path[0],
-      stakeInfo.address[1],
-      stakeInfo.uint256[2],
-      stakeInfo.address[3],
-      stakeInfo.address[0]
+      stakeInfo.meta[1],
+      stakeInfo.uints[2],
+      stakeInfo.meta[3],
+      stakeInfo.meta[0]
     );
 
     return await this.constructTxFunction(
@@ -215,10 +215,10 @@ export default class Stake extends Base {
   ): Promise<TransactionReceipt> {
     await this.preStakeChecks(
       stakeInfo.path[0],
-      stakeInfo.address[1],
-      stakeInfo.uint256[0],
-      stakeInfo.address[3],
-      stakeInfo.address[0]
+      stakeInfo.meta[1],
+      stakeInfo.uints[0],
+      stakeInfo.meta[3],
+      stakeInfo.meta[0]
     );
 
     return await this.constructTxFunction(
@@ -243,10 +243,10 @@ export default class Stake extends Base {
   ): Promise<TransactionReceipt> {
     await this.preStakeChecks(
       stakeInfo.path[0],
-      stakeInfo.address[1],
-      stakeInfo.uint256[2],
-      stakeInfo.address[3],
-      stakeInfo.address[0]
+      stakeInfo.meta[1],
+      stakeInfo.uints[2],
+      stakeInfo.meta[3],
+      stakeInfo.meta[0]
     );
 
     return await this.constructTxFunction(
@@ -270,10 +270,10 @@ export default class Stake extends Base {
   ): Promise<TransactionReceipt> {
     await this.preStakeChecks(
       stakeInfo.path[0],
-      stakeInfo.address[1],
-      stakeInfo.uint256[0],
-      stakeInfo.address[3],
-      stakeInfo.address[0]
+      stakeInfo.meta[1],
+      stakeInfo.uints[0],
+      stakeInfo.meta[3],
+      stakeInfo.meta[0]
     );
 
     return await this.constructTxFunction(
@@ -302,9 +302,9 @@ export default class Stake extends Base {
     const newStakeInfo = {
       ...stakeInfo,
       uint256: [
-        toWei(stakeInfo.uint256[0]),
-        toWei(stakeInfo.uint256[1]),
-        toWei(stakeInfo.uint256[2]),
+        toWei(stakeInfo.uints[0]),
+        toWei(stakeInfo.uints[1]),
+        toWei(stakeInfo.uints[2]),
       ],
     };
     try {

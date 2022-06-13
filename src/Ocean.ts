@@ -75,7 +75,7 @@ export default class Ocean extends Base {
     } catch (error) {
       throw {
         Code: 1000,
-        Message: "We ran into a problem, please refresh your page.",
+        Message: "We ran into a problem, please refresh your connection.",
         error,
       };
     }
@@ -100,7 +100,7 @@ export default class Ocean extends Base {
     } catch (error) {
       throw {
         Code: 1000,
-        Message: "We ran into a problem, please refresh your page.",
+        Message: "We ran into a problem, please refresh your connection.",
         error,
       };
     }
@@ -123,7 +123,7 @@ export default class Ocean extends Base {
     } catch (error) {
       throw {
         Code: 1000,
-        Message: "We ran into a problem, please refresh your page.",
+        Message: "We ran into a problem, please refresh your connection.",
         error,
       };
     }
@@ -320,10 +320,10 @@ export default class Ocean extends Base {
   }
 
   /**
-   * This function will get the max amount in and out of a token pair intended 
-   * to be swapped. The pool used for swapping each token is needed, and can be 
-   * the same pool if they share one. It is important to note that the max 
-   * amount in might equate to be greater than the max amount out, in which case 
+   * This function will get the max amount in and out of a token pair intended
+   * to be swapped. The pool used for swapping each token is needed, and can be
+   * the same pool if they share one. It is important to note that the max
+   * amount in might equate to be greater than the max amount out, in which case
    * the max amount out should limit the max amount in, and vice versa.
    * @param tokenIn
    * @param tokenOut
@@ -343,7 +343,7 @@ export default class Ocean extends Base {
       tokenOut.address
     );
 
-    return {maxIn, maxOut};
+    return { maxIn, maxOut };
   }
 
   /**
@@ -357,7 +357,7 @@ export default class Ocean extends Base {
     } catch (error) {
       throw {
         Code: 1000,
-        Message: "We ran into a problem, please refresh your page.",
+        Message: "We ran into a problem, please refresh your connection.",
         error,
       };
     }
@@ -374,7 +374,7 @@ export default class Ocean extends Base {
     } catch (error) {
       throw {
         Code: 1000,
-        Message: "We ran into a problem, please refresh your page.",
+        Message: "We ran into a problem, please refresh your connection.",
         error,
       };
     }
@@ -395,7 +395,7 @@ export default class Ocean extends Base {
     } catch (error) {
       throw {
         Code: 1000,
-        Message: "We ran into a problem, please refresh your page.",
+        Message: "We ran into a problem, please refresh your connection.",
         error,
       };
     }
@@ -416,7 +416,7 @@ export default class Ocean extends Base {
     } catch (error) {
       throw {
         Code: 1000,
-        Message: "We ran into a problem, please refresh your page.",
+        Message: "We ran into a problem, please refresh your connection.",
         error,
       };
     }
@@ -437,7 +437,7 @@ export default class Ocean extends Base {
     } catch (error) {
       throw {
         Code: 1000,
-        Message: "We ran into a problem, please refresh your page.",
+        Message: "We ran into a problem, please refresh your connection.",
         error,
       };
     }
@@ -458,7 +458,7 @@ export default class Ocean extends Base {
     } catch (error) {
       throw {
         Code: 1000,
-        Message: "We ran into a problem, please refresh your page.",
+        Message: "We ran into a problem, please refresh your connection.",
         error,
       };
     }
@@ -475,7 +475,7 @@ export default class Ocean extends Base {
     } catch (error) {
       throw {
         Code: 1000,
-        Message: "We ran into a problem, please refresh your page.",
+        Message: "We ran into a problem, please refresh your connection.",
         error,
       };
     }
@@ -502,7 +502,7 @@ export default class Ocean extends Base {
     } catch (error) {
       throw {
         Code: 1000,
-        Message: "We ran into a problem, please refresh your page.",
+        Message: "We ran into a problem, please refresh your connection.",
         error,
       };
     }
@@ -523,7 +523,7 @@ export default class Ocean extends Base {
     } catch (error) {
       throw {
         Code: 1000,
-        Message: "We ran into a problem, please refresh your page.",
+        Message: "We ran into a problem, please refresh your connection.",
         error,
       };
     }
@@ -545,7 +545,7 @@ export default class Ocean extends Base {
     } catch (error) {
       throw {
         Code: 1000,
-        Message: "We ran into a problem, please refresh your page.",
+        Message: "We ran into a problem, please refresh your connection.",
         error,
       };
     }
@@ -569,7 +569,7 @@ export default class Ocean extends Base {
     } catch (error) {
       throw {
         Code: 1000,
-        Message: "We ran into a problem, please refresh your page.",
+        Message: "We ran into a problem, please refresh your connection.",
         error,
       };
     }
@@ -594,7 +594,7 @@ export default class Ocean extends Base {
     } catch (error) {
       throw {
         Code: 1000,
-        Message: "We ran into a problem, please refresh your page.",
+        Message: "We ran into a problem, please refresh your connection.",
         error,
       };
     }
@@ -611,7 +611,7 @@ export default class Ocean extends Base {
     } catch (error) {
       throw {
         Code: 1000,
-        Message: "We ran into a problem, please refresh your page.",
+        Message: "We ran into a problem, please refresh your connection.",
         error,
       };
     }
@@ -633,7 +633,7 @@ export default class Ocean extends Base {
     } catch (error) {
       throw {
         Code: 1000,
-        Message: "We ran into a problem, please refresh your page.",
+        Message: "We ran into a problem, please refresh your connection.",
         error,
       };
     }
@@ -670,7 +670,7 @@ export default class Ocean extends Base {
     } catch (error) {
       throw {
         Code: 1000,
-        Message: "We ran into a problem, please refresh your page.",
+        Message: "We ran into a problem, please refresh your connection.",
         error,
       };
     }
@@ -707,7 +707,7 @@ export default class Ocean extends Base {
     } catch (error) {
       throw {
         Code: 1000,
-        Message: "We ran into a problem, please refresh your page.",
+        Message: "We ran into a problem, please refresh your connection.",
         error,
       };
     }
@@ -727,7 +727,7 @@ export default class Ocean extends Base {
     } catch (error) {
       throw {
         Code: 1000,
-        Message: "We ran into a problem, please refresh your page.",
+        Message: "We ran into a problem, please refresh your connection.",
         error,
       };
     }
@@ -747,7 +747,7 @@ export default class Ocean extends Base {
     } catch (error) {
       throw {
         Code: 1000,
-        Message: "We ran into a problem, please refresh your page.",
+        Message: "We ran into a problem, please refresh your connection.",
         error,
       };
     }
@@ -774,7 +774,7 @@ export default class Ocean extends Base {
     } catch (error) {
       throw {
         Code: 1000,
-        Message: "We ran into a problem, please refresh your page.",
+        Message: "We ran into a problem, please refresh your connection.",
         error,
       };
     }
@@ -798,7 +798,27 @@ export default class Ocean extends Base {
     } catch (error) {
       throw {
         Code: 1000,
-        Message: "We ran into a problem, please refresh your page.",
+        Message: "We ran into a problem, please refresh your connection.",
+        error,
+      };
+    }
+  }
+
+  public async getSharesReceivedForTokenIn(
+    poolAddress: string,
+    tokenInAddress: string,
+    tokenInAmount: string
+  ) {
+    try {
+      return await this.oceanPool.calcPoolOutGivenSingleIn(
+        poolAddress,
+        tokenInAddress,
+        tokenInAmount
+      );
+    } catch (error) {
+      throw {
+        Code: 1000,
+        Message: "We ran into a problem, please refresh your connection.",
         error,
       };
     }
