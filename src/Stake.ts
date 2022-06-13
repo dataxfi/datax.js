@@ -101,13 +101,16 @@ export default class Stake extends Base {
 
   private async constructTxFunction(
     senderAddress: string,
-    stakeInfo: IStakeInfo | string,
+    stakeInfo: IStakeInfo,
     stakeFunction: Function,
     errorMessage: string
   ): Promise<TransactionReceipt> {
     let estGas;
+    const newUints = stakeInfo.uints.map((amt) => this.web3.utils.toWei(amt));
+    const newStakeInfo = { ...stakeInfo, uints: newUints };
+
     try {
-      estGas = await stakeFunction(stakeInfo).estimateGas(
+      estGas = await stakeFunction(newStakeInfo).estimateGas(
         { from: senderAddress },
         (err, estGas) => (err ? this.GASLIMIT_DEFAULT : estGas)
       );
@@ -116,7 +119,7 @@ export default class Stake extends Base {
     }
 
     try {
-      return await stakeFunction(stakeInfo).send({
+      return await stakeFunction(newStakeInfo).send({
         from: senderAddress,
         gas: estGas + 1,
         gasPrice: await getFairGasPrice(this.web3),

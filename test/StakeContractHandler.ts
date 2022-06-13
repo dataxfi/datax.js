@@ -1,5 +1,5 @@
 import Web3 from "web3"
-
+import stakeRouterABI from "../src/abi/rinkeby/StakeRouter-abi.json"
 export default class StakeContractHandler{
     
 
