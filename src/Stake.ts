@@ -253,14 +253,10 @@ export default class Stake extends Base {
     calcFunction: Function,
     errorMessage: string
   ): Promise<string> {
-    const toWei = (amount) => this.web3.utils.toWei(amount);
-    const newStakeInfo = {
+    const toWei = (amount:string) => this.web3.utils.toWei(amount);
+    const newStakeInfo: IStakeInfo = {
       ...stakeInfo,
-      uint256: [
-        toWei(stakeInfo.uints[0]),
-        toWei(stakeInfo.uints[1]),
-        toWei(stakeInfo.uints[2]),
-      ],
+      uints: stakeInfo.uints.map(toWei),
     };
     try {
       const resultInWei = await calcFunction(newStakeInfo).call();
