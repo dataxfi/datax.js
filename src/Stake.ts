@@ -14,8 +14,7 @@ export default class Stake extends Base {
   private stakeRouter: Contract;
   private GASLIMIT_DEFAULT = 1000000;
   private stakeFailureMessage =
-    "ERROR: Failed to pay tokens in order to \
-  join the pool";
+    "ERROR: Failed to pay tokens in order to join the pool";
   private unstakeFailureMessage =
     "ERROR: Failed to pay pool shares into the pool";
 
@@ -109,12 +108,14 @@ export default class Stake extends Base {
     const newUints = stakeInfo.uints.map((amt) => this.web3.utils.toWei(amt));
     const newStakeInfo = { ...stakeInfo, uints: newUints };
 
+    console.log(newStakeInfo);
     try {
       estGas = await stakeFunction(newStakeInfo).estimateGas(
         { from: senderAddress },
         (err, estGas) => (err ? this.GASLIMIT_DEFAULT : estGas)
       );
     } catch (error) {
+      console.error(error);
       estGas = this.GASLIMIT_DEFAULT;
     }
 
@@ -253,7 +254,7 @@ export default class Stake extends Base {
     calcFunction: Function,
     errorMessage: string
   ): Promise<string> {
-    const toWei = (amount:string) => this.web3.utils.toWei(amount);
+    const toWei = (amount: string) => this.web3.utils.toWei(amount);
     const newStakeInfo: IStakeInfo = {
       ...stakeInfo,
       uints: stakeInfo.uints.map(toWei),

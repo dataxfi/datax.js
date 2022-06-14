@@ -2,7 +2,7 @@
  *
  * stakeInfo.address - An array of all the addresses relevant to the transaction to be made.
  *
- * address[0] = pool - The pool hash address involved in the transaction.
+ * address[0] = pool - The pool address involved in the transaction.
  *
  * address[1] = to - The account to be credited with the output of the transaction.
  *
