@@ -11,7 +11,7 @@ import Decimal from 'decimal.js'
 /**
  * Provides an interface to DataTokens
  */
-export class DataTokens {
+export default class DataTokens {
   public GASLIMIT_DEFAULT = 1000000
   public factoryAddress: string
   public factoryABI: AbiItem | AbiItem[]

@@ -1,5 +1,5 @@
 import { OceanPool, Pool } from "./balancer";
-import { DataTokens } from "./Datatokens";
+import DataTokens from "./Datatokens";
 import { Logger } from "./utils/Logger";
 import { TransactionReceipt } from "web3-core";
 import { AbiItem } from "web3-utils/types";
