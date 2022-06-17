@@ -111,8 +111,9 @@ export default class Stake extends Base {
 
     console.log(newStakeInfo);
     try {
-      estGas = await stakeFunction(newStakeInfo).estimateGas({ from: senderAddress }, (err, estGas) =>
-        err ? this.GASLIMIT_DEFAULT : estGas
+      estGas = await stakeFunction(newStakeInfo).estimateGas(
+        { from: senderAddress },
+        (err, estGas) => (err ? this.GASLIMIT_DEFAULT : estGas)
       );
     } catch (error) {
       console.error(error);
@@ -253,7 +254,7 @@ export default class Stake extends Base {
     stakeInfo: IStakeInfo,
     calcFunction: Function,
     errorMessage: string
-  ): Promise<string> {
+  ): Promise<{ dataxFee: string; poolAmountOut: string; refFee: string }> {
     const toWei = (amount: string) => this.web3.utils.toWei(amount);
     const uints = stakeInfo.uints.map(toWei) as [string, string, string];
 
@@ -261,7 +262,6 @@ export default class Stake extends Base {
       ...stakeInfo,
       uints,
     };
-
 
     try {
       return await calcFunction(newStakeInfo).call();
