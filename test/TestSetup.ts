@@ -20,8 +20,12 @@ import bFactory from "@oceanprotocol/contracts/artifacts/BFactory.json";
 import bPool from "@oceanprotocol/contracts/artifacts/BPool.json";
 // import bToken from "@oceanprotocol/contracts/artifacts/BToken.json";
 import { AbiItem } from "web3-utils";
-import { BalancerContractHandler } from "./BalancerContractHandler";
+import univ2abi from '../src/abi/rinkeby/UniV2Adapter-abi.json'
+import univ2bytecode from '../src/abi/rinkeby/UniV2Adapter-bytecode.json'
+// import { BalancerContractHandler } from "./BalancerContractHandler";
 import { Logger } from "../src/utils";
+import  UniswapV2Factory from './uniswap-abis/UniswapV2Factory.json'
+import  UniswapV2RouterO2 from './uniswap-abis/UniswapV2Router02.json'
 
 /**
  * Sets up instances of classes needed to test datax.js. Every class exported
@@ -140,42 +144,41 @@ export default class TestSetup {
     return [address, contract];
   }
 
-  private async setupTestPool() {
+  // private async setupTestPool() {
+  //   // setup pool for testing
+  //   // block 19
+  //   await setupPool(
+  //     this.sagkriPoolContract,
+  //     this.accounts[1],
+  //     this.sagkri,
+  //     this.web3.utils.toWei(String(this.dtAmount)),
+  //     this.web3.utils.toWei(String(this.dtWeight)),
+  //     this.oceanTokenAddress,
+  //     this.web3.utils.toWei(String(this.oceanAmount)),
+  //     this.web3.utils.toWei(String(this.oceanWeight)),
+  //     this.web3.utils.toWei(String(this.fee))
+  //   );
 
-    // setup pool for testing
-    // block 19
-    await setupPool(
-      this.sagkriPoolContract,
-      this.accounts[1],
-      this.sagkri,
-      this.web3.utils.toWei(String(this.dtAmount)),
-      this.web3.utils.toWei(String(this.dtWeight)),
-      this.oceanTokenAddress,
-      this.web3.utils.toWei(String(this.oceanAmount)),
-      this.web3.utils.toWei(String(this.oceanWeight)),
-      this.web3.utils.toWei(String(this.fee))
-    );
+  //   // block 20
+  //   await setupPool(
+  //     this.dazorcPoolContract,
+  //     this.accounts[1],
+  //     this.sagkri,
+  //     this.web3.utils.toWei(String(this.dtAmount)),
+  //     this.web3.utils.toWei(String(this.dtWeight)),
+  //     this.oceanTokenAddress,
+  //     this.web3.utils.toWei(String(this.oceanAmount)),
+  //     this.web3.utils.toWei(String(this.oceanWeight)),
+  //     this.web3.utils.toWei(String(this.fee))
+  //   );
+  // }
 
-    // block 20
-    await setupPool(
-      this.dazorcPoolContract,
-      this.accounts[1],
-      this.sagkri,
-      this.web3.utils.toWei(String(this.dtAmount)),
-      this.web3.utils.toWei(String(this.dtWeight)),
-      this.oceanTokenAddress,
-      this.web3.utils.toWei(String(this.oceanAmount)),
-      this.web3.utils.toWei(String(this.oceanWeight)),
-      this.web3.utils.toWei(String(this.fee))
-    );
-  }
-
-  public async setupLocalSetup() {
-    await this.setupLocalServer();
-    await this.deployNeededContracts();
-    await this.createTokens();
-    await this.setupTestPool();
-  }
+  // public async setupLocalSetup() {
+  //   await this.setupLocalServer();
+  //   await this.deployNeededContracts();
+  //   await this.createTokens();
+  //   await this.setupTestPool();
+  // }
 
   private async setupPool(
     contract: any,
@@ -301,7 +304,6 @@ export default class TestSetup {
     );
   }
 
-
   private async createTokens(
     datatokenInstance: DataTokens,
     metadataCacheUri: string,
@@ -323,20 +325,27 @@ export default class TestSetup {
     );
   }
 
-  private async mintTokens(datatokenInstance: Datatokens) {
+  private async mintTokens(
+    datatokenInstance: DataTokens,
+    dataTokenAddress: string,
+    address: string,
+    amount: string,
+    toAddress?: string | undefined
+  ) {
     // mint / approve tokens for account 2
-    await this.datatokenInstance.mint(
-      oceanToken,
-      this.accounts[0],
-      "5000",
-      this.accounts[1]
-    ); // block 9
-
-    await this.datatoken.mint(SAGRKI, this.accounts[0], "10", this.accounts[1]); // block 13
+    await datatokenInstance.mint(dataTokenAddress, address, amount, toAddress);
   }
 
+  private async deployUniV2Adapter(){
 
-  // private async 
+    
+    // this can get out of hand quick, saving for later
+    // const [uniFactoryAddress, uniFactoryContract] = await this.deployContract(this.web3, UniswapV2Factory.abi as AbiItem[], this.account_addys10[0], {})
+    
+    // const [uniRouterAddress, uniRouterContract] = await this.deployContract(this.web3, UniswapV2RouterO2.abi as AbiItem[], this.account_addys10[0], {})
+    // await this.deployContract(this.web3, univ2abi, this.account_addys10[0], )
+
+  }
   // await ocean.approve(oceanToken, this.sagkriPool, "10", this.accounts[1]); // block 15
   // await ocean.approve(SAGRKI, this.sagkriPool, "10", this.accounts[1]); // block 16
   // await ocean.approve(SAGRKI, this.sagkriPool, "10", this.accounts[2]); // block 17

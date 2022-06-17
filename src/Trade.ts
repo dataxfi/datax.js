@@ -334,7 +334,8 @@ export default class Trade extends Base {
     amountIn: string,
     path: string[]
   ): Promise<string[]> {
-    return await this.adapter.methods.getAmountsOut(amountIn, path).call();
+    const amountToWei = this.web3.utils.toWei(amountIn);
+    return await this.adapter.methods.getAmountsOut(amountToWei, path).call();
   }
 
   /**
@@ -346,6 +347,7 @@ export default class Trade extends Base {
     amountOut: string,
     path: string[]
   ): Promise<string[]> {
-    return await this.adapter.methods.getAmountsIn(amountOut, path).call();
+    const amountToWei = this.web3.utils.toWei(amountOut);
+    return await this.adapter.methods.getAmountsIn(amountToWei, path).call();
   }
 }

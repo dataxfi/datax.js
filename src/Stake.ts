@@ -49,13 +49,14 @@ export default class Stake extends Base {
     poolAddress: string
   ) {
     const txAmtBigNum = new BigNumber(amount);
-    const balance = new BigNumber(
-      await this.ocean.getBalance(inAddress, senderAddress)
-    );
+    console.log("tx amount", txAmtBigNum.toString());
+    // const balance = new BigNumber(
+    //   await this.ocean.getBalance(inAddress, senderAddress)
+    // );
 
-    if (balance.lt(txAmtBigNum)) {
-      throw new Error("ERROR: Not Enough Balance");
-    }
+    // if (balance.lt(txAmtBigNum)) {
+    //   throw new Error("ERROR: Not Enough Balance");
+    // }
 
     //check approval limit vs tx amount
     const isApproved = await this.ocean.checkIfApproved(
@@ -77,13 +78,13 @@ export default class Stake extends Base {
         };
       }
 
-    //check max stake/unstake vs tx amount
-    const max = new BigNumber(
-      await this.ocean.getMaxStakeAmount(poolAddress, inAddress)
-    );
+    // //check max stake/unstake vs tx amount
+    // const max = new BigNumber(
+    //   await this.ocean.getMaxStakeAmount(poolAddress, inAddress)
+    // );
 
-    if (max.lt(txAmtBigNum))
-      throw new Error("Transaction amount is greater than max.");
+    // if (max.lt(txAmtBigNum))
+    //   throw new Error("Transaction amount is greater than max.");
   }
 
   /**
@@ -110,9 +111,8 @@ export default class Stake extends Base {
 
     console.log(newStakeInfo);
     try {
-      estGas = await stakeFunction(newStakeInfo).estimateGas(
-        { from: senderAddress },
-        (err, estGas) => (err ? this.GASLIMIT_DEFAULT : estGas)
+      estGas = await stakeFunction(newStakeInfo).estimateGas({ from: senderAddress }, (err, estGas) =>
+        err ? this.GASLIMIT_DEFAULT : estGas
       );
     } catch (error) {
       console.error(error);
@@ -197,13 +197,13 @@ export default class Stake extends Base {
     stakeInfo: IStakeInfo,
     senderAddress: string
   ): Promise<TransactionReceipt> {
-    await this.preStakeChecks(
-      stakeInfo.path[0],
-      stakeInfo.meta[1],
-      stakeInfo.uints[2],
-      stakeInfo.meta[3],
-      stakeInfo.meta[0]
-    );
+    // await this.preStakeChecks(
+    //   stakeInfo.path[0],
+    //   stakeInfo.meta[1],
+    //   stakeInfo.uints[2],
+    //   stakeInfo.meta[3],
+    //   stakeInfo.meta[0]
+    // );
 
     return await this.constructTxFunction(
       senderAddress,
@@ -255,13 +255,16 @@ export default class Stake extends Base {
     errorMessage: string
   ): Promise<string> {
     const toWei = (amount: string) => this.web3.utils.toWei(amount);
+    const uints = stakeInfo.uints.map(toWei) as [string, string, string];
+
     const newStakeInfo: IStakeInfo = {
       ...stakeInfo,
-      uints: stakeInfo.uints.map(toWei),
+      uints,
     };
+
+
     try {
-      const resultInWei = await calcFunction(newStakeInfo).call();
-      return this.web3.utils.fromWei(resultInWei);
+      return await calcFunction(newStakeInfo).call();
     } catch (error) {
       throw new Error(`${errorMessage}: ${error.message}`);
     }

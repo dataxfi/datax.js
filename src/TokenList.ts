@@ -333,7 +333,7 @@ export default class TokenList extends Base {
   public async fetchPreparedTokenList(chainId: number): Promise<ITList> {
     try {
       const file = await axios.get(
-        `https://raw.githubusercontent.com/dataxfi/scripts/master/TokenList/chain${chainId}.json`
+        `https://raw.githubusercontent.com/dataxfi/scripts/master/TokenListV4/chain${chainId}.json`
       );
 
       return file.data;
