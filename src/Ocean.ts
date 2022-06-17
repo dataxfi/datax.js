@@ -4,11 +4,12 @@ import { Logger } from "./utils/Logger";
 import { TransactionReceipt } from "web3-core";
 import { AbiItem } from "web3-utils/types";
 import { getMaxSwapExactIn, getMaxSwapExactOut } from "./utils/PoolHelpers";
-import datatokensABI from "@oceanprotocol/contracts/artifacts/DataTokenTemplate.json";
-import poolABI from "@oceanprotocol/contracts/artifacts/BPool.json";
-import BFactoryABI from "@oceanprotocol/contracts/artifacts/BFactory.json";
+import datatokensABI from "@oceanprotocol/contracts/artifacts/contracts/templates/ERC20Template.sol/ERC20Template.json";
+import poolABI from "@oceanprotocol/contracts/artifacts/contracts/pools/balancer/BPool.sol/BPool.json";
+import BFactoryABI from "@oceanprotocol/contracts/artifacts/contracts/pools/balancer/BFactory.sol/BFactory.json";
 import Decimal from "decimal.js";
-import DTFactoryABI from "@oceanprotocol/contracts/artifacts/DTFactory.json";
+//Not sure if this is the right DTFactoryABI route
+import DTFactoryABI from "@oceanprotocol/contracts/artifacts/contracts/ERC721Factory.sol/ERC721Factory.json";
 import Base from "./Base";
 import BigNumber from "bignumber.js";
 

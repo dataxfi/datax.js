@@ -3,7 +3,7 @@ import { AbiItem } from "web3-utils/types";
 import fs from "fs";
 import { homedir } from "os";
 // eslint-disable-next-line import/no-named-default
-import { default as DefaultContractsAddresses } from "@oceanprotocol/contracts/artifacts/address.json";
+import { default as DefaultContractsAddresses } from "@oceanprotocol/contracts/addresses/address.json";
 import Logger from "./Logger";
 import { ConfigHelperConfig } from "../@types/datax-types";
 

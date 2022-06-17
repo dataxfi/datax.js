@@ -1,8 +1,9 @@
 import Web3 from 'web3'
 import { AbiItem } from 'web3-utils/types'
 
-import defaultFactoryABI from '@oceanprotocol/contracts/artifacts/DTFactory.json'
-import defaultDatatokensABI from '@oceanprotocol/contracts/artifacts/DataTokenTemplate.json'
+import defaultFactoryABI from '@oceanprotocol/contracts/artifacts/contracts/ERC721Factory.sol/ERC721Factory.json'
+// import NFTFactoryABI
+import defaultDatatokensABI from '@oceanprotocol/contracts/artifacts/contracts/templates/ERC20Template.sol/ERC20Template.json'
 import { Logger, getFairGasPrice } from './utils/'
 import { TransactionReceipt } from 'web3-core'
 import BigNumber from 'bignumber.js'

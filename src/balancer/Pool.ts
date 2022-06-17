@@ -2,12 +2,11 @@ import Web3 from "web3";
 import { AbiItem } from "web3-utils/types";
 import { TransactionReceipt } from "web3-core";
 import { Logger, getFairGasPrice } from "../utils/";
-import BigNumber from "bignumber.js";
-import jsonpoolABI from "@oceanprotocol/contracts/artifacts/BPool.json";
-import defaultDatatokensABI from "@oceanprotocol/contracts/artifacts/DataTokenTemplate.json";
+import jsonpoolABI from "@oceanprotocol/contracts/artifacts/contracts/pools/balancer/BPool.sol/BPool.json";
+import defaultDatatokensABI from "@oceanprotocol/contracts/artifacts/contracts/templates/ERC20Template.sol/ERC20Template.json";
 import { PoolFactory } from "./PoolFactory";
 import Decimal from "decimal.js";
-import { ITokensToAdd } from "../@types/datax-types";
+
 const MaxUint256 =
   "115792089237316195423570985008687907853269984665640564039457584007913129639934";
 
