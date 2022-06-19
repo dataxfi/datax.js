@@ -7,7 +7,6 @@ import { getMaxSwapExactIn, getMaxSwapExactOut } from "./utils/PoolHelpers";
 import datatokensABI from "@oceanprotocol/contracts/artifacts/contracts/templates/ERC20Template.sol/ERC20Template.json";
 import poolABI from "@oceanprotocol/contracts/artifacts/contracts/pools/balancer/BPool.sol/BPool.json";
 import BFactoryABI from "@oceanprotocol/contracts/artifacts/contracts/pools/balancer/BFactory.sol/BFactory.json";
-import Decimal from "decimal.js";
 //Not sure if this is the right DTFactoryABI route
 import DTFactoryABI from "@oceanprotocol/contracts/artifacts/contracts/ERC721Factory.sol/ERC721Factory.json";
 import Base from "./Base";
@@ -627,7 +626,7 @@ export default class Ocean extends Base {
   ): Promise<string> {
     try {
       let swapFee = await this.oceanPool.getSwapFee(poolAddress);
-      return new Decimal(tokenInAmount).mul(swapFee).toString();
+      return new BigNumber(tokenInAmount).multipliedBy(swapFee).toString();
     } catch (error) {
       throw {
         Code: 1000,

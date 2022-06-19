@@ -1,7 +1,7 @@
 import Web3 from "web3";
 import Base from "./Base";
 import Ocean from "./Ocean";
-import { Contract } from "web3-eth/node_modules/web3-eth-contract";
+import { Contract } from "web3-eth-contract";
 import { TransactionReceipt } from "web3-core";
 import BigNumber from "bignumber.js";
 import { AbiItem } from "web3-utils";
@@ -112,7 +112,7 @@ export default class Trade extends Base {
       return await swapFunction(...params).send({
         from: senderAddress,
         gas: estGas + 1,
-        gasPrice: await getFairGasPrice(this.web3),
+        gasPrice: await getFairGasPrice(this.web3, this.config.default),
       });
     } catch (error) {
       throw new Error(`${errorMessage} : ${error.message}`);

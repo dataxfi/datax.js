@@ -4,7 +4,6 @@ import Config from "./Config";
 import Watcher from "./Watcher";
 import Trade from "./Trade"
 import Stake from './Stake'
-import DataTokens  from "./Datatokens";
 import {
   PoolTransactionType,
   IMaxUnstake,
@@ -39,5 +38,4 @@ export {
   ITokensToAdd,
   Trade, 
   Stake, 
-  DataTokens
 };

@@ -5,7 +5,6 @@ import defaultNftAbi from '@oceanprotocol/contracts/artifacts/contracts/template
 import {
   LoggerInstance,
   getFairGasPrice,
-  generateDtName,
   setContractDefaults,
   estimateGas,
   ConfigHelper
@@ -125,9 +124,9 @@ export class Nft {
     if (!templateIndex) templateIndex = 1
 
     // Generate name & symbol if not present
-    if (!name || !symbol) {
-      ;({ name, symbol } = generateDtName())
-    }
+    // if (!name || !symbol) {
+    //   ;({ name, symbol } = generateDtName())
+    // }
 
     // Create 721contract object
     const nftContract = setContractDefaults(

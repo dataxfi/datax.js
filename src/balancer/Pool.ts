@@ -1,7 +1,7 @@
 import Web3 from 'web3'
 import { AbiItem } from 'web3-utils/types'
 import { TransactionReceipt } from 'web3-core'
-import { Contract } from 'web3-eth-contract'
+import { Contract } from "web3-eth-contract";
 import {
   getFairGasPrice,
   setContractDefaults,
@@ -28,7 +28,6 @@ import {
   getMaxSwapExactIn,
   getMaxSwapExactOut
 } from '../utils/PoolHelpers'
-import Decimal from 'decimal.js'
 const MaxUint256 =
   '115792089237316195423570985008687907853269984665640564039457584007913129639934'
 
@@ -849,7 +848,7 @@ export class Pool {
     )
 
     const maxSwap = await getMaxSwapExactIn(this, poolAddress, tokenInOutMarket.tokenIn)
-    if (new Decimal(amountsInOutMaxFee.tokenAmountIn).greaterThan(maxSwap)) {
+    if (new BigNumber(amountsInOutMaxFee.tokenAmountIn).gt(maxSwap)) {
       throw new Error(`tokenAmountIn is greater than ${maxSwap.toString()}`)
     }
 
@@ -996,7 +995,7 @@ export class Pool {
     let result = null
 
     const maxSwap = await getMaxSwapExactOut(this, poolAddress, tokenInOutMarket.tokenOut)
-    if (new Decimal(amountsInOutMaxFee.tokenAmountOut).greaterThan(maxSwap)) {
+    if (new BigNumber(amountsInOutMaxFee.tokenAmountOut).gt(maxSwap)) {
       throw new Error(`tokenAmountOut is greater than ${maxSwap.toString()}`)
     }
 
@@ -1118,7 +1117,7 @@ export class Pool {
     let result = null
     const tokenIn = await this.getBaseToken(poolAddress)
     const maxSwap = await getMaxAddLiquidity(this, poolAddress, tokenIn)
-    if (new Decimal(tokenAmountIn).greaterThan(maxSwap)) {
+    if (new BigNumber(tokenAmountIn).gt(maxSwap)) {
       throw new Error(`tokenAmountOut is greater than ${maxSwap.toString()}`)
     }
 
@@ -1215,7 +1214,7 @@ export class Pool {
     )
 
     const maxSwap = await getMaxRemoveLiquidity(this, poolAddress, tokenOut)
-    if (new Decimal(tokenAmountOut).greaterThan(maxSwap)) {
+    if (new BigNumber(tokenAmountOut).gt(maxSwap)) {
       throw new Error(`tokenAmountOut is greater than ${maxSwap.toString()}`)
     }
 
@@ -1338,7 +1337,7 @@ export class Pool {
 
     const maxSwap = await getMaxSwapExactOut(this, poolAddress, tokenOut)
 
-    if (new Decimal(tokenAmountOut).greaterThan(maxSwap)) {
+    if (new BigNumber(tokenAmountOut).gt(maxSwap)) {
       throw new Error(`tokenAmountOut is greater than ${maxSwap.toString()}`)
     }
 
@@ -1417,7 +1416,7 @@ export class Pool {
     )
 
     const maxSwap = await getMaxSwapExactIn(this, poolAddress, tokenIn)
-    if (new Decimal(tokenAmountIn).greaterThan(maxSwap)) {
+    if (new BigNumber(tokenAmountIn).gt(maxSwap)) {
       throw new Error(`tokenAmountIn is greater than ${maxSwap.toString()}`)
     }
 
