@@ -359,7 +359,7 @@ export default class TokenList extends Base {
       };
       pinata["pinataContent"] = list;
 
-      const url = `${this.config.default.pinataAPIBaseUrl}/pinning/pinJSONToIPFS`;
+      const url = `${this.config.extra.pinataAPIBaseUrl}/pinning/pinJSONToIPFS`;
       let resp = await axios.post(url, pinata, {
         headers: {
           pinata_api_key: this.pinataApiKey,

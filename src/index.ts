@@ -1,4 +1,3 @@
-import Ocean from "./Ocean";
 import TokenList from "./TokenList";
 import Config from "./Config";
 import Watcher from "./Watcher";
@@ -20,7 +19,6 @@ import {
 } from "./@types/datax-types";
 
 export {
-  Ocean,
   TokenList,
   Watcher,
   Config,

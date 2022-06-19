@@ -1,31 +1,233 @@
 import Web3 from "web3";
 import Base from "./Base";
-import Ocean from "./Ocean";
 import { Contract } from "web3-eth-contract";
 import { TransactionReceipt } from "web3-core";
 import BigNumber from "bignumber.js";
 import { AbiItem } from "web3-utils";
 import adapterABI from "./abi/rinkeby/UniV2Adapter-abi.json";
-import { getFairGasPrice } from "./utils/";
+import {
+  getFairGasPrice,
+  getMaxSwapExactIn,
+  getMaxSwapExactOut,
+} from "./utils/";
+import { supportedNetworks } from "./@types";
+import { Datatoken } from "./tokens";
+import { Pool } from "./balancer";
+import Config from "./Config";
+import { allowance, approve } from "./utils/TokenUtils";
 
 export default class Trade extends Base {
-  private ocean: Ocean;
   private adapterAddress: string;
   private adapter: Contract;
   private GASLIMIT_DEFAULT = 1000000;
+  private datatoken: Datatoken;
+  private pool: Pool;
 
-  constructor(web3: Web3, networkId: string, ocean?: Ocean) {
+  constructor(web3: Web3, networkId: supportedNetworks) {
     super(web3, networkId);
-    this.adapterAddress = this.config.custom[4].uniV2AdapterAddress;
-
-    ocean
-      ? (this.ocean = ocean)
-      : (this.ocean = new Ocean(this.web3, this.networkId));
+    this.adapterAddress = this.config.custom.uniV2AdapterAddress;
+    this.datatoken = new Datatoken(this.web3, this.networkId);
+    this.pool = new Pool(web3, networkId);
 
     this.adapter = new this.web3.eth.Contract(
       adapterABI as AbiItem[],
       this.adapterAddress
     );
+  }
+
+  /**
+   * This is a generic function that can be used to get the max exchange
+   * for a token in a pool. This can't be used for getting the max exchange
+   * for DT to DT values, in which case you should use getMaxDtToDtExchange()
+   * @param tokenAddress
+   * @param poolAddress
+   * @retun - An object containing the max amount in and the max amount out.
+   */
+
+  public async getMaxExchange(tokenAddress: string, poolAddress: string) {
+    const maxIn = await getMaxSwapExactIn(this.pool, poolAddress, tokenAddress);
+    const maxOut = await getMaxSwapExactOut(
+      this.pool,
+      poolAddress,
+      tokenAddress
+    );
+    return { maxIn, maxOut };
+  }
+
+  /**
+   * Gets the max in and out for a DT to DT swap. The max token in is weighed against the
+   * max token out and the lesser of each max is the limiting value.
+   * @param dtIn - An object containing the datatoken address and a poolAddress containing
+   * the DtIn.
+   * @param dtOut - An object containing the datatoken address and a poolAddress containing
+   * the DtOut.
+   * @returns - And object containing the maxDtIn and the maxDtOut
+   */
+  public async getMaxDtToDtExchange(
+    dtIn: { tokenAddress: string; poolAddress: string },
+    dtOut: { tokenAddress: string; poolAddress: string }
+  ): Promise<{ maxDtIn: string; maxDtOut: string }> {
+    const maxDtIn = await getMaxSwapExactIn(
+      this.pool,
+      dtIn.poolAddress,
+      dtIn.tokenAddress
+    );
+    const maxDtOut = await getMaxSwapExactOut(
+      this.pool,
+      dtOut.poolAddress,
+      dtOut.tokenAddress
+    );
+
+    // TODO: getOceanReceived will need to be switched with a new function
+    // TODO: from the v2 tradeRouter contract that gets base token received for
+    // TODO: a datatoken amount.
+    const maxDtInToOcean = new BigNumber(
+      0
+      // await this.getOceanReceived(dtOut.poolAddress, maxDtIn.toString())
+    );
+    const maxDtOutInOcean = new BigNumber(
+      0
+      // await this.getOceanReceived(dtOut.poolAddress, maxDtOut.toString())
+    );
+
+    /**The lesser value is the max exchange for the DT pair. The other value
+     * is the DT received for the max.
+     */
+    if (maxDtInToOcean.lt(maxDtOutInOcean)) {
+      const maxDtOut = "0";
+      // await this.getOceanReceived(
+      //   dtOut.poolAddress,
+      //   maxDtInToOcean.toString()
+      // );
+      return { maxDtIn: maxDtIn.toString(), maxDtOut };
+    } else {
+      const maxDtIn = "0";
+      // await this.getOceanReceived(
+      //   dtIn.poolAddress,
+      //   maxDtOutInOcean.toString()
+      // );
+      return { maxDtIn, maxDtOut: maxDtOut.toString() };
+    }
+  }
+
+  /**
+   * This function will get the max amount in and out of a token pair intended
+   * to be swapped. The pool used for swapping each token is needed, and can be
+   * the same pool if they share one. It is important to note that the max
+   * amount in might equate to be greater than the max amount out, in which case
+   * the max amount out should limit the max amount in, and vice versa.
+   * @param tokenIn
+   * @param tokenOut
+   */
+  public async getMaxInAndOut(
+    tokenIn: { address: string; pool: string },
+    tokenOut: { address: string; pool: string }
+  ) {
+    //TODO: integrate swap path to get max in/out in base token to token in
+    const maxIn = await getMaxSwapExactIn(
+      this.pool,
+      tokenIn.pool,
+      tokenIn.address
+    );
+    const maxOut = await getMaxSwapExactOut(
+      this.pool,
+      tokenOut.pool,
+      tokenOut.address
+    );
+
+    return { maxIn, maxOut };
+  }
+
+  public async getSpotPrice(
+    poolAddress: string,
+    tokenIn: string,
+    tokenOut: string
+  ) {
+    let swapMarketFee: string;
+    try {
+      swapMarketFee = await this.pool.getMarketFee(poolAddress);
+    } catch (error) {
+      throw {
+        Code: 1000,
+        Message: "We ran into a problem, please refresh your connection.",
+        error,
+      };
+    }
+
+    try {
+      return await this.pool.getSpotPrice(
+        poolAddress,
+        tokenIn,
+        tokenOut,
+        swapMarketFee
+      );
+    } catch (error) {
+      throw {
+        Code: 1000,
+        Message: "We ran into a problem, please refresh your connection.",
+        error,
+      };
+    }
+  }
+
+  /**
+   * Returns swap fee for a given pool
+   * @param poolAddress
+   * @returns
+   */
+  public async getSwapFee(poolAddress: string): Promise<string> {
+    try {
+      return await this.pool.getSwapFee(poolAddress);
+    } catch (error) {
+      throw {
+        Code: 1000,
+        Message: "We ran into a problem, please refresh your connection.",
+        error,
+      };
+    }
+  }
+
+  /**
+   * calculates Swap Fee for a given trade
+   * @param poolAddress
+   * @param tokenInAmount
+   * @returns
+   */
+  public async calculateSwapFee(
+    poolAddress: string,
+    tokenInAmount: string
+  ): Promise<string> {
+    try {
+      let swapFee = await this.pool.getSwapFee(poolAddress);
+      return new BigNumber(tokenInAmount).multipliedBy(swapFee).toString();
+    } catch (error) {
+      throw {
+        Code: 1000,
+        Message: "We ran into a problem, please refresh your connection.",
+        error,
+      };
+    }
+  }
+
+  /**
+   * Returns token balance of a given account
+   * @param {String} tokenAddress
+   * @param {String} account
+   * @returns {String} (in ETH denom)
+   */
+  public async getBalance(
+    tokenAddress: string,
+    account: string
+  ): Promise<string> {
+    try {
+      return this.datatoken.balance(tokenAddress, account);
+    } catch (error) {
+      throw {
+        Code: 1000,
+        Message: "We ran into a problem, please refresh your connection.",
+        error,
+      };
+    }
   }
 
   /**
@@ -45,37 +247,52 @@ export default class Trade extends Base {
     senderAddress: string,
     amountIn: string,
     amountOut: string,
-    spender: string
+    spender: string,
+    isDT: boolean
   ) {
     const inBigNum = new BigNumber(amountIn);
     const outBigNum = new BigNumber(amountOut);
     const balance = new BigNumber(
-      await this.ocean.getBalance(tokenIn, senderAddress)
+      await this.getBalance(tokenIn, senderAddress)
     );
 
     if (balance.lt(inBigNum)) {
       throw new Error("ERROR: Not Enough Balance");
     }
 
-    //check approval limit vs tx amount
-    const isApproved = await this.ocean.checkIfApproved(
-      tokenIn,
-      senderAddress,
-      spender,
-      amountIn
-    );
+    let isApproved;
+    try {
+      //check approval limit vs tx amount
+      isApproved = new BigNumber(
+        await allowance(this.web3, tokenIn, senderAddress, spender)
+      );
+    } catch (error) {
+      throw new Error("Could not check allowance limit");
+    }
 
-    //approve if not approved
-    if (!isApproved)
-      try {
-        await this.ocean.approve(tokenIn, spender, amountIn, senderAddress);
-      } catch (error) {
-        throw {
-          Code: 1000,
-          Message: "Failed to approve tokens.",
-          error,
-        };
-      }
+    try {
+      if (isApproved.lt(inBigNum))
+        if (isDT) {
+          //approve if not approved
+          await this.datatoken.approve(
+            tokenIn,
+            spender,
+            amountIn,
+            senderAddress
+          );
+        } else {
+          await approve(
+            this.web3,
+            senderAddress,
+            tokenIn,
+            spender,
+            amountIn,
+            true
+          );
+        }
+    } catch (error) {
+      throw new Error("Could not process approval transaction");
+    }
   }
 
   /**
@@ -119,8 +336,6 @@ export default class Trade extends Base {
     }
   }
 
-  // should this need deadline?
-  // should this need amount in max?
   /**
    * Swap native coin for an exact amount of tokens (not datatokens).
    *
@@ -145,7 +360,8 @@ export default class Trade extends Base {
       senderAddress,
       maxAmountIn,
       amountOut,
-      this.adapterAddress
+      this.adapterAddress,
+      false
     );
 
     return await this.constructTxFunction(
@@ -156,8 +372,6 @@ export default class Trade extends Base {
     );
   }
 
-  // should this need deadline?
-  // should this need amount in (exact)?
   /**
    * Swap an exact amount of native coin for tokens (not datatokens).
    *
@@ -180,7 +394,8 @@ export default class Trade extends Base {
       senderAddress,
       amountIn,
       amountOutMin,
-      this.adapterAddress
+      this.adapterAddress,
+      false
     );
     return await this.constructTxFunction(
       senderAddress,
@@ -201,7 +416,6 @@ export default class Trade extends Base {
    * @param senderAddress - The address of the sender.
    * @returns
    */
-  // should this need deadline?
   public async swapTokensForExactETH(
     amountOut: string,
     amountInMax: string,
@@ -215,7 +429,8 @@ export default class Trade extends Base {
       senderAddress,
       amountInMax,
       amountOut,
-      this.adapterAddress
+      this.adapterAddress,
+      false
     );
     return await this.constructTxFunction(
       senderAddress,
@@ -235,7 +450,6 @@ export default class Trade extends Base {
    * @param senderAddress - The address of the sender.
    * @returns
    */
-  // should this need deadline?
   public async swapExactTokensForETH(
     amountIn: string,
     amountOutMin: string,
@@ -248,7 +462,8 @@ export default class Trade extends Base {
       senderAddress,
       amountIn,
       amountOutMin,
-      this.adapterAddress
+      this.adapterAddress,
+      false
     );
     return await this.constructTxFunction(
       senderAddress,
@@ -268,7 +483,6 @@ export default class Trade extends Base {
    * @param senderAddress - The address of the sender.
    * @returns
    */
-  // should this need deadline?
   public async swapExactTokensForTokens(
     amountIn: string,
     amountOutMin: string,
@@ -281,7 +495,8 @@ export default class Trade extends Base {
       senderAddress,
       amountIn,
       amountOutMin,
-      this.adapterAddress
+      this.adapterAddress,
+      false
     );
     return await this.constructTxFunction(
       senderAddress,
@@ -315,7 +530,8 @@ export default class Trade extends Base {
       senderAddress,
       amountInMax,
       amountOut,
-      this.adapterAddress
+      this.adapterAddress,
+      false
     );
     return await this.constructTxFunction(
       senderAddress,

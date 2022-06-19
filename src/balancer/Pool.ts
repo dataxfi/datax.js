@@ -1,6 +1,6 @@
-import Web3 from 'web3'
-import { AbiItem } from 'web3-utils/types'
-import { TransactionReceipt } from 'web3-core'
+import Web3 from "web3";
+import { AbiItem } from "web3-utils/types";
+import { TransactionReceipt } from "web3-core";
 import { Contract } from "web3-eth-contract";
 import {
   getFairGasPrice,
@@ -9,35 +9,34 @@ import {
   amountToUnits,
   LoggerInstance,
   estimateGas,
-  ConfigHelper
-} from '../utils'
-import BigNumber from 'bignumber.js'
-import PoolTemplate from '@oceanprotocol/contracts/artifacts/contracts/pools/balancer/BPool.sol/BPool.json'
-import defaultErc20Abi from '@oceanprotocol/contracts/artifacts/contracts/templates/ERC20Template.sol/ERC20Template.json'
+} from "../utils";
+import BigNumber from "bignumber.js";
+import PoolTemplate from "@oceanprotocol/contracts/artifacts/contracts/pools/balancer/BPool.sol/BPool.json";
+import defaultErc20Abi from "@oceanprotocol/contracts/artifacts/contracts/templates/ERC20Template.sol/ERC20Template.json";
 import {
   CurrentFees,
   TokenInOutMarket,
   AmountsInMaxFee,
   AmountsOutMaxFee,
-  PoolPriceAndFees
-} from '../@types'
-import { Config } from '../models'
+  PoolPriceAndFees,
+} from "../@types";
+import { Config } from "../";
 import {
   getMaxAddLiquidity,
   getMaxRemoveLiquidity,
   getMaxSwapExactIn,
-  getMaxSwapExactOut
-} from '../utils/PoolHelpers'
+  getMaxSwapExactOut,
+} from "../utils/PoolHelpers";
 const MaxUint256 =
-  '115792089237316195423570985008687907853269984665640564039457584007913129639934'
+  "115792089237316195423570985008687907853269984665640564039457584007913129639934";
 
 /**
  * Provides an interface to Ocean friendly fork from Balancer BPool
  */
 export class Pool {
-  public poolAbi: AbiItem | AbiItem[]
-  public web3: Web3
-  private config: Config
+  public poolAbi: AbiItem | AbiItem[];
+  public web3: Web3;
+  private config: Config["default"];
 
   constructor(
     web3: Web3,
@@ -45,10 +44,10 @@ export class Pool {
     poolAbi: AbiItem | AbiItem[] = null,
     config?: Config
   ) {
-    if (poolAbi) this.poolAbi = poolAbi
-    else this.poolAbi = PoolTemplate.abi as AbiItem[]
-    this.web3 = web3
-    this.config = config || new ConfigHelper().getConfig(network || 'unknown')
+    if (poolAbi) this.poolAbi = poolAbi;
+    else this.poolAbi = PoolTemplate.abi as AbiItem[];
+    this.web3 = web3;
+    this.config = config.default;
   }
 
   async amountToUnits(
@@ -56,7 +55,7 @@ export class Pool {
     amount: string,
     tokenDecimals?: number
   ): Promise<string> {
-    return amountToUnits(this.web3, token, amount, tokenDecimals)
+    return amountToUnits(this.web3, token, amount, tokenDecimals);
   }
 
   async unitsToAmount(
@@ -64,7 +63,7 @@ export class Pool {
     amount: string,
     tokenDecimals?: number
   ): Promise<string> {
-    return unitsToAmount(this.web3, token, amount, tokenDecimals)
+    return unitsToAmount(this.web3, token, amount, tokenDecimals);
   }
 
   /**
@@ -74,18 +73,20 @@ export class Pool {
    * @return {String}
    */
   async sharesBalance(account: string, poolAddress: string): Promise<string> {
-    let result = null
+    let result = null;
     try {
       const token = setContractDefaults(
         new this.web3.eth.Contract(this.poolAbi, poolAddress),
         this.config
-      )
-      const balance = await token.methods.balanceOf(account).call()
-      result = this.web3.utils.fromWei(balance)
+      );
+      const balance = await token.methods.balanceOf(account).call();
+      result = this.web3.utils.fromWei(balance);
     } catch (e) {
-      LoggerInstance.error(`ERROR: Failed to get shares of pool : ${e.message}`)
+      LoggerInstance.error(
+        `ERROR: Failed to get shares of pool : ${e.message}`
+      );
     }
-    return result
+    return result;
   }
 
   /**
@@ -107,11 +108,14 @@ export class Pool {
     const poolContract =
       contractInstance ||
       setContractDefaults(
-        new this.web3.eth.Contract(defaultErc20Abi.abi as AbiItem[], poolAddress),
+        new this.web3.eth.Contract(
+          defaultErc20Abi.abi as AbiItem[],
+          poolAddress
+        ),
         this.config
-      )
+      );
 
-    return estimateGas(account, poolContract.methods.setSwapFee, fee)
+    return estimateGas(account, poolContract.methods.setSwapFee, fee);
   }
 
   /**
@@ -127,23 +131,23 @@ export class Pool {
   ): Promise<TransactionReceipt> {
     const pool = setContractDefaults(
       new this.web3.eth.Contract(this.poolAbi, poolAddress, {
-        from: account
+        from: account,
       }),
       this.config
-    )
-    let result = null
-    const estGas = await estimateGas(account, pool.methods.setSwapFee, fee)
+    );
+    let result = null;
+    const estGas = await estimateGas(account, pool.methods.setSwapFee, fee);
 
     try {
       result = await pool.methods.setSwapFee(this.web3.utils.toWei(fee)).send({
         from: account,
         gas: estGas,
-        gasPrice: await getFairGasPrice(this.web3, this.config)
-      })
+        gasPrice: await getFairGasPrice(this.web3, this.config),
+      });
     } catch (e) {
-      LoggerInstance.error(`ERROR: Failed to set pool swap fee: ${e.message}`)
+      LoggerInstance.error(`ERROR: Failed to set pool swap fee: ${e.message}`);
     }
-    return result
+    return result;
   }
 
   /**
@@ -155,14 +159,16 @@ export class Pool {
     const pool = setContractDefaults(
       new this.web3.eth.Contract(this.poolAbi, poolAddress),
       this.config
-    )
-    let result = null
+    );
+    let result = null;
     try {
-      result = await pool.methods.getNumTokens().call()
+      result = await pool.methods.getNumTokens().call();
     } catch (e) {
-      LoggerInstance.error(`ERROR: Failed to get number of tokens: ${e.message}`)
+      LoggerInstance.error(
+        `ERROR: Failed to get number of tokens: ${e.message}`
+      );
     }
-    return result
+    return result;
   }
 
   /**
@@ -174,17 +180,17 @@ export class Pool {
     const pool = setContractDefaults(
       new this.web3.eth.Contract(this.poolAbi, poolAddress),
       this.config
-    )
-    let amount = null
+    );
+    let amount = null;
     try {
-      const result = await pool.methods.totalSupply().call()
-      amount = this.web3.utils.fromWei(result)
+      const result = await pool.methods.totalSupply().call();
+      amount = this.web3.utils.fromWei(result);
     } catch (e) {
       LoggerInstance.error(
         `ERROR: Failed to get total supply of pool shares: ${e.message}`
-      )
+      );
     }
-    return amount
+    return amount;
   }
 
   /**
@@ -197,16 +203,16 @@ export class Pool {
     const pool = setContractDefaults(
       new this.web3.eth.Contract(this.poolAbi, poolAddress),
       this.config
-    )
-    let result = null
+    );
+    let result = null;
     try {
-      result = await pool.methods.getCurrentTokens().call()
+      result = await pool.methods.getCurrentTokens().call();
     } catch (e) {
       LoggerInstance.error(
         `ERROR: Failed to get tokens composing this pool: ${e.message}`
-      )
+      );
     }
-    return result
+    return result;
   }
 
   /**
@@ -219,16 +225,16 @@ export class Pool {
     const pool = setContractDefaults(
       new this.web3.eth.Contract(this.poolAbi, poolAddress),
       this.config
-    )
-    let result = null
+    );
+    let result = null;
     try {
-      result = await pool.methods.getFinalTokens().call()
+      result = await pool.methods.getFinalTokens().call();
     } catch (e) {
       LoggerInstance.error(
         `ERROR: Failed to get the final tokens composing this pool ${e.message}`
-      )
+      );
     }
-    return result
+    return result;
   }
 
   /**
@@ -240,14 +246,16 @@ export class Pool {
     const pool = setContractDefaults(
       new this.web3.eth.Contract(this.poolAbi, poolAddress),
       this.config
-    )
-    let result = null
+    );
+    let result = null;
     try {
-      result = await pool.methods.getController().call()
+      result = await pool.methods.getController().call();
     } catch (e) {
-      LoggerInstance.error(`ERROR: Failed to get pool controller address: ${e.message}`)
+      LoggerInstance.error(
+        `ERROR: Failed to get pool controller address: ${e.message}`
+      );
     }
-    return result
+    return result;
   }
 
   /**
@@ -259,14 +267,16 @@ export class Pool {
     const pool = setContractDefaults(
       new this.web3.eth.Contract(this.poolAbi, poolAddress),
       this.config
-    )
-    let result = null
+    );
+    let result = null;
     try {
-      result = await pool.methods.getBaseTokenAddress().call()
+      result = await pool.methods.getBaseTokenAddress().call();
     } catch (e) {
-      LoggerInstance.error(`ERROR: Failed to get baseToken address: ${e.message}`)
+      LoggerInstance.error(
+        `ERROR: Failed to get baseToken address: ${e.message}`
+      );
     }
-    return result
+    return result;
   }
 
   /**
@@ -278,14 +288,16 @@ export class Pool {
     const pool = setContractDefaults(
       new this.web3.eth.Contract(this.poolAbi, poolAddress),
       this.config
-    )
-    let result = null
+    );
+    let result = null;
     try {
-      result = await pool.methods.getDatatokenAddress().call()
+      result = await pool.methods.getDatatokenAddress().call();
     } catch (e) {
-      LoggerInstance.error(`ERROR: Failed to get datatoken address: ${e.message}`)
+      LoggerInstance.error(
+        `ERROR: Failed to get datatoken address: ${e.message}`
+      );
     }
-    return result
+    return result;
   }
 
   /**
@@ -297,14 +309,14 @@ export class Pool {
     const pool = setContractDefaults(
       new this.web3.eth.Contract(this.poolAbi, poolAddress),
       this.config
-    )
-    let result = null
+    );
+    let result = null;
     try {
-      result = await pool.methods.getMarketFee().call()
+      result = await pool.methods.getMarketFee().call();
     } catch (e) {
-      LoggerInstance.error(`ERROR: Failed to get getMarketFee: ${e.message}`)
+      LoggerInstance.error(`ERROR: Failed to get getMarketFee: ${e.message}`);
     }
-    return this.web3.utils.fromWei(result).toString()
+    return this.web3.utils.fromWei(result).toString();
   }
 
   /**
@@ -316,16 +328,16 @@ export class Pool {
     const pool = setContractDefaults(
       new this.web3.eth.Contract(this.poolAbi, poolAddress),
       this.config
-    )
-    let result = null
+    );
+    let result = null;
     try {
-      result = await pool.methods._publishMarketCollector().call()
+      result = await pool.methods._publishMarketCollector().call();
     } catch (e) {
       LoggerInstance.error(
         `ERROR: Failed to get marketFeeCollector address: ${e.message}`
-      )
+      );
     }
-    return result
+    return result;
   }
 
   /**
@@ -339,15 +351,15 @@ export class Pool {
     const pool = setContractDefaults(
       new this.web3.eth.Contract(this.poolAbi, poolAddress),
       this.config
-    )
-    let result = null
+    );
+    let result = null;
     try {
-      result = await pool.methods.isBound(token).call()
+      result = await pool.methods.isBound(token).call();
     } catch (e) {
       LoggerInstance.error(`ERROR: Failed to check whether a token \
-      bounded to a pool. ${e.message}`)
+      bounded to a pool. ${e.message}`);
     }
-    return result
+    return result;
   }
 
   /**
@@ -362,19 +374,19 @@ export class Pool {
     token: string,
     tokenDecimals?: number
   ): Promise<string> {
-    let amount = null
+    let amount = null;
     try {
       const pool = setContractDefaults(
         new this.web3.eth.Contract(this.poolAbi, poolAddress),
         this.config
-      )
-      const result = await pool.methods.getBalance(token).call()
-      amount = await this.unitsToAmount(token, result, tokenDecimals)
+      );
+      const result = await pool.methods.getBalance(token).call();
+      amount = await this.unitsToAmount(token, result, tokenDecimals);
     } catch (e) {
       LoggerInstance.error(`ERROR: Failed to get how many tokens \
-      are in the pool: ${e.message}`)
+      are in the pool: ${e.message}`);
     }
-    return amount.toString()
+    return amount.toString();
   }
 
   /**
@@ -387,16 +399,16 @@ export class Pool {
     const pool = setContractDefaults(
       new this.web3.eth.Contract(this.poolAbi, poolAddress),
       this.config
-    )
-    let result = null
+    );
+    let result = null;
     try {
-      result = await pool.methods.isFinalized().call()
+      result = await pool.methods.isFinalized().call();
     } catch (e) {
       LoggerInstance.error(
         `ERROR: Failed to check whether pool is finalized: ${e.message}`
-      )
+      );
     }
-    return result
+    return result;
   }
 
   /**
@@ -408,15 +420,15 @@ export class Pool {
     const pool = setContractDefaults(
       new this.web3.eth.Contract(this.poolAbi, poolAddress),
       this.config
-    )
-    let fee = null
+    );
+    let fee = null;
     try {
-      const result = await pool.methods.getSwapFee().call()
-      fee = this.web3.utils.fromWei(result)
+      const result = await pool.methods.getSwapFee().call();
+      fee = this.web3.utils.fromWei(result);
     } catch (e) {
-      LoggerInstance.error(`ERROR: Failed to get pool fee: ${e.message}`)
+      LoggerInstance.error(`ERROR: Failed to get pool fee: ${e.message}`);
     }
-    return fee
+    return fee;
   }
 
   /**
@@ -427,21 +439,24 @@ export class Pool {
    * @param {String} token token to be checked
    * @return {String}
    */
-  async getNormalizedWeight(poolAddress: string, token: string): Promise<string> {
+  async getNormalizedWeight(
+    poolAddress: string,
+    token: string
+  ): Promise<string> {
     const pool = setContractDefaults(
       new this.web3.eth.Contract(this.poolAbi, poolAddress),
       this.config
-    )
-    let weight = null
+    );
+    let weight = null;
     try {
-      const result = await pool.methods.getNormalizedWeight(token).call()
-      weight = this.web3.utils.fromWei(result)
+      const result = await pool.methods.getNormalizedWeight(token).call();
+      weight = this.web3.utils.fromWei(result);
     } catch (e) {
       LoggerInstance.error(
         `ERROR: Failed to get normalized weight of a token: ${e.message}`
-      )
+      );
     }
-    return weight
+    return weight;
   }
 
   /**
@@ -450,21 +465,24 @@ export class Pool {
    * @param {String} token token to be checked
    * @return {String}
    */
-  async getDenormalizedWeight(poolAddress: string, token: string): Promise<string> {
+  async getDenormalizedWeight(
+    poolAddress: string,
+    token: string
+  ): Promise<string> {
     const pool = setContractDefaults(
       new this.web3.eth.Contract(this.poolAbi, poolAddress),
       this.config
-    )
-    let weight = null
+    );
+    let weight = null;
     try {
-      const result = await pool.methods.getDenormalizedWeight(token).call()
-      weight = this.web3.utils.fromWei(result)
+      const result = await pool.methods.getDenormalizedWeight(token).call();
+      weight = this.web3.utils.fromWei(result);
     } catch (e) {
       LoggerInstance.error(
         `ERROR: Failed to get denormalized weight of a token in pool ${e.message}`
-      )
+      );
     }
-    return weight
+    return weight;
   }
 
   /**
@@ -477,17 +495,17 @@ export class Pool {
     const pool = setContractDefaults(
       new this.web3.eth.Contract(this.poolAbi, poolAddress),
       this.config
-    )
-    let weight = null
+    );
+    let weight = null;
     try {
-      const result = await pool.methods.getTotalDenormalizedWeight().call()
-      weight = this.web3.utils.fromWei(result)
+      const result = await pool.methods.getTotalDenormalizedWeight().call();
+      weight = this.web3.utils.fromWei(result);
     } catch (e) {
       LoggerInstance.error(
         `ERROR: Failed to get total denormalized weight in pool ${e.message}`
-      )
+      );
     }
-    return weight
+    return weight;
   }
 
   /**
@@ -506,15 +524,17 @@ export class Pool {
     const pool = setContractDefaults(
       new this.web3.eth.Contract(this.poolAbi, poolAddress),
       this.config
-    )
-    let weight = null
+    );
+    let weight = null;
     try {
-      const result = await pool.methods.publishMarketFees(token).call()
-      weight = await this.unitsToAmount(token, result, tokenDecimals)
+      const result = await pool.methods.publishMarketFees(token).call();
+      weight = await this.unitsToAmount(token, result, tokenDecimals);
     } catch (e) {
-      LoggerInstance.error(`ERROR: Failed to get market fees for a token: ${e.message}`)
+      LoggerInstance.error(
+        `ERROR: Failed to get market fees for a token: ${e.message}`
+      );
     }
-    return weight
+    return weight;
   }
 
   /**
@@ -525,14 +545,14 @@ export class Pool {
     const pool = setContractDefaults(
       new this.web3.eth.Contract(this.poolAbi, poolAddress),
       this.config
-    )
+    );
     try {
-      const currentMarketFees = await pool.methods.getCurrentOPCFees().call()
-      return currentMarketFees
+      const currentMarketFees = await pool.methods.getCurrentOPCFees().call();
+      return currentMarketFees;
     } catch (e) {
       LoggerInstance.error(
         `ERROR: Failed to get community fees for a token: ${e.message}`
-      )
+      );
     }
   }
 
@@ -544,14 +564,14 @@ export class Pool {
     const pool = setContractDefaults(
       new this.web3.eth.Contract(this.poolAbi, poolAddress),
       this.config
-    )
+    );
     try {
-      const currentMarketFees = await pool.methods.getCurrentOPCFees().call()
-      return currentMarketFees
+      const currentMarketFees = await pool.methods.getCurrentOPCFees().call();
+      return currentMarketFees;
     } catch (e) {
       LoggerInstance.error(
         `ERROR: Failed to get community fees for a token: ${e.message}`
-      )
+      );
     }
   }
 
@@ -570,17 +590,17 @@ export class Pool {
     const pool = setContractDefaults(
       new this.web3.eth.Contract(this.poolAbi, poolAddress),
       this.config
-    )
-    let weight = null
+    );
+    let weight = null;
     try {
-      const result = await pool.methods.communityFees(token).call()
-      weight = await this.unitsToAmount(token, result, tokenDecimals)
+      const result = await pool.methods.communityFees(token).call();
+      weight = await this.unitsToAmount(token, result, tokenDecimals);
     } catch (e) {
       LoggerInstance.error(
         `ERROR: Failed to get community fees for a token: ${e.message}`
-      )
+      );
     }
-    return weight
+    return weight;
   }
 
   /**
@@ -600,9 +620,9 @@ export class Pool {
       setContractDefaults(
         new this.web3.eth.Contract(this.poolAbi as AbiItem[], poolAddress),
         this.config
-      )
+      );
 
-    return estimateGas(address, poolContract.methods.collectOPC)
+    return estimateGas(address, poolContract.methods.collectOPC);
   }
 
   /**
@@ -611,24 +631,29 @@ export class Pool {
    * @param {String} poolAddress
    * @return {TransactionReceipt}
    */
-  async collectOPC(address: string, poolAddress: string): Promise<TransactionReceipt> {
+  async collectOPC(
+    address: string,
+    poolAddress: string
+  ): Promise<TransactionReceipt> {
     const pool = setContractDefaults(
       new this.web3.eth.Contract(this.poolAbi, poolAddress),
       this.config
-    )
-    let result = null
-    const estGas = await estimateGas(address, pool.methods.collectOPC)
+    );
+    let result = null;
+    const estGas = await estimateGas(address, pool.methods.collectOPC);
 
     try {
       result = await pool.methods.collectOPC().send({
         from: address,
         gas: estGas + 1,
-        gasPrice: await getFairGasPrice(this.web3, this.config)
-      })
+        gasPrice: await getFairGasPrice(this.web3, this.config),
+      });
     } catch (e) {
-      LoggerInstance.error(`ERROR: Failed to swap exact amount in : ${e.message}`)
+      LoggerInstance.error(
+        `ERROR: Failed to swap exact amount in : ${e.message}`
+      );
     }
-    return result
+    return result;
   }
 
   /**
@@ -649,9 +674,9 @@ export class Pool {
       setContractDefaults(
         new this.web3.eth.Contract(this.poolAbi as AbiItem[], poolAddress),
         this.config
-      )
+      );
 
-    return estimateGas(address, poolContract.methods.collectMarketFee)
+    return estimateGas(address, poolContract.methods.collectMarketFee);
   }
 
   /**
@@ -666,25 +691,27 @@ export class Pool {
     poolAddress: string
   ): Promise<TransactionReceipt> {
     if ((await this.getMarketFeeCollector(poolAddress)) !== address) {
-      throw new Error(`Caller is not MarketFeeCollector`)
+      throw new Error(`Caller is not MarketFeeCollector`);
     }
     const pool = setContractDefaults(
       new this.web3.eth.Contract(this.poolAbi, poolAddress),
       this.config
-    )
-    let result = null
-    const estGas = await estimateGas(address, pool.methods.collectMarketFee)
+    );
+    let result = null;
+    const estGas = await estimateGas(address, pool.methods.collectMarketFee);
 
     try {
       result = await pool.methods.collectMarketFee().send({
         from: address,
         gas: estGas + 1,
-        gasPrice: await getFairGasPrice(this.web3, this.config)
-      })
+        gasPrice: await getFairGasPrice(this.web3, this.config),
+      });
     } catch (e) {
-      LoggerInstance.error(`ERROR: Failed to swap exact amount in : ${e.message}`)
+      LoggerInstance.error(
+        `ERROR: Failed to swap exact amount in : ${e.message}`
+      );
     }
-    return result
+    return result;
   }
 
   /**
@@ -708,14 +735,14 @@ export class Pool {
       setContractDefaults(
         new this.web3.eth.Contract(this.poolAbi as AbiItem[], poolAddress),
         this.config
-      )
+      );
 
     return estimateGas(
       address,
       poolContract.methods.updatePublishMarketFee,
       newPublishMarketAddress,
       this.web3.utils.toWei(newPublishMarketSwapFee)
-    )
+    );
   }
 
   /**
@@ -733,20 +760,20 @@ export class Pool {
     newPublishMarketSwapFee: string
   ): Promise<TransactionReceipt> {
     if ((await this.getMarketFeeCollector(poolAddress)) !== address) {
-      throw new Error(`Caller is not MarketFeeCollector`)
+      throw new Error(`Caller is not MarketFeeCollector`);
     }
     const pool = setContractDefaults(
       new this.web3.eth.Contract(this.poolAbi, poolAddress),
       this.config
-    )
-    let result = null
+    );
+    let result = null;
 
     const estGas = await estimateGas(
       address,
       pool.methods.updatePublishMarketFee,
       newPublishMarketAddress,
       this.web3.utils.toWei(newPublishMarketSwapFee)
-    )
+    );
     try {
       result = await pool.methods
         .updatePublishMarketFee(
@@ -756,12 +783,14 @@ export class Pool {
         .send({
           from: address,
           gas: estGas + 1,
-          gasPrice: await getFairGasPrice(this.web3, this.config)
-        })
+          gasPrice: await getFairGasPrice(this.web3, this.config),
+        });
     } catch (e) {
-      LoggerInstance.error(`ERROR: Failed to updatePublishMarketFee : ${e.message}`)
+      LoggerInstance.error(
+        `ERROR: Failed to updatePublishMarketFee : ${e.message}`
+      );
     }
-    return result
+    return result;
   }
 
   /**
@@ -785,26 +814,26 @@ export class Pool {
       setContractDefaults(
         new this.web3.eth.Contract(this.poolAbi as AbiItem[], poolAddress),
         this.config
-      )
+      );
 
     const tokenAmountIn = await this.amountToUnits(
       tokenInOutMarket.tokenIn,
       amountsInOutMaxFee.tokenAmountIn,
       tokenInOutMarket.tokenInDecimals
-    )
+    );
 
     const minAmountOut = await this.amountToUnits(
       tokenInOutMarket.tokenOut,
       amountsInOutMaxFee.minAmountOut,
       tokenInOutMarket.tokenOutDecimals
-    )
+    );
 
     const maxPrice = amountsInOutMaxFee.maxPrice
       ? this.amountToUnits(
           await this.getBaseToken(poolAddress),
           amountsInOutMaxFee.maxPrice
         )
-      : MaxUint256
+      : MaxUint256;
 
     return estimateGas(
       address,
@@ -812,15 +841,15 @@ export class Pool {
       [
         tokenInOutMarket.tokenIn,
         tokenInOutMarket.tokenOut,
-        tokenInOutMarket.marketFeeAddress
+        tokenInOutMarket.marketFeeAddress,
       ],
       [
         tokenAmountIn,
         minAmountOut,
         maxPrice,
-        this.web3.utils.toWei(amountsInOutMaxFee.swapMarketFee)
+        this.web3.utils.toWei(amountsInOutMaxFee.swapMarketFee),
       ]
-    )
+    );
   }
 
   /**
@@ -845,31 +874,35 @@ export class Pool {
     const pool = setContractDefaults(
       new this.web3.eth.Contract(this.poolAbi, poolAddress),
       this.config
-    )
+    );
 
-    const maxSwap = await getMaxSwapExactIn(this, poolAddress, tokenInOutMarket.tokenIn)
+    const maxSwap = await getMaxSwapExactIn(
+      this,
+      poolAddress,
+      tokenInOutMarket.tokenIn
+    );
     if (new BigNumber(amountsInOutMaxFee.tokenAmountIn).gt(maxSwap)) {
-      throw new Error(`tokenAmountIn is greater than ${maxSwap.toString()}`)
+      throw new Error(`tokenAmountIn is greater than ${maxSwap.toString()}`);
     }
 
     const tokenAmountIn = await this.amountToUnits(
       tokenInOutMarket.tokenIn,
       amountsInOutMaxFee.tokenAmountIn,
       tokenInOutMarket.tokenInDecimals
-    )
+    );
 
     const minAmountOut = await this.amountToUnits(
       tokenInOutMarket.tokenOut,
       amountsInOutMaxFee.minAmountOut,
       tokenInOutMarket.tokenOutDecimals
-    )
+    );
 
     const maxPrice = amountsInOutMaxFee.maxPrice
       ? await this.amountToUnits(
           await this.getBaseToken(poolAddress),
           amountsInOutMaxFee.maxPrice
         )
-      : MaxUint256
+      : MaxUint256;
 
     const estGas = await estimateGas(
       address,
@@ -877,42 +910,44 @@ export class Pool {
       [
         tokenInOutMarket.tokenIn,
         tokenInOutMarket.tokenOut,
-        tokenInOutMarket.marketFeeAddress
+        tokenInOutMarket.marketFeeAddress,
       ],
       [
         tokenAmountIn,
         minAmountOut,
         maxPrice,
-        this.web3.utils.toWei(amountsInOutMaxFee.swapMarketFee)
+        this.web3.utils.toWei(amountsInOutMaxFee.swapMarketFee),
       ]
-    )
+    );
 
-    let result = null
+    let result = null;
     try {
       result = await pool.methods
         .swapExactAmountIn(
           [
             tokenInOutMarket.tokenIn,
             tokenInOutMarket.tokenOut,
-            tokenInOutMarket.marketFeeAddress
+            tokenInOutMarket.marketFeeAddress,
           ],
           [
             tokenAmountIn,
             minAmountOut,
             maxPrice,
-            this.web3.utils.toWei(amountsInOutMaxFee.swapMarketFee)
+            this.web3.utils.toWei(amountsInOutMaxFee.swapMarketFee),
           ]
         )
         .send({
           from: address,
           gas: estGas + 1,
-          gasPrice: await getFairGasPrice(this.web3, this.config)
-        })
+          gasPrice: await getFairGasPrice(this.web3, this.config),
+        });
     } catch (e) {
-      LoggerInstance.error(`ERROR: Failed to swap exact amount in : ${e.message}`)
+      LoggerInstance.error(
+        `ERROR: Failed to swap exact amount in : ${e.message}`
+      );
     }
 
-    return result
+    return result;
   }
 
   /**
@@ -936,26 +971,26 @@ export class Pool {
       setContractDefaults(
         new this.web3.eth.Contract(this.poolAbi as AbiItem[], poolAddress),
         this.config
-      )
+      );
 
     const maxAmountIn = await this.amountToUnits(
       tokenInOutMarket.tokenIn,
       amountsInOutMaxFee.maxAmountIn,
       tokenInOutMarket.tokenInDecimals
-    )
+    );
 
     const tokenAmountOut = await this.amountToUnits(
       tokenInOutMarket.tokenOut,
       amountsInOutMaxFee.tokenAmountOut,
       tokenInOutMarket.tokenOutDecimals
-    )
+    );
 
     const maxPrice = amountsInOutMaxFee.maxPrice
       ? await this.amountToUnits(
           await this.getBaseToken(poolAddress),
           amountsInOutMaxFee.maxPrice
         )
-      : MaxUint256
+      : MaxUint256;
 
     return estimateGas(
       address,
@@ -963,15 +998,15 @@ export class Pool {
       [
         tokenInOutMarket.tokenIn,
         tokenInOutMarket.tokenOut,
-        tokenInOutMarket.marketFeeAddress
+        tokenInOutMarket.marketFeeAddress,
       ],
       [
         maxAmountIn,
         tokenAmountOut,
         maxPrice,
-        this.web3.utils.toWei(amountsInOutMaxFee.swapMarketFee)
+        this.web3.utils.toWei(amountsInOutMaxFee.swapMarketFee),
       ]
-    )
+    );
   }
 
   /**
@@ -991,32 +1026,36 @@ export class Pool {
     const pool = setContractDefaults(
       new this.web3.eth.Contract(this.poolAbi, poolAddress),
       this.config
-    )
-    let result = null
+    );
+    let result = null;
 
-    const maxSwap = await getMaxSwapExactOut(this, poolAddress, tokenInOutMarket.tokenOut)
+    const maxSwap = await getMaxSwapExactOut(
+      this,
+      poolAddress,
+      tokenInOutMarket.tokenOut
+    );
     if (new BigNumber(amountsInOutMaxFee.tokenAmountOut).gt(maxSwap)) {
-      throw new Error(`tokenAmountOut is greater than ${maxSwap.toString()}`)
+      throw new Error(`tokenAmountOut is greater than ${maxSwap.toString()}`);
     }
 
     const maxAmountIn = await this.amountToUnits(
       tokenInOutMarket.tokenIn,
       amountsInOutMaxFee.maxAmountIn,
       tokenInOutMarket.tokenInDecimals
-    )
+    );
 
     const tokenAmountOut = await this.amountToUnits(
       tokenInOutMarket.tokenOut,
       amountsInOutMaxFee.tokenAmountOut,
       tokenInOutMarket.tokenOutDecimals
-    )
+    );
 
     const maxPrice = amountsInOutMaxFee.maxPrice
       ? this.amountToUnits(
           await this.getBaseToken(poolAddress),
           amountsInOutMaxFee.maxPrice
         )
-      : MaxUint256
+      : MaxUint256;
 
     const estGas = await estimateGas(
       account,
@@ -1024,15 +1063,15 @@ export class Pool {
       [
         tokenInOutMarket.tokenIn,
         tokenInOutMarket.tokenOut,
-        tokenInOutMarket.marketFeeAddress
+        tokenInOutMarket.marketFeeAddress,
       ],
       [
         maxAmountIn,
         tokenAmountOut,
         maxPrice,
-        this.web3.utils.toWei(amountsInOutMaxFee.swapMarketFee)
+        this.web3.utils.toWei(amountsInOutMaxFee.swapMarketFee),
       ]
-    )
+    );
 
     try {
       result = await pool.methods
@@ -1040,24 +1079,26 @@ export class Pool {
           [
             tokenInOutMarket.tokenIn,
             tokenInOutMarket.tokenOut,
-            tokenInOutMarket.marketFeeAddress
+            tokenInOutMarket.marketFeeAddress,
           ],
           [
             maxAmountIn,
             tokenAmountOut,
             maxPrice,
-            this.web3.utils.toWei(amountsInOutMaxFee.swapMarketFee)
+            this.web3.utils.toWei(amountsInOutMaxFee.swapMarketFee),
           ]
         )
         .send({
           from: account,
           gas: estGas + 1,
-          gasPrice: await getFairGasPrice(this.web3, this.config)
-        })
+          gasPrice: await getFairGasPrice(this.web3, this.config),
+        });
     } catch (e) {
-      LoggerInstance.error(`ERROR: Failed to swap exact amount out: ${e.message}`)
+      LoggerInstance.error(
+        `ERROR: Failed to swap exact amount out: ${e.message}`
+      );
     }
-    return result
+    return result;
   }
 
   /**
@@ -1082,14 +1123,14 @@ export class Pool {
       setContractDefaults(
         new this.web3.eth.Contract(this.poolAbi as AbiItem[], poolAddress),
         this.config
-      )
+      );
 
     return estimateGas(
       address,
       poolContract.methods.joinswapExternAmountIn,
       tokenAmountIn,
       minPoolAmountOut
-    )
+    );
   }
 
   /**
@@ -1113,25 +1154,25 @@ export class Pool {
     const pool = setContractDefaults(
       new this.web3.eth.Contract(this.poolAbi, poolAddress),
       this.config
-    )
-    let result = null
-    const tokenIn = await this.getBaseToken(poolAddress)
-    const maxSwap = await getMaxAddLiquidity(this, poolAddress, tokenIn)
+    );
+    let result = null;
+    const tokenIn = await this.getBaseToken(poolAddress);
+    const maxSwap = await getMaxAddLiquidity(this, poolAddress, tokenIn);
     if (new BigNumber(tokenAmountIn).gt(maxSwap)) {
-      throw new Error(`tokenAmountOut is greater than ${maxSwap.toString()}`)
+      throw new Error(`tokenAmountOut is greater than ${maxSwap.toString()}`);
     }
 
     const amountInFormatted = await this.amountToUnits(
       tokenIn,
       tokenAmountIn,
       tokenInDecimals
-    )
+    );
     const estGas = await estimateGas(
       account,
       pool.methods.joinswapExternAmountIn,
       amountInFormatted,
       this.web3.utils.toWei(minPoolAmountOut)
-    )
+    );
 
     try {
       result = await pool.methods
@@ -1142,13 +1183,13 @@ export class Pool {
         .send({
           from: account,
           gas: estGas + 1,
-          gasPrice: await getFairGasPrice(this.web3, this.config)
-        })
+          gasPrice: await getFairGasPrice(this.web3, this.config),
+        });
     } catch (e) {
       LoggerInstance.error(`ERROR: Failed to pay tokens in order to \
-      join the pool: ${e.message}`)
+      join the pool: ${e.message}`);
     }
-    return result
+    return result;
   }
 
   /**
@@ -1172,14 +1213,14 @@ export class Pool {
       setContractDefaults(
         new this.web3.eth.Contract(this.poolAbi as AbiItem[], poolAddress),
         this.config
-      )
+      );
 
     return estimateGas(
       address,
       poolContract.methods.exitswapPoolAmountIn,
       poolAmountIn,
       minTokenAmountOut
-    )
+    );
   }
 
   /**
@@ -1203,45 +1244,50 @@ export class Pool {
     const pool = setContractDefaults(
       new this.web3.eth.Contract(this.poolAbi, poolAddress),
       this.config
-    )
-    let result = null
-    const tokenOut = await this.getBaseToken(poolAddress)
+    );
+    let result = null;
+    const tokenOut = await this.getBaseToken(poolAddress);
 
     const tokenAmountOut = await this.calcSingleOutGivenPoolIn(
       poolAddress,
       tokenOut,
       poolAmountIn
-    )
+    );
 
-    const maxSwap = await getMaxRemoveLiquidity(this, poolAddress, tokenOut)
+    const maxSwap = await getMaxRemoveLiquidity(this, poolAddress, tokenOut);
     if (new BigNumber(tokenAmountOut).gt(maxSwap)) {
-      throw new Error(`tokenAmountOut is greater than ${maxSwap.toString()}`)
+      throw new Error(`tokenAmountOut is greater than ${maxSwap.toString()}`);
     }
 
     const minTokenOutFormatted = await this.amountToUnits(
       await this.getBaseToken(poolAddress),
       minTokenAmountOut,
       poolDecimals
-    )
+    );
     const estGas = await estimateGas(
       account,
       pool.methods.exitswapPoolAmountIn,
       this.web3.utils.toWei(poolAmountIn),
       minTokenOutFormatted
-    )
+    );
 
     try {
       result = await pool.methods
-        .exitswapPoolAmountIn(this.web3.utils.toWei(poolAmountIn), minTokenOutFormatted)
+        .exitswapPoolAmountIn(
+          this.web3.utils.toWei(poolAmountIn),
+          minTokenOutFormatted
+        )
         .send({
           from: account,
           gas: estGas + 1,
-          gasPrice: await getFairGasPrice(this.web3, this.config)
-        })
+          gasPrice: await getFairGasPrice(this.web3, this.config),
+        });
     } catch (e) {
-      LoggerInstance.error(`ERROR: Failed to pay pool shares into the pool: ${e.message}`)
+      LoggerInstance.error(
+        `ERROR: Failed to pay pool shares into the pool: ${e.message}`
+      );
     }
-    return result
+    return result;
   }
 
   /**
@@ -1261,53 +1307,57 @@ export class Pool {
     const pool = setContractDefaults(
       new this.web3.eth.Contract(this.poolAbi, poolAddress),
       this.config
-    )
-    let decimalsTokenIn = 18
-    let decimalsTokenOut = 18
+    );
+    let decimalsTokenIn = 18;
+    let decimalsTokenOut = 18;
 
     const tokenInContract = setContractDefaults(
       new this.web3.eth.Contract(defaultErc20Abi.abi as AbiItem[], tokenIn),
       this.config
-    )
+    );
     const tokenOutContract = setContractDefaults(
       new this.web3.eth.Contract(defaultErc20Abi.abi as AbiItem[], tokenOut),
       this.config
-    )
+    );
     try {
-      decimalsTokenIn = await tokenInContract.methods.decimals().call()
+      decimalsTokenIn = await tokenInContract.methods.decimals().call();
     } catch (e) {
-      LoggerInstance.error(`ERROR: FAILED TO CALL DECIMALS(), USING 18 ${e.message}`)
+      LoggerInstance.error(
+        `ERROR: FAILED TO CALL DECIMALS(), USING 18 ${e.message}`
+      );
     }
     try {
-      decimalsTokenOut = await tokenOutContract.methods.decimals().call()
+      decimalsTokenOut = await tokenOutContract.methods.decimals().call();
     } catch (e) {
-      LoggerInstance.error(`ERROR: FAILED TO CALL DECIMALS(), USING 18 ${e.message}`)
+      LoggerInstance.error(
+        `ERROR: FAILED TO CALL DECIMALS(), USING 18 ${e.message}`
+      );
     }
 
-    let price = null
+    let price = null;
     try {
       price = await pool.methods
         .getSpotPrice(tokenIn, tokenOut, this.web3.utils.toWei(swapMarketFee))
-        .call()
-      price = new BigNumber(price.toString())
+        .call();
+      price = new BigNumber(price.toString());
     } catch (e) {
       LoggerInstance.error(
-        'ERROR: Failed to get spot price of swapping tokenIn to tokenOut'
-      )
+        "ERROR: Failed to get spot price of swapping tokenIn to tokenOut"
+      );
     }
 
-    let decimalsDiff
+    let decimalsDiff;
     if (decimalsTokenIn > decimalsTokenOut) {
-      decimalsDiff = decimalsTokenIn - decimalsTokenOut
-      price = new BigNumber(price / 10 ** decimalsDiff)
-      price = price / 10 ** decimalsTokenOut
+      decimalsDiff = decimalsTokenIn - decimalsTokenOut;
+      price = new BigNumber(price / 10 ** decimalsDiff);
+      price = price / 10 ** decimalsTokenOut;
     } else {
-      decimalsDiff = decimalsTokenOut - decimalsTokenIn
-      price = new BigNumber(price * 10 ** (2 * decimalsDiff))
-      price = price / 10 ** decimalsTokenOut
+      decimalsDiff = decimalsTokenOut - decimalsTokenIn;
+      price = new BigNumber(price * 10 ** (2 * decimalsDiff));
+      price = price / 10 ** decimalsTokenOut;
     }
 
-    return price.toString()
+    return price.toString();
   }
 
   /**
@@ -1333,21 +1383,21 @@ export class Pool {
     const pool = setContractDefaults(
       new this.web3.eth.Contract(this.poolAbi, poolAddress),
       this.config
-    )
+    );
 
-    const maxSwap = await getMaxSwapExactOut(this, poolAddress, tokenOut)
+    const maxSwap = await getMaxSwapExactOut(this, poolAddress, tokenOut);
 
     if (new BigNumber(tokenAmountOut).gt(maxSwap)) {
-      throw new Error(`tokenAmountOut is greater than ${maxSwap.toString()}`)
+      throw new Error(`tokenAmountOut is greater than ${maxSwap.toString()}`);
     }
 
     const amountOutFormatted = await this.amountToUnits(
       tokenOut,
       tokenAmountOut,
       tokenOutDecimals
-    )
+    );
 
-    let amount = null
+    let amount = null;
 
     try {
       const result = await pool.methods
@@ -1357,7 +1407,7 @@ export class Pool {
           amountOutFormatted,
           this.web3.utils.toWei(swapMarketFee)
         )
-        .call()
+        .call();
       amount = {
         tokenAmount: await this.unitsToAmount(
           tokenOut,
@@ -1383,12 +1433,12 @@ export class Pool {
           tokenIn,
           result.consumeMarketSwapFeeAmount,
           tokenInDecimals
-        )
-      }
+        ),
+      };
     } catch (e) {
-      LoggerInstance.error(`ERROR: Failed to calcInGivenOut ${e.message}`)
+      LoggerInstance.error(`ERROR: Failed to calcInGivenOut ${e.message}`);
     }
-    return amount
+    return amount;
   }
 
   /**
@@ -1413,20 +1463,20 @@ export class Pool {
     const pool = setContractDefaults(
       new this.web3.eth.Contract(this.poolAbi, poolAddress),
       this.config
-    )
+    );
 
-    const maxSwap = await getMaxSwapExactIn(this, poolAddress, tokenIn)
+    const maxSwap = await getMaxSwapExactIn(this, poolAddress, tokenIn);
     if (new BigNumber(tokenAmountIn).gt(maxSwap)) {
-      throw new Error(`tokenAmountIn is greater than ${maxSwap.toString()}`)
+      throw new Error(`tokenAmountIn is greater than ${maxSwap.toString()}`);
     }
 
     const amountInFormatted = await this.amountToUnits(
       tokenIn,
       tokenAmountIn,
       tokenInDecimals
-    )
+    );
 
-    let amount = null
+    let amount = null;
 
     try {
       const result = await pool.methods
@@ -1436,7 +1486,7 @@ export class Pool {
           amountInFormatted,
           this.web3.utils.toWei(swapMarketFee)
         )
-        .call()
+        .call();
 
       amount = {
         tokenAmount: await this.unitsToAmount(
@@ -1463,12 +1513,12 @@ export class Pool {
           tokenIn,
           result.consumeMarketSwapFeeAmount,
           tokenInDecimals
-        )
-      }
+        ),
+      };
     } catch (e) {
-      LoggerInstance.error(`ERROR: Failed to calcOutGivenIn ${e.message}`)
+      LoggerInstance.error(`ERROR: Failed to calcOutGivenIn ${e.message}`);
     }
-    return amount
+    return amount;
   }
 
   /**
@@ -1488,8 +1538,8 @@ export class Pool {
     const pool = setContractDefaults(
       new this.web3.eth.Contract(this.poolAbi, poolAddress),
       this.config
-    )
-    let amount = null
+    );
+    let amount = null;
 
     try {
       const result = await pool.methods
@@ -1497,15 +1547,15 @@ export class Pool {
           tokenIn,
           await this.amountToUnits(tokenIn, tokenAmountIn, tokenInDecimals)
         )
-        .call()
+        .call();
 
-      amount = await this.unitsToAmount(poolAddress, result, poolDecimals)
+      amount = await this.unitsToAmount(poolAddress, result, poolDecimals);
     } catch (e) {
       LoggerInstance.error(
         `ERROR: Failed to calculate PoolOutGivenSingleIn : ${e.message}`
-      )
+      );
     }
-    return amount
+    return amount;
   }
 
   /**
@@ -1525,25 +1575,25 @@ export class Pool {
     const pool = setContractDefaults(
       new this.web3.eth.Contract(this.poolAbi, poolAddress),
       this.config
-    )
-    let amount = null
+    );
+    let amount = null;
     const amountFormatted = await this.amountToUnits(
       poolAddress,
       poolAmountOut,
       poolDecimals
-    )
+    );
     try {
       const result = await pool.methods
         .calcSingleInPoolOut(tokenIn, amountFormatted)
-        .call()
+        .call();
 
-      amount = await this.unitsToAmount(tokenIn, result, tokenInDecimals)
+      amount = await this.unitsToAmount(tokenIn, result, tokenInDecimals);
     } catch (e) {
       LoggerInstance.error(
         `ERROR: Failed to calculate SingleInGivenPoolOut : ${e.message}`
-      )
+      );
     }
-    return amount
+    return amount;
   }
 
   /**
@@ -1563,8 +1613,8 @@ export class Pool {
     const pool = setContractDefaults(
       new this.web3.eth.Contract(this.poolAbi, poolAddress),
       this.config
-    )
-    let amount = null
+    );
+    let amount = null;
 
     try {
       const result = await pool.methods
@@ -1572,12 +1622,14 @@ export class Pool {
           tokenOut,
           await this.amountToUnits(poolAddress, poolAmountIn, poolDecimals)
         )
-        .call()
-      amount = await this.unitsToAmount(tokenOut, result, tokenOutDecimals)
+        .call();
+      amount = await this.unitsToAmount(tokenOut, result, tokenOutDecimals);
     } catch (e) {
-      LoggerInstance.error(`ERROR: Failed to calculate SingleOutGivenPoolIn : ${e}`)
+      LoggerInstance.error(
+        `ERROR: Failed to calculate SingleOutGivenPoolIn : ${e}`
+      );
     }
-    return amount
+    return amount;
   }
 
   /**
@@ -1597,8 +1649,8 @@ export class Pool {
     const pool = setContractDefaults(
       new this.web3.eth.Contract(this.poolAbi, poolAddress),
       this.config
-    )
-    let amount = null
+    );
+    let amount = null;
 
     try {
       const result = await pool.methods
@@ -1606,15 +1658,15 @@ export class Pool {
           tokenOut,
           await this.amountToUnits(tokenOut, tokenAmountOut, tokenOutDecimals)
         )
-        .call()
+        .call();
 
-      amount = await this.unitsToAmount(poolAddress, result, poolDecimals)
+      amount = await this.unitsToAmount(poolAddress, result, poolDecimals);
     } catch (e) {
       LoggerInstance.error(
         `ERROR: Failed to calculate PoolInGivenSingleOut : ${e.message}`
-      )
+      );
     }
-    return amount
+    return amount;
   }
 
   /**
@@ -1622,12 +1674,12 @@ export class Pool {
    * @return {String}
    */
   public getSwapEventSignature(): string {
-    const abi = this.poolAbi as AbiItem[]
+    const abi = this.poolAbi as AbiItem[];
     const eventdata = abi.find(
-      ({ name, type }) => type === 'event' && name === 'LOG_SWAP'
-    )
-    const topic = this.web3.eth.abi.encodeEventSignature(eventdata)
-    return topic
+      ({ name, type }) => type === "event" && name === "LOG_SWAP"
+    );
+    const topic = this.web3.eth.abi.encodeEventSignature(eventdata);
+    return topic;
   }
 
   /**
@@ -1635,12 +1687,12 @@ export class Pool {
    * @return {String}
    */
   public getJoinEventSignature(): string {
-    const abi = this.poolAbi as AbiItem[]
+    const abi = this.poolAbi as AbiItem[];
     const eventdata = abi.find(
-      ({ name, type }) => type === 'event' && name === 'LOG_JOIN'
-    )
-    const topic = this.web3.eth.abi.encodeEventSignature(eventdata)
-    return topic
+      ({ name, type }) => type === "event" && name === "LOG_JOIN"
+    );
+    const topic = this.web3.eth.abi.encodeEventSignature(eventdata);
+    return topic;
   }
 
   /**
@@ -1648,11 +1700,11 @@ export class Pool {
    * @return {String}
    */
   public getExitEventSignature(): string {
-    const abi = this.poolAbi as AbiItem[]
+    const abi = this.poolAbi as AbiItem[];
     const eventdata = abi.find(
-      ({ name, type }) => type === 'event' && name === 'LOG_EXIT'
-    )
-    const topic = this.web3.eth.abi.encodeEventSignature(eventdata)
-    return topic
+      ({ name, type }) => type === "event" && name === "LOG_EXIT"
+    );
+    const topic = this.web3.eth.abi.encodeEventSignature(eventdata);
+    return topic;
   }
 }

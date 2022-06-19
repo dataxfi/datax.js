@@ -7,11 +7,10 @@ import {
   getFairGasPrice,
   setContractDefaults,
   estimateGas,
-  ConfigHelper
 } from '../utils'
 import { Contract } from 'web3-eth-contract'
-import { MetadataProof } from '../../src/@types'
-import { Config } from '../models/index.js'
+import { MetadataProof, supportedNetworks } from '../../src/@types'
+import { Config } from '../'
 import { MetadataAndTokenURI } from '../@types'
 
 /**
@@ -30,17 +29,17 @@ export class Nft {
   public nftAbi: AbiItem | AbiItem[]
   public web3: Web3
   public startBlock: number
-  public config: Config
+  public config: Config["default"]
 
   constructor(
     web3: Web3,
-    network?: string | number,
+    network: supportedNetworks,
     nftAbi?: AbiItem | AbiItem[],
     config?: Config
   ) {
     this.nftAbi = nftAbi || (defaultNftAbi.abi as AbiItem[])
     this.web3 = web3
-    this.config = config || new ConfigHelper().getConfig(network || 'unknown')
+    this.config = config.default || new Config(web3, network).default;
   }
 
   /**
@@ -123,6 +122,7 @@ export class Nft {
     }
     if (!templateIndex) templateIndex = 1
 
+    //TODO: Remove support for minting etc.
     // Generate name & symbol if not present
     // if (!name || !symbol) {
     //   ;({ name, symbol } = generateDtName())

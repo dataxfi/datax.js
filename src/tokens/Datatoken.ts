@@ -1,10 +1,10 @@
-import Web3 from 'web3'
-import { AbiItem } from 'web3-utils'
-import { TransactionReceipt } from 'web3-eth'
-import { Contract } from 'web3-eth-contract'
-import Decimal from 'decimal.js'
-import defaultDatatokensAbi from '@oceanprotocol/contracts/artifacts/contracts/templates/ERC20Template.sol/ERC20Template.json'
-import defaultDatatokensEnterpriseAbi from '@oceanprotocol/contracts/artifacts/contracts/templates/ERC20TemplateEnterprise.sol/ERC20TemplateEnterprise.json'
+import Web3 from "web3";
+import { AbiItem } from "web3-utils";
+import { TransactionReceipt } from "web3-eth";
+import { Contract } from "web3-eth-contract";
+import Decimal from "decimal.js";
+import defaultDatatokensAbi from "@oceanprotocol/contracts/artifacts/contracts/templates/ERC20Template.sol/ERC20Template.json";
+import defaultDatatokensEnterpriseAbi from "@oceanprotocol/contracts/artifacts/contracts/templates/ERC20TemplateEnterprise.sol/ERC20TemplateEnterprise.json";
 import {
   LoggerInstance,
   getFairGasPrice,
@@ -12,48 +12,48 @@ import {
   getFreOrderParams,
   estimateGas,
   ZERO_ADDRESS,
-  ConfigHelper
-} from '../utils'
+} from "../utils";
 import {
   ConsumeMarketFee,
   FreOrderParams,
   FreCreationParams,
   ProviderFees,
-  PublishingMarketFee
-} from '../@types'
-import { Nft } from './NFT'
-import { Config } from '../models/index.js'
+  PublishingMarketFee,
+  supportedNetworks,
+} from "../@types";
+import { Nft } from "./NFT";
+import { Config } from "../";
 
 /**
  * ERC20 ROLES
  */
 interface Roles {
-  minter: boolean
-  paymentManager: boolean
+  minter: boolean;
+  paymentManager: boolean;
 }
 
 export interface OrderParams {
-  consumer: string
-  serviceIndex: number
-  _providerFee: ProviderFees
-  _consumeMarketFee: ConsumeMarketFee
+  consumer: string;
+  serviceIndex: number;
+  _providerFee: ProviderFees;
+  _consumeMarketFee: ConsumeMarketFee;
 }
 
 export interface DispenserParams {
-  maxTokens: string
-  maxBalance: string
-  withMint?: boolean // true if we want to allow the dispenser to be a minter
-  allowedSwapper?: string // only account that can ask tokens. set address(0) if not required
+  maxTokens: string;
+  maxBalance: string;
+  withMint?: boolean; // true if we want to allow the dispenser to be a minter
+  allowedSwapper?: string; // only account that can ask tokens. set address(0) if not required
 }
 
 export class Datatoken {
-  public factoryAddress: string
-  public factoryABI: AbiItem | AbiItem[]
-  public datatokensAbi: AbiItem | AbiItem[]
-  public datatokensEnterpriseAbi: AbiItem | AbiItem[]
-  public web3: Web3
-  public config: Config
-  public nft: Nft
+  public factoryAddress: string;
+  public factoryABI: AbiItem | AbiItem[];
+  public datatokensAbi: AbiItem | AbiItem[];
+  public datatokensEnterpriseAbi: AbiItem | AbiItem[];
+  public web3: Web3;
+  public config: Config["default"];
+  public nft: Nft;
 
   /**
    * Instantiate ERC20 Datatokens
@@ -62,17 +62,19 @@ export class Datatoken {
    */
   constructor(
     web3: Web3,
-    network?: string | number,
+    network: supportedNetworks,
     datatokensAbi?: AbiItem | AbiItem[],
     datatokensEnterpriseAbi?: AbiItem | AbiItem[],
     config?: Config
   ) {
-    this.web3 = web3
-    this.datatokensAbi = datatokensAbi || (defaultDatatokensAbi.abi as AbiItem[])
+    this.web3 = web3;
+    this.datatokensAbi =
+      datatokensAbi || (defaultDatatokensAbi.abi as AbiItem[]);
     this.datatokensEnterpriseAbi =
-      datatokensEnterpriseAbi || (defaultDatatokensEnterpriseAbi.abi as AbiItem[])
-    this.config = config || new ConfigHelper().getConfig(network || 'unknown')
-    this.nft = new Nft(this.web3)
+      datatokensEnterpriseAbi ||
+      (defaultDatatokensEnterpriseAbi.abi as AbiItem[]);
+    this.config = config.default || new Config(web3, network).default;
+    this.nft = new Nft(this.web3, network);
   }
 
   /**
@@ -96,14 +98,14 @@ export class Datatoken {
       setContractDefaults(
         new this.web3.eth.Contract(this.datatokensAbi, dtAddress),
         this.config
-      )
+      );
 
     return estimateGas(
       address,
       dtContract.methods.approve,
       spender,
       this.web3.utils.toWei(amount)
-    )
+    );
   }
 
   /**
@@ -123,14 +125,14 @@ export class Datatoken {
     const dtContract = setContractDefaults(
       new this.web3.eth.Contract(this.datatokensAbi, dtAddress),
       this.config
-    )
+    );
 
     const estGas = await estimateGas(
       address,
       dtContract.methods.approve,
       spender,
       this.web3.utils.toWei(amount)
-    )
+    );
 
     // Call mint contract method
     const trxReceipt = await dtContract.methods
@@ -138,9 +140,9 @@ export class Datatoken {
       .send({
         from: address,
         gas: estGas + 1,
-        gasPrice: await getFairGasPrice(this.web3, this.config)
-      })
-    return trxReceipt
+        gasPrice: await getFairGasPrice(this.web3, this.config),
+      });
+    return trxReceipt;
   }
 
   /**
@@ -164,14 +166,14 @@ export class Datatoken {
       setContractDefaults(
         new this.web3.eth.Contract(this.datatokensAbi, dtAddress),
         this.config
-      )
+      );
 
     return estimateGas(
       address,
       dtContract.methods.mint,
       toAddress || address,
       this.web3.utils.toWei(amount)
-    )
+    );
   }
 
   /**
@@ -194,10 +196,11 @@ export class Datatoken {
       setContractDefaults(
         new this.web3.eth.Contract(this.datatokensAbi, dtAddress),
         this.config
-      )
+      );
 
-    if (!fixedRateParams.allowedConsumer) fixedRateParams.allowedConsumer = ZERO_ADDRESS
-    const withMint = fixedRateParams.withMint ? 1 : 0
+    if (!fixedRateParams.allowedConsumer)
+      fixedRateParams.allowedConsumer = ZERO_ADDRESS;
+    const withMint = fixedRateParams.withMint ? 1 : 0;
 
     return estimateGas(
       address,
@@ -207,16 +210,16 @@ export class Datatoken {
         fixedRateParams.baseTokenAddress,
         address,
         fixedRateParams.marketFeeCollector,
-        fixedRateParams.allowedConsumer
+        fixedRateParams.allowedConsumer,
       ],
       [
         fixedRateParams.baseTokenDecimals,
         fixedRateParams.datatokenDecimals,
         fixedRateParams.fixedRate,
         fixedRateParams.marketFee,
-        withMint
+        withMint,
       ]
-    )
+    );
   }
 
   /**
@@ -235,13 +238,14 @@ export class Datatoken {
     const dtContract = setContractDefaults(
       new this.web3.eth.Contract(this.datatokensAbi, dtAddress),
       this.config
-    )
+    );
     if (!(await this.isERC20Deployer(dtAddress, address))) {
-      throw new Error(`User is not ERC20 Deployer`)
+      throw new Error(`User is not ERC20 Deployer`);
     }
-    if (!fixedRateParams.allowedConsumer) fixedRateParams.allowedConsumer = ZERO_ADDRESS
+    if (!fixedRateParams.allowedConsumer)
+      fixedRateParams.allowedConsumer = ZERO_ADDRESS;
 
-    const withMint = fixedRateParams.withMint ? 1 : 0
+    const withMint = fixedRateParams.withMint ? 1 : 0;
 
     // should check ERC20Deployer role using erc721 level ..
 
@@ -253,16 +257,16 @@ export class Datatoken {
         fixedRateParams.baseTokenAddress,
         fixedRateParams.owner,
         fixedRateParams.marketFeeCollector,
-        fixedRateParams.allowedConsumer
+        fixedRateParams.allowedConsumer,
       ],
       [
         fixedRateParams.baseTokenDecimals,
         fixedRateParams.datatokenDecimals,
         fixedRateParams.fixedRate,
         fixedRateParams.marketFee,
-        withMint
+        withMint,
       ]
-    )
+    );
 
     // Call createFixedRate contract method
     const trxReceipt = await dtContract.methods
@@ -272,22 +276,22 @@ export class Datatoken {
           fixedRateParams.baseTokenAddress,
           fixedRateParams.owner,
           fixedRateParams.marketFeeCollector,
-          fixedRateParams.allowedConsumer
+          fixedRateParams.allowedConsumer,
         ],
         [
           fixedRateParams.baseTokenDecimals,
           fixedRateParams.datatokenDecimals,
           fixedRateParams.fixedRate,
           fixedRateParams.marketFee,
-          withMint
+          withMint,
         ]
       )
       .send({
         from: address,
         gas: estGas + 1,
-        gasPrice: await getFairGasPrice(this.web3, this.config)
-      })
-    return trxReceipt
+        gasPrice: await getFairGasPrice(this.web3, this.config),
+      });
+    return trxReceipt;
   }
 
   /**
@@ -311,11 +315,12 @@ export class Datatoken {
       setContractDefaults(
         new this.web3.eth.Contract(this.datatokensAbi, dtAddress),
         this.config
-      )
+      );
 
-    if (!dispenserParams.allowedSwapper) dispenserParams.allowedSwapper = ZERO_ADDRESS
+    if (!dispenserParams.allowedSwapper)
+      dispenserParams.allowedSwapper = ZERO_ADDRESS;
 
-    if (!dispenserParams.withMint) dispenserParams.withMint = false
+    if (!dispenserParams.withMint) dispenserParams.withMint = false;
 
     return estimateGas(
       address,
@@ -325,7 +330,7 @@ export class Datatoken {
       dispenserParams.maxBalance,
       dispenserParams.withMint,
       dispenserParams.allowedSwapper
-    )
+    );
   }
 
   /**
@@ -343,17 +348,18 @@ export class Datatoken {
     dispenserParams: DispenserParams
   ): Promise<TransactionReceipt> {
     if (!(await this.isERC20Deployer(dtAddress, address))) {
-      throw new Error(`User is not ERC20 Deployer`)
+      throw new Error(`User is not ERC20 Deployer`);
     }
 
     const dtContract = setContractDefaults(
       new this.web3.eth.Contract(this.datatokensAbi, dtAddress),
       this.config
-    )
+    );
 
-    if (!dispenserParams.allowedSwapper) dispenserParams.allowedSwapper = ZERO_ADDRESS
+    if (!dispenserParams.allowedSwapper)
+      dispenserParams.allowedSwapper = ZERO_ADDRESS;
 
-    if (!dispenserParams.withMint) dispenserParams.withMint = false
+    if (!dispenserParams.withMint) dispenserParams.withMint = false;
 
     // should check ERC20Deployer role using erc721 level ..
 
@@ -365,7 +371,7 @@ export class Datatoken {
       dispenserParams.maxBalance,
       dispenserParams.withMint,
       dispenserParams.allowedSwapper
-    )
+    );
 
     // Call createFixedRate contract method
     const trxReceipt = await dtContract.methods
@@ -379,9 +385,9 @@ export class Datatoken {
       .send({
         from: address,
         gas: estGas + 1,
-        gasPrice: await getFairGasPrice(this.web3, this.config)
-      })
-    return trxReceipt
+        gasPrice: await getFairGasPrice(this.web3, this.config),
+      });
+    return trxReceipt;
   }
 
   /**
@@ -401,20 +407,20 @@ export class Datatoken {
     const dtContract = setContractDefaults(
       new this.web3.eth.Contract(this.datatokensAbi, dtAddress),
       this.config
-    )
+    );
 
     if ((await this.getDTPermissions(dtAddress, address)).minter !== true) {
-      throw new Error(`Caller is not Minter`)
+      throw new Error(`Caller is not Minter`);
     }
 
-    const capAvailble = await this.getCap(dtAddress)
+    const capAvailble = await this.getCap(dtAddress);
     if (new Decimal(capAvailble).gte(amount)) {
       const estGas = await estimateGas(
         address,
         dtContract.methods.mint,
         toAddress || address,
         this.web3.utils.toWei(amount)
-      )
+      );
 
       // Call mint contract method
       const trxReceipt = await dtContract.methods
@@ -422,11 +428,11 @@ export class Datatoken {
         .send({
           from: address,
           gas: estGas + 1,
-          gasPrice: await getFairGasPrice(this.web3, this.config)
-        })
-      return trxReceipt
+          gasPrice: await getFairGasPrice(this.web3, this.config),
+        });
+      return trxReceipt;
     } else {
-      throw new Error(`Mint amount exceeds cap available`)
+      throw new Error(`Mint amount exceeds cap available`);
     }
   }
 
@@ -449,9 +455,9 @@ export class Datatoken {
       setContractDefaults(
         new this.web3.eth.Contract(this.datatokensAbi, dtAddress),
         this.config
-      )
+      );
 
-    return estimateGas(address, dtContract.methods.addMinter, minter)
+    return estimateGas(address, dtContract.methods.addMinter, minter);
   }
 
   /**
@@ -470,22 +476,26 @@ export class Datatoken {
     const dtContract = setContractDefaults(
       new this.web3.eth.Contract(this.datatokensAbi, dtAddress),
       this.config
-    )
+    );
 
     if ((await this.isERC20Deployer(dtAddress, address)) !== true) {
-      throw new Error(`Caller is not ERC20Deployer`)
+      throw new Error(`Caller is not ERC20Deployer`);
     }
     // Estimate gas cost for addMinter method
-    const estGas = await estimateGas(address, dtContract.methods.addMinter, minter)
+    const estGas = await estimateGas(
+      address,
+      dtContract.methods.addMinter,
+      minter
+    );
 
     // Call addMinter function of the contract
     const trxReceipt = await dtContract.methods.addMinter(minter).send({
       from: address,
       gas: estGas + 1,
-      gasPrice: await getFairGasPrice(this.web3, this.config)
-    })
+      gasPrice: await getFairGasPrice(this.web3, this.config),
+    });
 
-    return trxReceipt
+    return trxReceipt;
   }
 
   /**
@@ -507,11 +517,11 @@ export class Datatoken {
       setContractDefaults(
         new this.web3.eth.Contract(this.datatokensAbi, dtAddress),
         this.config
-      )
+      );
 
     // should check ERC20Deployer role using erc721 level ..
 
-    return estimateGas(address, dtContract.methods.removeMinter, minter)
+    return estimateGas(address, dtContract.methods.removeMinter, minter);
   }
 
   /**
@@ -531,22 +541,26 @@ export class Datatoken {
     const dtContract = setContractDefaults(
       new this.web3.eth.Contract(this.datatokensAbi, dtAddress),
       this.config
-    )
+    );
 
     if ((await this.isERC20Deployer(dtAddress, address)) !== true) {
-      throw new Error(`Caller is not ERC20Deployer`)
+      throw new Error(`Caller is not ERC20Deployer`);
     }
 
-    const estGas = await estimateGas(address, dtContract.methods.removeMinter, minter)
+    const estGas = await estimateGas(
+      address,
+      dtContract.methods.removeMinter,
+      minter
+    );
 
     // Call dtContract function of the contract
     const trxReceipt = await dtContract.methods.removeMinter(minter).send({
       from: address,
       gas: estGas + 1,
-      gasPrice: await getFairGasPrice(this.web3, this.config)
-    })
+      gasPrice: await getFairGasPrice(this.web3, this.config),
+    });
 
-    return trxReceipt
+    return trxReceipt;
   }
 
   /**
@@ -568,9 +582,13 @@ export class Datatoken {
       setContractDefaults(
         new this.web3.eth.Contract(this.datatokensAbi, dtAddress),
         this.config
-      )
+      );
 
-    return estimateGas(address, dtContract.methods.addPaymentManager, paymentManager)
+    return estimateGas(
+      address,
+      dtContract.methods.addPaymentManager,
+      paymentManager
+    );
   }
 
   /**
@@ -589,26 +607,28 @@ export class Datatoken {
     const dtContract = setContractDefaults(
       new this.web3.eth.Contract(this.datatokensAbi, dtAddress),
       this.config
-    )
+    );
 
     if ((await this.isERC20Deployer(dtAddress, address)) !== true) {
-      throw new Error(`Caller is not ERC20Deployer`)
+      throw new Error(`Caller is not ERC20Deployer`);
     }
 
     const estGas = await estimateGas(
       address,
       dtContract.methods.addPaymentManager,
       paymentManager
-    )
+    );
 
     // Call addPaymentManager function of the contract
-    const trxReceipt = await dtContract.methods.addPaymentManager(paymentManager).send({
-      from: address,
-      gas: estGas + 1,
-      gasPrice: await getFairGasPrice(this.web3, this.config)
-    })
+    const trxReceipt = await dtContract.methods
+      .addPaymentManager(paymentManager)
+      .send({
+        from: address,
+        gas: estGas + 1,
+        gasPrice: await getFairGasPrice(this.web3, this.config),
+      });
 
-    return trxReceipt
+    return trxReceipt;
   }
 
   /**
@@ -630,9 +650,13 @@ export class Datatoken {
       setContractDefaults(
         new this.web3.eth.Contract(this.datatokensAbi, dtAddress),
         this.config
-      )
+      );
 
-    return estimateGas(address, dtContract.methods.removePaymentManager, paymentManager)
+    return estimateGas(
+      address,
+      dtContract.methods.removePaymentManager,
+      paymentManager
+    );
   }
 
   /**
@@ -651,17 +675,17 @@ export class Datatoken {
     const dtContract = setContractDefaults(
       new this.web3.eth.Contract(this.datatokensAbi, dtAddress),
       this.config
-    )
+    );
 
     if ((await this.isERC20Deployer(dtAddress, address)) !== true) {
-      throw new Error(`Caller is not ERC20Deployer`)
+      throw new Error(`Caller is not ERC20Deployer`);
     }
 
     const estGas = await estimateGas(
       address,
       dtContract.methods.removePaymentManager,
       paymentManager
-    )
+    );
 
     // Call removeFeeManager function of the contract
     const trxReceipt = await dtContract.methods
@@ -669,10 +693,10 @@ export class Datatoken {
       .send({
         from: address,
         gas: estGas + 1,
-        gasPrice: await getFairGasPrice(this.web3, this.config)
-      })
+        gasPrice: await getFairGasPrice(this.web3, this.config),
+      });
 
-    return trxReceipt
+    return trxReceipt;
   }
 
   /**
@@ -694,9 +718,13 @@ export class Datatoken {
       setContractDefaults(
         new this.web3.eth.Contract(this.datatokensAbi, dtAddress),
         this.config
-      )
+      );
 
-    return estimateGas(address, dtContract.methods.setPaymentCollector, paymentCollector)
+    return estimateGas(
+      address,
+      dtContract.methods.setPaymentCollector,
+      paymentCollector
+    );
   }
 
   /**
@@ -716,23 +744,27 @@ export class Datatoken {
     const dtContract = setContractDefaults(
       new this.web3.eth.Contract(this.datatokensAbi, dtAddress),
       this.config
-    )
+    );
     const isPaymentManager = (await this.getDTPermissions(dtAddress, address))
-      .paymentManager
-    const nftAddress = !isPaymentManager && (await this.getNFTAddress(dtAddress))
-    const isNftOwner = nftAddress && (await this.nft.getNftOwner(nftAddress)) === address
+      .paymentManager;
+    const nftAddress =
+      !isPaymentManager && (await this.getNFTAddress(dtAddress));
+    const isNftOwner =
+      nftAddress && (await this.nft.getNftOwner(nftAddress)) === address;
     const nftPermissions =
-      nftAddress && !isNftOwner && (await this.nft.getNftPermissions(nftAddress, address))
-    const isErc20Deployer = nftPermissions?.deployERC20
+      nftAddress &&
+      !isNftOwner &&
+      (await this.nft.getNftPermissions(nftAddress, address));
+    const isErc20Deployer = nftPermissions?.deployERC20;
     if (!isPaymentManager && !isNftOwner && !isErc20Deployer) {
-      throw new Error(`Caller is not Fee Manager, owner or erc20 Deployer`)
+      throw new Error(`Caller is not Fee Manager, owner or erc20 Deployer`);
     }
 
     const estGas = await estimateGas(
       address,
       dtContract.methods.setPaymentCollector,
       paymentCollector
-    )
+    );
 
     // Call setFeeCollector method of the contract
     const trxReceipt = await dtContract.methods
@@ -740,10 +772,10 @@ export class Datatoken {
       .send({
         from: address,
         gas: estGas + 1,
-        gasPrice: await getFairGasPrice(this.web3, this.config)
-      })
+        gasPrice: await getFairGasPrice(this.web3, this.config),
+      });
 
-    return trxReceipt
+    return trxReceipt;
   }
 
   /** getPaymentCollector - It returns the current paymentCollector
@@ -754,9 +786,11 @@ export class Datatoken {
     const dtContract = setContractDefaults(
       new this.web3.eth.Contract(this.datatokensAbi, dtAddress),
       this.config
-    )
-    const paymentCollector = await dtContract.methods.getPaymentCollector().call()
-    return paymentCollector
+    );
+    const paymentCollector = await dtContract.methods
+      .getPaymentCollector()
+      .call();
+    return paymentCollector;
   }
 
   /**
@@ -773,8 +807,8 @@ export class Datatoken {
     amount: string,
     address: string
   ): Promise<TransactionReceipt> {
-    const weiAmount = this.web3.utils.toWei(amount)
-    return this.transferWei(dtAddress, toAddress, weiAmount, address)
+    const weiAmount = this.web3.utils.toWei(amount);
+    return this.transferWei(dtAddress, toAddress, weiAmount, address);
   }
 
   /**
@@ -798,9 +832,9 @@ export class Datatoken {
       setContractDefaults(
         new this.web3.eth.Contract(this.datatokensAbi, dtAddress),
         this.config
-      )
+      );
 
-    return estimateGas(address, dtContract.methods.transfer, toAddress, amount)
+    return estimateGas(address, dtContract.methods.transfer, toAddress, amount);
   }
 
   /**
@@ -820,24 +854,26 @@ export class Datatoken {
     const dtContract = setContractDefaults(
       new this.web3.eth.Contract(this.datatokensAbi, dtAddress),
       this.config
-    )
+    );
     try {
       const estGas = await estimateGas(
         address,
         dtContract.methods.transfer,
         toAddress,
         amount
-      )
+      );
       // Call transfer function of the contract
-      const trxReceipt = await dtContract.methods.transfer(toAddress, amount).send({
-        from: address,
-        gas: estGas + 1,
-        gasPrice: await getFairGasPrice(this.web3, this.config)
-      })
-      return trxReceipt
+      const trxReceipt = await dtContract.methods
+        .transfer(toAddress, amount)
+        .send({
+          from: address,
+          gas: estGas + 1,
+          gasPrice: await getFairGasPrice(this.web3, this.config),
+        });
+      return trxReceipt;
     } catch (e) {
-      LoggerInstance.error(`ERROR: Failed to transfer tokens: ${e.message}`)
-      throw new Error(`Failed Failed to transfer tokens: ${e.message}`)
+      LoggerInstance.error(`ERROR: Failed to transfer tokens: ${e.message}`);
+      throw new Error(`Failed Failed to transfer tokens: ${e.message}`);
     }
   }
 
@@ -865,7 +901,7 @@ export class Datatoken {
       setContractDefaults(
         new this.web3.eth.Contract(this.datatokensAbi, dtAddress),
         this.config
-      )
+      );
 
     return estimateGas(
       address,
@@ -874,7 +910,7 @@ export class Datatoken {
       serviceIndex,
       providerFees,
       consumeMarketFee
-    )
+    );
   }
 
   /** Start Order: called by payer or consumer prior ordering a service consume on a marketplace.
@@ -897,13 +933,13 @@ export class Datatoken {
     const dtContract = setContractDefaults(
       new this.web3.eth.Contract(this.datatokensAbi, dtAddress),
       this.config
-    )
+    );
     if (!consumeMarketFee) {
       consumeMarketFee = {
         consumeMarketFeeAddress: ZERO_ADDRESS,
         consumeMarketFeeToken: ZERO_ADDRESS,
-        consumeMarketFeeAmount: '0'
-      }
+        consumeMarketFeeAmount: "0",
+      };
     }
     try {
       const estGas = await estimateGas(
@@ -913,19 +949,19 @@ export class Datatoken {
         serviceIndex,
         providerFees,
         consumeMarketFee
-      )
+      );
 
       const trxReceipt = await dtContract.methods
         .startOrder(consumer, serviceIndex, providerFees, consumeMarketFee)
         .send({
           from: address,
           gas: estGas + 1,
-          gasPrice: await getFairGasPrice(this.web3, this.config)
-        })
-      return trxReceipt
+          gasPrice: await getFairGasPrice(this.web3, this.config),
+        });
+      return trxReceipt;
     } catch (e) {
-      LoggerInstance.error(`ERROR: Failed to start order : ${e.message}`)
-      throw new Error(`Failed to start order: ${e.message}`)
+      LoggerInstance.error(`ERROR: Failed to start order : ${e.message}`);
+      throw new Error(`Failed to start order: ${e.message}`);
     }
   }
 
@@ -949,9 +985,14 @@ export class Datatoken {
       setContractDefaults(
         new this.web3.eth.Contract(this.datatokensAbi, dtAddress),
         this.config
-      )
+      );
 
-    return estimateGas(address, dtContract.methods.reuseOrder, orderTxId, providerFees)
+    return estimateGas(
+      address,
+      dtContract.methods.reuseOrder,
+      orderTxId,
+      providerFees
+    );
   }
 
   /** Reuse Order: called by payer or consumer having a valid order, but with expired provider access.
@@ -972,26 +1013,28 @@ export class Datatoken {
     const dtContract = setContractDefaults(
       new this.web3.eth.Contract(this.datatokensAbi, dtAddress),
       this.config
-    )
+    );
     try {
       const estGas = await estimateGas(
         address,
         dtContract.methods.reuseOrder,
         orderTxId,
         providerFees
-      )
+      );
 
       const trxReceipt = await dtContract.methods
         .reuseOrder(orderTxId, providerFees)
         .send({
           from: address,
           gas: estGas + 1,
-          gasPrice: await getFairGasPrice(this.web3, this.config)
-        })
-      return trxReceipt
+          gasPrice: await getFairGasPrice(this.web3, this.config),
+        });
+      return trxReceipt;
     } catch (e) {
-      LoggerInstance.error(`ERROR: Failed to call reuse order order : ${e.message}`)
-      throw new Error(`Failed to start order: ${e.message}`)
+      LoggerInstance.error(
+        `ERROR: Failed to call reuse order order : ${e.message}`
+      );
+      throw new Error(`Failed to start order: ${e.message}`);
     }
   }
 
@@ -1012,14 +1055,14 @@ export class Datatoken {
   ): Promise<any> {
     const dtContract =
       contractInstance ||
-      new this.web3.eth.Contract(this.datatokensEnterpriseAbi, dtAddress)
+      new this.web3.eth.Contract(this.datatokensEnterpriseAbi, dtAddress);
 
     return estimateGas(
       address,
       dtContract.methods.buyFromFreAndOrder,
       orderParams,
       freParams
-    )
+    );
   }
 
   /** Buys 1 DT from the FRE and then startsOrder, while burning that DT
@@ -1035,28 +1078,33 @@ export class Datatoken {
     orderParams: OrderParams,
     freParams: FreOrderParams
   ): Promise<TransactionReceipt> {
-    const dtContract = new this.web3.eth.Contract(this.datatokensEnterpriseAbi, dtAddress)
+    const dtContract = new this.web3.eth.Contract(
+      this.datatokensEnterpriseAbi,
+      dtAddress
+    );
     try {
-      const freContractParams = getFreOrderParams(freParams)
+      const freContractParams = getFreOrderParams(freParams);
 
       const estGas = await estimateGas(
         address,
         dtContract.methods.buyFromFreAndOrder,
         orderParams,
         freContractParams
-      )
+      );
 
       const trxReceipt = await dtContract.methods
         .buyFromFreAndOrder(orderParams, freContractParams)
         .send({
           from: address,
           gas: estGas + 1,
-          gasPrice: await getFairGasPrice(this.web3, this.config)
-        })
-      return trxReceipt
+          gasPrice: await getFairGasPrice(this.web3, this.config),
+        });
+      return trxReceipt;
     } catch (e) {
-      LoggerInstance.error(`ERROR: Failed to buy DT From Fre And Order : ${e.message}`)
-      throw new Error(`Failed to buy DT From Fre And Order: ${e.message}`)
+      LoggerInstance.error(
+        `ERROR: Failed to buy DT From Fre And Order : ${e.message}`
+      );
+      throw new Error(`Failed to buy DT From Fre And Order: ${e.message}`);
     }
   }
 
@@ -1077,14 +1125,14 @@ export class Datatoken {
   ): Promise<any> {
     const dtContract =
       contractInstance ||
-      new this.web3.eth.Contract(this.datatokensEnterpriseAbi, dtAddress)
+      new this.web3.eth.Contract(this.datatokensEnterpriseAbi, dtAddress);
 
     return estimateGas(
       address,
       dtContract.methods.buyFromDispenserAndOrder,
       orderParams,
       dispenserContract
-    )
+    );
   }
 
   /** Gets DT from dispenser and then startsOrder, while burning that DT
@@ -1100,26 +1148,31 @@ export class Datatoken {
     orderParams: OrderParams,
     dispenserContract: string
   ): Promise<TransactionReceipt> {
-    const dtContract = new this.web3.eth.Contract(this.datatokensEnterpriseAbi, dtAddress)
+    const dtContract = new this.web3.eth.Contract(
+      this.datatokensEnterpriseAbi,
+      dtAddress
+    );
     try {
       const estGas = await estimateGas(
         address,
         dtContract.methods.buyFromDispenserAndOrder,
         orderParams,
         dispenserContract
-      )
+      );
 
       const trxReceipt = await dtContract.methods
         .buyFromDispenserAndOrder(orderParams, dispenserContract)
         .send({
           from: address,
           gas: estGas + 1,
-          gasPrice: await getFairGasPrice(this.web3, this.config)
-        })
-      return trxReceipt
+          gasPrice: await getFairGasPrice(this.web3, this.config),
+        });
+      return trxReceipt;
     } catch (e) {
-      LoggerInstance.error(`ERROR: Failed to buy DT From Fre And Order : ${e.message}`)
-      throw new Error(`Failed to buy DT From Fre And Order: ${e.message}`)
+      LoggerInstance.error(
+        `ERROR: Failed to buy DT From Fre And Order : ${e.message}`
+      );
+      throw new Error(`Failed to buy DT From Fre And Order: ${e.message}`);
     }
   }
 
@@ -1141,9 +1194,9 @@ export class Datatoken {
       setContractDefaults(
         new this.web3.eth.Contract(this.datatokensAbi, dtAddress),
         this.config
-      )
+      );
 
-    return estimateGas(address, dtContract.methods.setData, value)
+    return estimateGas(address, dtContract.methods.setData, value);
   }
 
   /** setData
@@ -1160,24 +1213,28 @@ export class Datatoken {
     value: string
   ): Promise<TransactionReceipt> {
     if (!(await this.isERC20Deployer(dtAddress, address))) {
-      throw new Error(`User is not ERC20 Deployer`)
+      throw new Error(`User is not ERC20 Deployer`);
     }
 
     const dtContract = setContractDefaults(
       new this.web3.eth.Contract(this.datatokensAbi, dtAddress),
       this.config
-    )
+    );
 
-    const estGas = await estimateGas(address, dtContract.methods.setData, value)
+    const estGas = await estimateGas(
+      address,
+      dtContract.methods.setData,
+      value
+    );
 
     // Call setData function of the contract
     const trxReceipt = await dtContract.methods.setData(value).send({
       from: address,
       gas: estGas + 1,
-      gasPrice: await getFairGasPrice(this.web3, this.config)
-    })
+      gasPrice: await getFairGasPrice(this.web3, this.config),
+    });
 
-    return trxReceipt
+    return trxReceipt;
   }
 
   /** Estimate gas for cleanPermissions method
@@ -1196,9 +1253,9 @@ export class Datatoken {
       setContractDefaults(
         new this.web3.eth.Contract(this.datatokensAbi, dtAddress),
         this.config
-      )
+      );
 
-    return estimateGas(address, dtContract.methods.cleanPermissions)
+    return estimateGas(address, dtContract.methods.cleanPermissions);
   }
 
   /**
@@ -1212,24 +1269,30 @@ export class Datatoken {
     dtAddress: string,
     address: string
   ): Promise<TransactionReceipt> {
-    if ((await this.nft.getNftOwner(await this.getNFTAddress(dtAddress))) !== address) {
-      throw new Error('Caller is NOT Nft Owner')
+    if (
+      (await this.nft.getNftOwner(await this.getNFTAddress(dtAddress))) !==
+      address
+    ) {
+      throw new Error("Caller is NOT Nft Owner");
     }
     const dtContract = setContractDefaults(
       new this.web3.eth.Contract(this.datatokensAbi, dtAddress),
       this.config
-    )
+    );
 
-    const estGas = await estimateGas(address, dtContract.methods.cleanPermissions)
+    const estGas = await estimateGas(
+      address,
+      dtContract.methods.cleanPermissions
+    );
 
     // Call cleanPermissions function of the contract
     const trxReceipt = await dtContract.methods.cleanPermissions().send({
       from: address,
       gas: estGas + 1,
-      gasPrice: await getFairGasPrice(this.web3, this.config)
-    })
+      gasPrice: await getFairGasPrice(this.web3, this.config),
+    });
 
-    return trxReceipt
+    return trxReceipt;
   }
 
   /** Returns ERC20 user's permissions for a datatoken
@@ -1237,13 +1300,16 @@ export class Datatoken {
    * @param {String} address user adress
    * @return {Promise<Roles>}
    */
-  public async getDTPermissions(dtAddress: string, address: string): Promise<Roles> {
+  public async getDTPermissions(
+    dtAddress: string,
+    address: string
+  ): Promise<Roles> {
     const dtContract = setContractDefaults(
       new this.web3.eth.Contract(this.datatokensAbi, dtAddress),
       this.config
-    )
-    const roles = await dtContract.methods.permissions(address).call()
-    return roles
+    );
+    const roles = await dtContract.methods.permissions(address).call();
+    return roles;
   }
 
   /** Returns the Datatoken capital
@@ -1254,9 +1320,9 @@ export class Datatoken {
     const dtContract = setContractDefaults(
       new this.web3.eth.Contract(this.datatokensAbi, dtAddress),
       this.config
-    )
-    const cap = await dtContract.methods.cap().call()
-    return this.web3.utils.fromWei(cap)
+    );
+    const cap = await dtContract.methods.cap().call();
+    return this.web3.utils.fromWei(cap);
   }
 
   /** It returns the token decimals, how many supported decimal points
@@ -1267,9 +1333,9 @@ export class Datatoken {
     const dtContract = setContractDefaults(
       new this.web3.eth.Contract(this.datatokensAbi, dtAddress),
       this.config
-    )
-    const decimals = await dtContract.methods.decimals().call()
-    return decimals
+    );
+    const decimals = await dtContract.methods.decimals().call();
+    return decimals;
   }
 
   /** It returns the token decimals, how many supported decimal points
@@ -1280,9 +1346,9 @@ export class Datatoken {
     const dtContract = setContractDefaults(
       new this.web3.eth.Contract(this.datatokensAbi, dtAddress),
       this.config
-    )
-    const nftAddress = await dtContract.methods.getERC721Address().call()
-    return nftAddress
+    );
+    const nftAddress = await dtContract.methods.getERC721Address().call();
+    return nftAddress;
   }
 
   /**  Returns true if address has deployERC20 role
@@ -1290,13 +1356,18 @@ export class Datatoken {
    * @param {String} dtAddress Datatoken adress
    * @return {Promise<boolean>}
    */
-  public async isERC20Deployer(dtAddress: string, address: string): Promise<boolean> {
+  public async isERC20Deployer(
+    dtAddress: string,
+    address: string
+  ): Promise<boolean> {
     const dtContract = setContractDefaults(
       new this.web3.eth.Contract(this.datatokensAbi, dtAddress),
       this.config
-    )
-    const isERC20Deployer = await dtContract.methods.isERC20Deployer(address).call()
-    return isERC20Deployer
+    );
+    const isERC20Deployer = await dtContract.methods
+      .isERC20Deployer(address)
+      .call();
+    return isERC20Deployer;
   }
 
   /**
@@ -1305,12 +1376,19 @@ export class Datatoken {
    * @param {String} address user adress
    * @return {Promise<String>} balance  Number of datatokens. Will be converted from wei
    */
-  public async balance(datatokenAddress: string, address: string): Promise<string> {
-    const dtContract = new this.web3.eth.Contract(this.datatokensAbi, datatokenAddress, {
-      from: address
-    })
-    const balance = await dtContract.methods.balanceOf(address).call()
-    return this.web3.utils.fromWei(balance)
+  public async balance(
+    datatokenAddress: string,
+    address: string
+  ): Promise<string> {
+    const dtContract = new this.web3.eth.Contract(
+      this.datatokensAbi,
+      datatokenAddress,
+      {
+        from: address,
+      }
+    );
+    const balance = await dtContract.methods.balanceOf(address).call();
+    return this.web3.utils.fromWei(balance);
   }
 
   /**
@@ -1330,16 +1408,20 @@ export class Datatoken {
     address: string
   ): Promise<number> {
     // Estimate gas cost for publishMarketFeeAddress method
-    const dtContract = new this.web3.eth.Contract(this.datatokensAbi, datatokenAddress, {
-      from: address
-    })
+    const dtContract = new this.web3.eth.Contract(
+      this.datatokensAbi,
+      datatokenAddress,
+      {
+        from: address,
+      }
+    );
     return estimateGas(
       address,
       dtContract.methods.setPublishingMarketFee,
       publishMarketFeeAddress,
       publishMarketFeeToken,
       publishMarketFeeAmount
-    )
+    );
   }
 
   /**
@@ -1359,12 +1441,18 @@ export class Datatoken {
     publishMarketFeeAmount: string,
     address: string
   ) {
-    const dtContract = new this.web3.eth.Contract(this.datatokensAbi, datatokenAddress, {
-      from: address
-    })
-    const mktFeeAddress = (await dtContract.methods.getPublishingMarketFee().call())[0]
+    const dtContract = new this.web3.eth.Contract(
+      this.datatokensAbi,
+      datatokenAddress,
+      {
+        from: address,
+      }
+    );
+    const mktFeeAddress = (
+      await dtContract.methods.getPublishingMarketFee().call()
+    )[0];
     if (mktFeeAddress !== address) {
-      throw new Error(`Caller is not the Publishing Market Fee Address`)
+      throw new Error(`Caller is not the Publishing Market Fee Address`);
     }
     const estGas = await this.estGasSetPublishingMarketFee(
       datatokenAddress,
@@ -1372,7 +1460,7 @@ export class Datatoken {
       publishMarketFeeToken,
       publishMarketFeeAmount,
       address
-    )
+    );
     await dtContract.methods
       .setPublishingMarketFee(
         publishMarketFeeAddress,
@@ -1382,8 +1470,8 @@ export class Datatoken {
       .send({
         from: address,
         gas: estGas + 1,
-        gasPrice: await getFairGasPrice(this.web3, this.config)
-      })
+        gasPrice: await getFairGasPrice(this.web3, this.config),
+      });
   }
 
   /**
@@ -1398,16 +1486,22 @@ export class Datatoken {
     datatokenAddress: string,
     address: string
   ): Promise<PublishingMarketFee> {
-    const dtContract = new this.web3.eth.Contract(this.datatokensAbi, datatokenAddress, {
-      from: address
-    })
+    const dtContract = new this.web3.eth.Contract(
+      this.datatokensAbi,
+      datatokenAddress,
+      {
+        from: address,
+      }
+    );
 
-    const publishingMarketFee = await dtContract.methods.getPublishingMarketFee().call()
+    const publishingMarketFee = await dtContract.methods
+      .getPublishingMarketFee()
+      .call();
     const returnValues = {
       publishMarketFeeAddress: publishingMarketFee[0],
       publishMarketFeeToken: publishingMarketFee[1],
-      publishMarketFeeAmount: publishingMarketFee[2]
-    }
-    return returnValues
+      publishMarketFeeAmount: publishingMarketFee[2],
+    };
+    return returnValues;
   }
 }

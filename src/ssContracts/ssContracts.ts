@@ -5,28 +5,28 @@ import { Contract } from 'web3-eth-contract'
 import {
   LoggerInstance,
   getFairGasPrice,
-  ConfigHelper,
   estimateGas,
   unitsToAmount
 } from '../utils'
 import SideStakingTemplate from '@oceanprotocol/contracts/artifacts/contracts/pools/ssContracts/SideStaking.sol/SideStaking.json'
-import { Config } from '../models'
+import { Config } from '../'
+import { supportedNetworks } from 'src/@types'
 
 export class SideStaking {
   public ssAbi: AbiItem | AbiItem[]
   public web3: Web3
-  public config: Config
+  public config: Config["default"]
 
   constructor(
     web3: Web3,
-    network?: string | number,
+    network: supportedNetworks,
     ssAbi: AbiItem | AbiItem[] = null,
     config?: Config
   ) {
     if (ssAbi) this.ssAbi = ssAbi
     else this.ssAbi = SideStakingTemplate.abi as AbiItem[]
     this.web3 = web3
-    this.config = config || new ConfigHelper().getConfig(network || 'unknown')
+    this.config = config.default || new Config(web3, network).default;
   }
 
   async unitsToAmount(
