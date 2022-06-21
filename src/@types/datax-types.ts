@@ -17,10 +17,17 @@ export interface ConfigHelperConfig extends Config {
 
 export type PoolTransactionType = "swap" | "join" | "exit";
 
-export type supportedNetworks = "1" | "4" | "56" | "137" | "246" | "1285" | "8996"
+export type supportedNetworks =
+  | "1"
+  | "4"
+  | "56"
+  | "137"
+  | "246"
+  | "1285"
+  | "8996";
 
 export interface IMaxUnstake {
-  OCEAN: BigNumber;
+  base: BigNumber;
   shares: BigNumber;
   userPerc: BigNumber;
 }
@@ -55,12 +62,13 @@ export interface ISwap {
 export interface ITokenDetails {
   name: string;
   symbol: string;
-  tokenAddress?: string;
+  id: string;
 }
 
 export interface ITokenInfo extends TInfo {
-  pool?: string;
+  pools: { id: string }[];
   did: string;
+  isFRE:boolean
 }
 
 export interface ITList extends Tlist {
@@ -77,8 +85,12 @@ export interface IToken {
 }
 
 export interface IPoolDetails {
-  poolAddress: string;
-  tokens: string[];
+  id: string;
+  datatoken: ITokenDetails;
+  baseToken: ITokenDetails;
+  baseTokenLiquidity: string;
+  datatokenLiquidity: string;
+  totalShares: string;
 }
 
 export interface IPoolTransaction {

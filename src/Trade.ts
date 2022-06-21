@@ -27,12 +27,40 @@ export default class Trade extends Base {
     super(web3, networkId);
     this.adapterAddress = this.config.custom.uniV2AdapterAddress;
     this.datatoken = new Datatoken(this.web3, this.networkId);
-    this.pool = new Pool(web3, networkId);
+    this.pool = new Pool(web3, this.config);
 
     this.adapter = new this.web3.eth.Contract(
       adapterABI as AbiItem[],
       this.adapterAddress
     );
+  }
+
+  public async approve(
+    tokenAddress: string,
+    senderAddress: string,
+    amountIn: string,
+    spender: string,
+    isDT: boolean,
+    decimals: number = 18
+  ) {
+    if (isDT) {
+      return await this.datatoken.approve(
+        tokenAddress,
+        spender,
+        amountIn,
+        senderAddress
+      );
+    } else {
+      return await approve(
+        this.web3,
+        senderAddress,
+        tokenAddress,
+        spender,
+        amountIn,
+        true,
+        decimals
+      );
+    }
   }
 
   /**
@@ -272,24 +300,7 @@ export default class Trade extends Base {
 
     try {
       if (isApproved.lt(inBigNum))
-        if (isDT) {
-          //approve if not approved
-          await this.datatoken.approve(
-            tokenIn,
-            spender,
-            amountIn,
-            senderAddress
-          );
-        } else {
-          await approve(
-            this.web3,
-            senderAddress,
-            tokenIn,
-            spender,
-            amountIn,
-            true
-          );
-        }
+        await this.approve(tokenIn, spender, amountIn, senderAddress, isDT);
     } catch (error) {
       throw new Error("Could not process approval transaction");
     }
@@ -540,30 +551,41 @@ export default class Trade extends Base {
       "Failed to swap tokens for exact tokens"
     );
   }
+  private fromWei = (amount: string) => this.web3.utils.fromWei(amount);
+  private toWei = (amount: string) => this.web3.utils.toWei(amount);
 
   /**
    * Given an input asset amount and an array of token addresses, calculates all subsequent maximum output token amounts.
-   * @param amountIn
-   * @param path
+   * @param amountIn - will be converted to wei
+   * @param path - each value in eth denom
    */
   public async getAmountsOut(
     amountIn: string,
     path: string[]
   ): Promise<string[]> {
-    const amountToWei = this.web3.utils.toWei(amountIn);
-    return await this.adapter.methods.getAmountsOut(amountToWei, path).call();
+    const amountToWei = this.toWei(amountIn);
+    const amountsOutInWei = await this.adapter.methods
+      .getAmountsOut(amountToWei, path)
+      .call();
+    return amountsOutInWei.map((amt: string) => this.fromWei(amt));
   }
 
   /**
    * Given an output asset amount and an array of token addresses, calculates all preceding minimum input token amounts.
-   * @param amountOut
-   * @param path
+   * @param amountOut - will be converted to wei
+   * @param path -each value in eth denom
    */
   public async getAmountsIn(
     amountOut: string,
     path: string[]
   ): Promise<string[]> {
     const amountToWei = this.web3.utils.toWei(amountOut);
-    return await this.adapter.methods.getAmountsIn(amountToWei, path).call();
+    const amountsInInWei = await this.adapter.methods
+      .getAmountsIn(amountToWei, path)
+      .call();
+
+    return amountsInInWei.map((amt: string) => this.fromWei(amt));
   }
+
+  //TODO: make duplicate getAmountsInWei and getAmountsOutWei
 }

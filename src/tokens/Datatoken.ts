@@ -73,7 +73,7 @@ export class Datatoken {
     this.datatokensEnterpriseAbi =
       datatokensEnterpriseAbi ||
       (defaultDatatokensEnterpriseAbi.abi as AbiItem[]);
-    this.config = config.default || new Config(web3, network).default;
+    this.config = config ? config.default : new Config(web3, network).default;
     this.nft = new Nft(this.web3, network);
   }
 

@@ -1,8 +1,8 @@
 import TokenList from "./TokenList";
 import Config from "./Config";
 import Watcher from "./Watcher";
-import Trade from "./Trade"
-import Stake from './Stake'
+import Trade from "./Trade";
+import Stake from "./Stake";
 import {
   PoolTransactionType,
   IMaxUnstake,
@@ -34,6 +34,6 @@ export {
   IPoolDetails,
   IPoolTransaction,
   ITokensToAdd,
-  Trade, 
-  Stake, 
+  Trade,
+  Stake,
 };

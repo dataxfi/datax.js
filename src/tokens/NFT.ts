@@ -39,7 +39,7 @@ export class Nft {
   ) {
     this.nftAbi = nftAbi || (defaultNftAbi.abi as AbiItem[])
     this.web3 = web3
-    this.config = config.default || new Config(web3, network).default;
+    this.config = config ? config.default : new Config(web3, network).default;
   }
 
   /**

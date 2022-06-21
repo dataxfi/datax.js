@@ -309,17 +309,18 @@ export async function getTokenDetails(
           token(id: "${tokenAddress}") {
             symbol
             name
+            id
           }
         }
       `;
 
     const {
       data: {
-        token: { name, symbol },
+        token: { name, symbol, id },
       },
     } = await this.gqlClient.request(query);
 
-    return { name: name, symbol: symbol };
+    return { name: name, symbol: symbol, id};
   } catch (error) {
     throw {
       Code: 1000,

@@ -41,7 +41,7 @@
  */
 
 export interface IStakeInfo {
-  meta: [string, string, string, string]; //[pool, to, refAddress, adapterAddress]
-  uints: [string, string, string]; //[amountOut/minAmountOut, refFees, amountIn/maxAmountIn]
+  meta: string[]; //[pool, to, refAddress, adapterAddress]
+  uints: string[]; //[amountOut/minAmountOut, refFees, amountIn/maxAmountIn]
   path: string[]; // swap path between tokens e.g. USDT -> ETH -> OCEAN
 }

@@ -14,13 +14,12 @@ import { IStakeInfo } from "./@types/stake";
 import { supportedNetworks } from "./@types";
 import { Pool } from "./balancer";
 import Trade from "./Trade";
-import poolABI from "@oceanprotocol/contracts/artifacts/contracts/pools/balancer/BPool.sol/BPool.json";
 import { gql } from "graphql-request";
 import { allowance, approve } from "./utils/TokenUtils";
 import { Datatoken } from "./tokens";
 
 export default class Stake extends Base {
-  private stakeRouterAddress: string = this.config.custom.stakeRouterAddress;
+  private stakeRouterAddress: string;
   private stakeRouter: Contract;
   private GASLIMIT_DEFAULT = 1000000;
   private stakeFailureMessage =
@@ -33,17 +32,44 @@ export default class Stake extends Base {
 
   constructor(web3: Web3, networkId: supportedNetworks) {
     super(web3, networkId);
-
+    this.stakeRouterAddress = this.config.custom.stakeRouterAddress;
+    console.dir(this.config);
     this.stakeRouter = new this.web3.eth.Contract(
       stakeRouterAbi as AbiItem[],
       this.stakeRouterAddress
     );
 
-    this.pool = new Pool(this.web3, this.networkId);
+    this.pool = new Pool(this.web3, this.config);
     this.trade = new Trade(web3, networkId);
   }
 
-  /** get pool details
+  public async getAllowance(
+    tokenAddress: string,
+    account: string,
+    spender: string
+  ) {
+    return await allowance(this.web3, tokenAddress, account, spender);
+  }
+
+  /**
+   * Gets total supply of pool shares
+   * @param poolAddress
+   * @returns
+   */
+  public async getTotalPoolShares(poolAddress: string) {
+    return await this.pool.getPoolSharesTotalSupply(poolAddress);
+  }
+
+  /**
+   * Gets base token of pool
+   * @param poolAddress
+   * @returns
+   */
+  public async getBaseToken(poolAddress: string) {
+    return await this.pool.getBaseToken(poolAddress);
+  }
+
+  /** Get pool details
    * @param {Srting} poolAddress
    * @returns {String[]} - datatoken addresses
    */
@@ -51,27 +77,30 @@ export default class Stake extends Base {
   public async getPoolDetails(poolAddress: string): Promise<any> {
     try {
       const query = gql`
-          {
-            pool(id: ${poolAddress}) {
-              baseToken {
-                name
-                symbol
-              }
-              datatoken {
-                name
-                symbol
-              }
+        {
+          pool(id: "${poolAddress}") {
+            id
+            baseToken {
+              name
+              symbol
+              id
             }
+            datatoken {
+              name
+              symbol
+              id
+            }
+            baseTokenLiquidity
+            datatokenLiquidity
+            totalShares
           }
-        `;
+        }
+      `;
 
-      const {
-        data: {
-          pool: { datatoken, baseToken },
-        },
-      } = await this.config.gqlClient.request(query);
+      const response = await this.config.gqlClient.request(query);
+      console.log(response);
 
-      return { datatoken, baseToken };
+      return response.pool;
     } catch (error) {
       throw {
         Code: 1000,
@@ -86,6 +115,7 @@ export default class Stake extends Base {
    * @param poolAddress
    * @param tokenAddress
    */
+  //TODO add erc20 conversion, can be done client side for now
   public async getMaxUnstakeAmount(
     poolAddress: string,
     tokenAddress: string
@@ -103,19 +133,37 @@ export default class Stake extends Base {
     }
   }
 
+  //TODO add erc20 conversion, can be done client side for now
   /**
-   * returns total shares of a given pool
-   * @param poolAddress
-   * @returns
+   * Gets max stake amount converted to any ERC20. Max stake in
+   * pool base token is internally fetched and calculated to token in.
+   * @param poolAddress - Address of pool to add stake to
+   * @param tokenInAddress - In token address (Any ERC20)
+   * @returns max amount in (eth denom)
    */
-  public async getTotalPoolShares(poolAddress: string): Promise<string> {
+  public async getMaxStakeAmount(
+    poolAddress: string,
+    tokenInAddress: string,
+    path: string[]
+  ) {
     try {
-      const poolInst = new this.web3.eth.Contract(
-        poolABI.abi as AbiItem[],
-        poolAddress
+      const baseToken = await this.getBaseToken(poolAddress);
+      console.log("BaseToken:", baseToken);
+      const baseMaxIn = await getMaxAddLiquidity(
+        this.pool,
+        poolAddress,
+        baseToken
       );
-      let totalSupply = await poolInst.methods.totalSupply().call();
-      return this.web3.utils.fromWei(totalSupply);
+
+      console.log("Base max in:", baseMaxIn);
+      if (tokenInAddress.toLowerCase() === baseToken.toLowerCase())
+        return baseMaxIn;
+
+      const inAmts = await this.trade?.getAmountsIn(baseMaxIn.toString(), path);
+      console.log("In amts:", inAmts);
+
+      console.log("Max in for in token:", inAmts[0]);
+      if (inAmts) return inAmts[0];
     } catch (error) {
       throw {
         Code: 1000,
@@ -131,9 +179,9 @@ export default class Stake extends Base {
    * @param account
    * @returns
    */
-  public async getMyPoolSharesForPool(
+  public async sharesBalance(
+    account: string,
     poolAddress: string,
-    account: string
   ): Promise<string> {
     try {
       return await this.pool.sharesBalance(poolAddress, account);
@@ -164,19 +212,23 @@ export default class Stake extends Base {
     spender: string,
     poolAddress: string,
     isDT: boolean,
-    txType: "stake" | "unstake"
+    txType: "stake" | "unstake",
+    path
   ) {
     const txAmtBigNum = new BigNumber(amount);
 
     try {
       let balance: BigNumber;
       if (txType === "stake") {
+        console.log(
+          "gettin balance of" + tokenIn + "in account" + senderAddress
+        );
         balance = new BigNumber(
           await this.trade.getBalance(tokenIn, senderAddress)
         );
       } else {
         balance = new BigNumber(
-          await this.getMyPoolSharesForPool(poolAddress, senderAddress)
+          await this.sharesBalance(poolAddress, senderAddress)
         );
       }
 
@@ -222,7 +274,7 @@ export default class Stake extends Base {
       let max;
       if (txType === "stake") {
         max = new BigNumber(
-          await getMaxAddLiquidity(this.pool, poolAddress, tokenIn)
+          await this.getMaxStakeAmount(poolAddress, tokenIn, path)
         );
       } else {
         max = new BigNumber(
@@ -253,16 +305,20 @@ export default class Stake extends Base {
     senderAddress: string,
     stakeInfo: IStakeInfo,
     stakeFunction: Function,
-    errorMessage: string
+    errorMessage: string,
+    isETH: boolean
   ): Promise<TransactionReceipt> {
     let estGas;
     const newUints = stakeInfo.uints.map((amt) => this.web3.utils.toWei(amt));
     const newStakeInfo = { ...stakeInfo, uints: newUints };
+    const args = isETH
+      ? { from: senderAddress, value: newUints[2] }
+      : { from: senderAddress };
 
     console.log(newStakeInfo);
     try {
       estGas = await stakeFunction(newStakeInfo).estimateGas(
-        { from: senderAddress },
+        args,
         (err, estGas) => (err ? this.GASLIMIT_DEFAULT : estGas)
       );
     } catch (error) {
@@ -272,7 +328,7 @@ export default class Stake extends Base {
 
     try {
       return await stakeFunction(newStakeInfo).send({
-        from: senderAddress,
+        ...args,
         gas: estGas + 1,
         gasPrice: await getFairGasPrice(this.web3, this.config.default),
       });
@@ -293,6 +349,7 @@ export default class Stake extends Base {
     senderAddress: string
   ): Promise<TransactionReceipt> {
     // checks balance, approval, and max
+    console.log("In stake ETH function");
     await this.preStakeChecks(
       stakeInfo.path[0],
       stakeInfo.meta[1],
@@ -300,14 +357,16 @@ export default class Stake extends Base {
       stakeInfo.meta[3],
       stakeInfo.meta[0],
       false,
-      "stake"
+      "stake",
+      stakeInfo.path
     );
 
     return await this.constructTxFunction(
       senderAddress,
       stakeInfo,
       this.stakeRouter.methods.stakeETHInDTPool,
-      this.stakeFailureMessage
+      this.stakeFailureMessage,
+      true
     );
   }
 
@@ -329,14 +388,16 @@ export default class Stake extends Base {
       stakeInfo.meta[3],
       stakeInfo.meta[0],
       false,
-      "unstake"
+      "unstake",
+      stakeInfo.path
     );
 
     return await this.constructTxFunction(
       senderAddress,
       stakeInfo,
       this.stakeRouter.methods.unstakeETHFromDTPool,
-      this.unstakeFailureMessage
+      this.unstakeFailureMessage,
+      true
     );
   }
 
@@ -352,6 +413,7 @@ export default class Stake extends Base {
     stakeInfo: IStakeInfo,
     senderAddress: string
   ): Promise<TransactionReceipt> {
+    console.log("In stake token function");
     await this.preStakeChecks(
       stakeInfo.path[0],
       stakeInfo.meta[1],
@@ -359,14 +421,16 @@ export default class Stake extends Base {
       stakeInfo.meta[3],
       stakeInfo.meta[0],
       false,
-      "stake"
+      "stake",
+      stakeInfo.path
     );
 
     return await this.constructTxFunction(
       senderAddress,
       stakeInfo,
       this.stakeRouter.methods.stakeTokenInDTPool,
-      this.stakeFailureMessage
+      this.stakeFailureMessage,
+      false
     );
   }
 
@@ -388,14 +452,16 @@ export default class Stake extends Base {
       stakeInfo.meta[3],
       stakeInfo.meta[0],
       false,
-      "unstake"
+      "unstake",
+      stakeInfo.path
     );
 
     return await this.constructTxFunction(
       senderAddress,
       stakeInfo,
       this.stakeRouter.methods.unstakeTokenFromDTPool,
-      this.unstakeFailureMessage
+      this.unstakeFailureMessage,
+      false
     );
   }
 
@@ -406,14 +472,22 @@ export default class Stake extends Base {
    * @param stakeInfo
    * @param calcFunction
    * @param errorMessage
-   * @returns
+   * @returns { dataxFee: string; poolAmountOut: string; refFee: string } pool amount out and fees in eth denom
    */
   private async constructCalcFunction(
     stakeInfo: IStakeInfo,
     calcFunction: Function,
-    errorMessage: string
-  ): Promise<{ dataxFee: string; poolAmountOut: string; refFee: string }> {
-    const toWei = (amount: string) => this.web3.utils.toWei(amount);
+    errorMessage: string,
+    outType: "baseAmountOut" | "poolAmountOut" | "poolAmountIn"
+  ): Promise<{
+    dataxFee: string;
+    refFee: string;
+    baseAmountOut?: string;
+    poolAmountOut?: string;
+    poolAmountIn?: string;
+  }> {
+    const fromWei = (amount: string) => this.web3.utils.fromWei(String(amount));
+    const toWei = (amount: string) => this.web3.utils.toWei(String(amount));
     const uints = stakeInfo.uints.map(toWei) as [string, string, string];
 
     const newStakeInfo: IStakeInfo = {
@@ -421,8 +495,22 @@ export default class Stake extends Base {
       uints,
     };
 
+    console.log(newStakeInfo);
     try {
-      return await calcFunction(newStakeInfo).call();
+      const responseInWei = await calcFunction(newStakeInfo).call();
+      if (responseInWei) {
+        console.log(responseInWei);
+        const { poolAmountOut, baseAmountOut, poolAmountIn, dataxFee, refFee } =
+          responseInWei;
+
+        const toReturn = poolAmountOut || baseAmountOut || poolAmountIn;
+
+        return {
+          [outType]: fromWei(toReturn),
+          dataxFee: fromWei(dataxFee),
+          refFee: fromWei(refFee),
+        };
+      }
     } catch (error) {
       throw new Error(`${errorMessage}: ${error.message}`);
     }
@@ -431,31 +519,33 @@ export default class Stake extends Base {
   /**
    * This is a stake calculation. Calculates the pool amount out for an exact token amount in.
    * @param stakeInfo
-   * @returns {string[]} [baseAmountOut, dataxFee, refFee]
+   * @returns {string[]} [poolAmountOut, dataxFee, refFee]
    */
   public async calcPoolOutGivenTokenIn(stakeInfo: IStakeInfo) {
     return await this.constructCalcFunction(
       stakeInfo,
       this.stakeRouter.methods.calcPoolOutGivenTokenIn,
-      "Failed to calculate pool out given token in"
+      "Failed to calculate pool out given token in",
+      "poolAmountOut"
     );
   }
 
   /**
    * This is an unstake calculation. Calculates the pool amount in needed for an exact token amount out.
    * @param stakeInfo
-   * @returns {string[]} [baseAmountOut, dataxFee, refFee]
+   * @returns {string[]} [poolAmountIn, dataxFee, refFee]
    */
   public async calcPoolInGivenTokenOut(stakeInfo: IStakeInfo) {
     return await this.constructCalcFunction(
       stakeInfo,
       this.stakeRouter.methods.calcPoolInGivenTokenOut,
-      "Failed to calculate pool in given token out"
+      "Failed to calculate pool in given token out",
+      "poolAmountIn"
     );
   }
 
   /**
-   * This is an unstake calculation. Calculates the amount of token out from an exact pool amount in.
+   * This is an unstake calculation. Calculates the amount of base token out from an exact pool amount in.
    * @param stakeInfo
    * @param senderAddress - The address which the transaction will be sent from.
    * @returns {string[]} [baseAmountOut, dataxFee, refFee]
@@ -464,7 +554,8 @@ export default class Stake extends Base {
     return this.constructCalcFunction(
       stakeInfo,
       this.stakeRouter.methods.calcTokenOutGivenPoolIn,
-      "Failed to calculate token out given pool in"
+      "Failed to calculate token out given pool in",
+      "baseAmountOut"
     );
   }
 
