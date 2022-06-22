@@ -9,7 +9,7 @@ import {
 } from "./utils/";
 import { TransactionReceipt } from "web3-core";
 import { Contract } from "web3-eth-contract";
-import { AbiItem } from "web3-utils";
+import { AbiItem, Units } from "web3-utils";
 import { IStakeInfo } from "./@types/stake";
 import { supportedNetworks } from "./@types";
 import { Pool } from "./balancer";
@@ -111,19 +111,164 @@ export default class Stake extends Base {
   }
 
   /**
-   * Returns max amount of tokens that you can unstake from the pool
-   * @param poolAddress
-   * @param tokenAddress
+   * Helper function for getMaxUnstake
+   * @param finalOut - Max amount out converted to final token in the path.
+   * @param meta  - [poolAddress, to, refAddress, adapter]
+   * @param path - The swap path
+   * @param userShareBalance
+   * @returns { {tokenOut: string, shares: string, userPerc:string, dataxFee:string, refFee:string} }
    */
-  //TODO add erc20 conversion, can be done client side for now
+  private async calcMaxUnstakeWithFinalAmtOut(
+    finalOut: string,
+    meta: string[],
+    path: string[],
+    senderAddress: string,
+    refFee: string
+  ) {
+    const userShareBalance = await this.sharesBalance(senderAddress, meta[0]);
+
+    let userPerc: string;
+    let maxTokenOut: string = finalOut;
+    let dataxFeeTotal: string;
+    let refFeeTotal: string;
+    let maxPoolAmountIn: string;
+    console.log(
+      "max final out",
+      finalOut,
+      "user share balance",
+      userShareBalance
+    );
+
+    const {
+      poolAmountIn,
+      dataxFee,
+      refFee: totalRefFee,
+    } = await this.calcPoolInGivenTokenOut({
+      meta,
+      path,
+      uints: [finalOut, refFee, "0"],
+    });
+
+    dataxFeeTotal = dataxFee;
+    refFeeTotal = totalRefFee;
+    maxPoolAmountIn = poolAmountIn;
+    console.log(poolAmountIn)
+
+    const maxPoolIn = new BigNumber(poolAmountIn);
+    if (maxPoolIn.lt(userShareBalance)) {
+      console.log("max unstake is less than user balance in shares");
+      const shareBalanceBN = new BigNumber(userShareBalance);
+      const userPercBN = new BigNumber(maxPoolIn)
+        .div(shareBalanceBN)
+        .multipliedBy(100);
+
+      userPerc = userPercBN.toString();
+    } else {
+      console.log("max unstake is greater than user balance in shares");
+      const {
+        dataxFee,
+        refFee: totalRefFee,
+        baseAmountOut,
+      } = await this.calcTokenOutGivenPoolIn({
+        meta,
+        path,
+        uints: ["0", refFee, userShareBalance],
+      });
+
+      userPerc = "100";
+      dataxFeeTotal = dataxFee;
+      refFeeTotal = totalRefFee;
+      maxTokenOut = baseAmountOut;
+      maxPoolAmountIn = userShareBalance;
+    }
+
+    console.log(
+      "maxUnstake",
+      maxTokenOut.toString(),
+      maxPoolAmountIn.toString(),
+      userPerc.toString(),
+      refFeeTotal,
+      dataxFeeTotal
+    );
+
+    const userMaxUnstake = {
+      maxTokenOut,
+      maxPoolTokensIn: maxPoolAmountIn,
+      userPerc,
+      dataxFee: dataxFeeTotal,
+      refFee: refFeeTotal,
+    };
+
+    return userMaxUnstake;
+  }
+
+  /**
+   * Calculates the max amount a specific user can stake in a pool. If the
+   * users shares are less than the max unstake amount, the users shares are
+   * returned as the max unstake amount.
+   *
+   * @param meta - [poolAddress, to, refAddress, adapter]
+   * @param path - The swap path of token addresses to be used in the transaction
+   * path example : ([DAI_Address, ETH_Address, OCEAN_Address])
+   * @param senderAddress
+   * @param refFee - The base refFee to be used in total refFee calculation
+   * @returns { {tokenOut: string, shares: string, userPerc:string, dataxFee:string, refFee:string} }
+   *
+   * Returns an object containing:
+   * maxTokenOut - Tokens received for the max unstake amount
+   * maxPoolTokensIn - The max unstake amount of shares
+   * userPerc - The percentage of max unstake out of user shares
+   * dataxFee - The total dataxFee for max stake removal
+   * refFee - The total refFee for max stake removal
+   */
   public async getMaxUnstakeAmount(
-    poolAddress: string,
-    tokenAddress: string
-  ): Promise<string> {
+    meta: string[],
+    path: string[],
+    senderAddress: string,
+    refFee: string
+  ): Promise<{
+    maxTokenOut: string;
+    maxPoolTokensIn: string;
+    userPerc: string;
+    dataxFee: string;
+    refFee: string;
+  }> {
     try {
-      return (
-        await getMaxRemoveLiquidity(this.pool, poolAddress, tokenAddress)
-      ).toString();
+      const baseToken = await this.getBaseToken(meta[0]);
+
+      console.log("Base token in dataxjs: ", baseToken);
+      const baseMaxOut = await getMaxRemoveLiquidity(
+        this.pool,
+        meta[0],
+        baseToken
+      );
+
+      console.log("Base max out dataxjs", baseMaxOut.toString());
+      if (baseToken.toLowerCase() === path[path.length - 1].toLowerCase()) {
+        console.log("Unstaking datattoken calculation");
+        //User is unstaking to base token, use base max out
+        return await this.calcMaxUnstakeWithFinalAmtOut(
+          baseMaxOut.toString(),
+          meta,
+          path,
+          senderAddress,
+          refFee
+        );
+      } else {
+        //User is unstaking to a non-base token, get final max out
+        const amtsOut = await this.trade.getAmountsOut(
+          baseMaxOut.toString(),
+          path
+        );
+
+        return await this.calcMaxUnstakeWithFinalAmtOut(
+          amtsOut[amtsOut.length - 1],
+          meta,
+          path,
+          senderAddress,
+          refFee
+        );
+      }
     } catch (error) {
       throw {
         Code: 1000,
@@ -135,8 +280,8 @@ export default class Stake extends Base {
 
   //TODO add erc20 conversion, can be done client side for now
   /**
-   * Gets max stake amount converted to any ERC20. Max stake in
-   * pool base token is internally fetched and calculated to token in.
+   * Gets max stake amount converted to any ERC20. Max add liquidity in
+   * pool-base-token is internally fetched and calculated to token in.
    * @param poolAddress - Address of pool to add stake to
    * @param tokenInAddress - In token address (Any ERC20)
    * @returns max amount in (eth denom)
@@ -181,10 +326,10 @@ export default class Stake extends Base {
    */
   public async sharesBalance(
     account: string,
-    poolAddress: string,
+    poolAddress: string
   ): Promise<string> {
     try {
-      return await this.pool.sharesBalance(poolAddress, account);
+      return await this.pool.sharesBalance(account, poolAddress);
     } catch (error) {
       throw {
         Code: 1000,
@@ -223,12 +368,13 @@ export default class Stake extends Base {
         console.log(
           "gettin balance of" + tokenIn + "in account" + senderAddress
         );
+
         balance = new BigNumber(
           await this.trade.getBalance(tokenIn, senderAddress)
         );
       } else {
         balance = new BigNumber(
-          await this.sharesBalance(poolAddress, senderAddress)
+          await this.sharesBalance(senderAddress, poolAddress)
         );
       }
 
@@ -236,6 +382,7 @@ export default class Stake extends Base {
         throw new Error("Not Enough Balance");
       }
     } catch (error) {
+      console.error(error);
       throw new Error("Could not check account balance");
     }
 
@@ -384,7 +531,7 @@ export default class Stake extends Base {
     await this.preStakeChecks(
       stakeInfo.path[0],
       stakeInfo.meta[1],
-      stakeInfo.uints[0],
+      stakeInfo.uints[2],
       stakeInfo.meta[3],
       stakeInfo.meta[0],
       false,
@@ -448,7 +595,7 @@ export default class Stake extends Base {
     await this.preStakeChecks(
       stakeInfo.path[0],
       stakeInfo.meta[1],
-      stakeInfo.uints[0],
+      stakeInfo.uints[2],
       stakeInfo.meta[3],
       stakeInfo.meta[0],
       false,

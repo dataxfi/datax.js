@@ -27,8 +27,8 @@ export type supportedNetworks =
   | "8996";
 
 export interface IMaxUnstake {
-  base: BigNumber;
-  shares: BigNumber;
+  maxTokenOut: BigNumber;
+  maxPoolTokensIn: BigNumber;
   userPerc: BigNumber;
 }
 
