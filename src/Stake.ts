@@ -17,6 +17,7 @@ import Trade from "./Trade";
 import { gql } from "graphql-request";
 import { allowance, approve } from "./utils/TokenUtils";
 import { Datatoken } from "./tokens";
+import { Config } from "../";
 
 export default class Stake extends Base {
   private stakeRouterAddress: string;
@@ -450,10 +451,11 @@ export default class Stake extends Base {
     }
 
     let isApproved;
+    const contractToApprove = this.config.custom.stakeRouterAddress;
     try {
       //check approval limit vs tx amount
       isApproved = new BigNumber(
-        await allowance(this.web3, tokenIn, senderAddress, spender)
+        await allowance(this.web3, tokenIn, senderAddress, contractToApprove)
       );
     } catch (error) {
       throw new Error("Could not check allowance limit");
@@ -463,13 +465,18 @@ export default class Stake extends Base {
       if (isApproved.lt(txAmtBigNum))
         if (isDT) {
           //approve if not approved
-          await this.datatoken.approve(tokenIn, spender, amount, senderAddress);
+          await this.datatoken.approve(
+            tokenIn,
+            contractToApprove,
+            amount,
+            senderAddress
+          );
         } else {
           await approve(
             this.web3,
             senderAddress,
             tokenIn,
-            spender,
+            contractToApprove,
             amount,
             true
           );
