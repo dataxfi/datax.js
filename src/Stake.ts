@@ -152,7 +152,7 @@ export default class Stake extends Base {
     dataxFeeTotal = dataxFee;
     refFeeTotal = totalRefFee;
     maxPoolAmountIn = poolAmountIn;
-    console.log(poolAmountIn)
+    console.log(poolAmountIn);
 
     const maxPoolIn = new BigNumber(poolAmountIn);
     if (maxPoolIn.lt(userShareBalance)) {
@@ -624,14 +624,11 @@ export default class Stake extends Base {
   private async constructCalcFunction(
     stakeInfo: IStakeInfo,
     calcFunction: Function,
-    errorMessage: string,
-    outType: "baseAmountOut" | "poolAmountOut" | "poolAmountIn"
+    errorMessage: string
   ): Promise<{
     dataxFee: string;
     refFee: string;
-    baseAmountOut?: string;
-    poolAmountOut?: string;
-    poolAmountIn?: string;
+    return: string;
   }> {
     const fromWei = (amount: string) => this.web3.utils.fromWei(String(amount));
     const toWei = (amount: string) => this.web3.utils.toWei(String(amount));
@@ -653,7 +650,7 @@ export default class Stake extends Base {
         const toReturn = poolAmountOut || baseAmountOut || poolAmountIn;
 
         return {
-          [outType]: fromWei(toReturn),
+          return: fromWei(toReturn),
           dataxFee: fromWei(dataxFee),
           refFee: fromWei(refFee),
         };
@@ -666,44 +663,59 @@ export default class Stake extends Base {
   /**
    * This is a stake calculation. Calculates the pool amount out for an exact token amount in.
    * @param stakeInfo
-   * @returns {string[]} [poolAmountOut, dataxFee, refFee]
+   * @returns {{ poolAmountOut, dataxFee, refFee }} { poolAmountOut, dataxFee, refFee }
    */
   public async calcPoolOutGivenTokenIn(stakeInfo: IStakeInfo) {
-    return await this.constructCalcFunction(
+    const {
+      return: poolAmountOut,
+      dataxFee,
+      refFee,
+    } = await this.constructCalcFunction(
       stakeInfo,
       this.stakeRouter.methods.calcPoolOutGivenTokenIn,
-      "Failed to calculate pool out given token in",
-      "poolAmountOut"
+      "Failed to calculate pool out given token in"
     );
+
+    return { poolAmountOut, dataxFee, refFee };
   }
 
   /**
    * This is an unstake calculation. Calculates the pool amount in needed for an exact token amount out.
    * @param stakeInfo
-   * @returns {string[]} [poolAmountIn, dataxFee, refFee]
+   * @returns {{ poolAmountIn, dataxFee, refFee }} { poolAmountIn, dataxFee, refFee }
    */
   public async calcPoolInGivenTokenOut(stakeInfo: IStakeInfo) {
-    return await this.constructCalcFunction(
+    const {
+      return: poolAmountIn,
+      dataxFee,
+      refFee,
+    } = await this.constructCalcFunction(
       stakeInfo,
       this.stakeRouter.methods.calcPoolInGivenTokenOut,
-      "Failed to calculate pool in given token out",
-      "poolAmountIn"
+      "Failed to calculate pool in given token out"
     );
+
+    return { poolAmountIn, dataxFee, refFee };
   }
 
   /**
    * This is an unstake calculation. Calculates the amount of base token out from an exact pool amount in.
    * @param stakeInfo
    * @param senderAddress - The address which the transaction will be sent from.
-   * @returns {string[]} [baseAmountOut, dataxFee, refFee]
+   * @returns {{ baseAmountOut, dataxFee, refFee }} {baseAmountOut, dataxFee, refFee}
    */
   public async calcTokenOutGivenPoolIn(stakeInfo: IStakeInfo) {
-    return this.constructCalcFunction(
+    const {
+      return: baseAmountOut,
+      dataxFee,
+      refFee,
+    } = await this.constructCalcFunction(
       stakeInfo,
       this.stakeRouter.methods.calcTokenOutGivenPoolIn,
-      "Failed to calculate token out given pool in",
-      "baseAmountOut"
+      "Failed to calculate token out given pool in"
     );
+
+    return { baseAmountOut, dataxFee, refFee };
   }
 
   /**
