@@ -103,8 +103,8 @@ export default class Stake extends Base {
       return response.pool;
     } catch (error) {
       throw {
-        Code: 1000,
-        Message: "We ran into a problem, please refresh your connection.",
+        code: 1000,
+        message: "We ran into a problem, please refresh your connection.",
         error,
       };
     }
@@ -272,15 +272,15 @@ export default class Stake extends Base {
       }
     } catch (error) {
       throw {
-        Code: 1000,
-        Message: "We ran into a problem, please refresh your connection.",
+        code: 1000,
+        message: "We ran into a problem, please refresh your connection.",
         error,
       };
     }
   }
 
   /**
-   * Gets the max stake amount for a pool. Max stake amount is converted to 
+   * Gets the max stake amount for a pool. Max stake amount is converted to
    * the first token in the path.
    * @param poolAddress
    * @param path
@@ -334,8 +334,8 @@ export default class Stake extends Base {
       if (inAmts) return inAmts[0];
     } catch (error) {
       throw {
-        Code: 1000,
-        Message: "We ran into a problem, please refresh your connection.",
+        code: 1000,
+        message: "We ran into a problem, please refresh your connection.",
         error,
       };
     }
@@ -395,8 +395,8 @@ export default class Stake extends Base {
       return await this.pool.sharesBalance(account, poolAddress);
     } catch (error) {
       throw {
-        Code: 1000,
-        Message: "We ran into a problem, please refresh your connection.",
+        code: 1000,
+        message: "We ran into a problem, please refresh your connection.",
         error,
       };
     }
@@ -530,8 +530,12 @@ export default class Stake extends Base {
         (err, estGas) => (err ? this.GASLIMIT_DEFAULT : estGas)
       );
     } catch (error) {
-      console.error(error);
-      estGas = this.GASLIMIT_DEFAULT;
+      throw {
+        code: 1000,
+        message:
+          "Gas estimation could not be determined. Aborting due to likey transaction failure.",
+        error,
+      };
     }
 
     try {
@@ -704,10 +708,10 @@ export default class Stake extends Base {
     try {
       const responseInWei = await calcFunction(newStakeInfo).call();
       if (responseInWei) {
-        console.log(responseInWei);
         const { poolAmountOut, baseAmountOut, poolAmountIn, dataxFee, refFee } =
           responseInWei;
 
+        //depending on the calcFunction param, only one of these values will be truthy
         const toReturn = poolAmountOut || baseAmountOut || poolAmountIn;
 
         return {
