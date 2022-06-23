@@ -205,7 +205,8 @@ export default class Stake extends Base {
   /**
    * Calculates the max amount a specific user can stake in a pool. If the
    * users shares are less than the max unstake amount, the users shares are
-   * returned as the max unstake amount.
+   * returned as the max unstake amount. Unstake amount is converted to the
+   * first token in the path.
    *
    * @param meta - [poolAddress, to, refAddress, adapter]
    * @param path - The swap path of token addresses to be used in the transaction
@@ -234,7 +235,7 @@ export default class Stake extends Base {
     refFee: string;
   }> {
     try {
-      const baseToken = await this.getBaseToken(meta[0]);
+      const baseToken = path[path.length - 1];
 
       console.log("Base token in dataxjs: ", baseToken);
       const baseMaxOut = await getMaxRemoveLiquidity(
@@ -278,7 +279,32 @@ export default class Stake extends Base {
     }
   }
 
-  //TODO add erc20 conversion, can be done client side for now
+  /**
+   * Gets the max stake amount for a pool. Max stake amount is converted to 
+   * the first token in the path.
+   * @param poolAddress
+   * @param path
+   * @returns
+   */
+  public async getMaxUnstakeAmount(
+    poolAddress: string,
+    path: string[]
+  ): Promise<string> {
+    const baseAddress = path[path.length - 1];
+    const poolMaxIn = await getMaxAddLiquidity(
+      this.pool,
+      poolAddress,
+      baseAddress
+    );
+
+    if (path.length === 1) {
+      return poolMaxIn.toString();
+    }
+
+    const amtsIn = await this.trade.getAmountsIn(poolMaxIn.toString(), path);
+    return amtsIn[0];
+  }
+
   /**
    * Gets max stake amount for dataken pool. Stake amount is converted
    * to the first token in the path.
@@ -329,7 +355,6 @@ export default class Stake extends Base {
     senderAddress: string,
     path: string[]
   ): Promise<string> {
-    
     const userBalance = new BigNumber(
       await this.trade.getBalance(path[path.length - 1], senderAddress)
     );
