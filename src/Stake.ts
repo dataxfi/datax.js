@@ -221,7 +221,7 @@ export default class Stake extends Base {
    * dataxFee - The total dataxFee for max stake removal
    * refFee - The total refFee for max stake removal
    */
-  public async getMaxUnstakeAmount(
+  public async getUserMaxUnstake(
     meta: string[],
     path: string[],
     senderAddress: string,
@@ -280,18 +280,15 @@ export default class Stake extends Base {
 
   //TODO add erc20 conversion, can be done client side for now
   /**
-   * Gets max stake amount converted to any ERC20. Max add liquidity in
-   * pool-base-token is internally fetched and calculated to token in.
+   * Gets max stake amount for dataken pool. Stake amount is converted
+   * to the first token in the path.
    * @param poolAddress - Address of pool to add stake to
    * @param tokenInAddress - In token address (Any ERC20)
    * @returns max amount in (eth denom)
    */
-  public async getMaxStakeAmount(
-    poolAddress: string,
-    tokenInAddress: string,
-    path: string[]
-  ) {
+  public async getMaxStakeAmount(poolAddress: string, path: string[]) {
     try {
+      const tokenInAddress = path[path.length - 1];
       const baseToken = await this.getBaseToken(poolAddress);
       console.log("BaseToken:", baseToken);
       const baseMaxIn = await getMaxAddLiquidity(
@@ -316,6 +313,47 @@ export default class Stake extends Base {
         error,
       };
     }
+  }
+
+  /**
+   * Gets max stake amount for datatoke pool considering the sender balance. If the sender
+   * balance is greater than the max stake amount, the user balance is returned. Stake
+   * amount is converted to the first token in the path.
+   * @param poolAddress
+   * @param senderAddress
+   * @param path
+   * @returns {Promise<string>}
+   */
+  public async getUserMaxStakeAmount(
+    poolAddress: string,
+    senderAddress: string,
+    path: string[]
+  ): Promise<string> {
+    
+    const userBalance = new BigNumber(
+      await this.trade.getBalance(path[path.length - 1], senderAddress)
+    );
+
+    const maxPoolAmountIn = new BigNumber(
+      await this.getMaxStakeAmount(poolAddress, path)
+    );
+
+    let maxStakeAmt: string;
+
+    if (userBalance.lt(maxPoolAmountIn)) {
+      maxStakeAmt = userBalance.toString();
+    }
+
+    if (path.length === 1) {
+      return maxStakeAmt;
+    }
+
+    const firstAmtInMax = await this.trade.getAmountsIn(maxStakeAmt, path);
+    return firstAmtInMax[0];
+  }
+
+  public async getBalance(tokenAddress: string, account: string) {
+    return this.trade.getBalance(tokenAddress, account);
   }
 
   /**
@@ -358,7 +396,7 @@ export default class Stake extends Base {
     poolAddress: string,
     isDT: boolean,
     txType: "stake" | "unstake",
-    path
+    path: string[]
   ) {
     const txAmtBigNum = new BigNumber(amount);
 
@@ -420,9 +458,7 @@ export default class Stake extends Base {
 
       let max;
       if (txType === "stake") {
-        max = new BigNumber(
-          await this.getMaxStakeAmount(poolAddress, tokenIn, path)
-        );
+        max = new BigNumber(await this.getMaxStakeAmount(poolAddress, path));
       } else {
         max = new BigNumber(
           await getMaxRemoveLiquidity(this.pool, poolAddress, tokenIn)
