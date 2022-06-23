@@ -9,7 +9,7 @@ import {
 } from "./utils/";
 import { TransactionReceipt } from "web3-core";
 import { Contract } from "web3-eth-contract";
-import { AbiItem, Units } from "web3-utils";
+import { AbiItem } from "web3-utils";
 import { IStakeInfo } from "./@types/stake";
 import { supportedNetworks } from "./@types";
 import { Pool } from "./balancer";
@@ -17,7 +17,6 @@ import Trade from "./Trade";
 import { gql } from "graphql-request";
 import { allowance, approve } from "./utils/TokenUtils";
 import { Datatoken } from "./tokens";
-import { Config } from "../";
 
 export default class Stake extends Base {
   private stakeRouterAddress: string;
@@ -351,7 +350,7 @@ export default class Stake extends Base {
    * @param path
    * @returns {Promise<string>}
    */
-  public async getUserMaxStakeAmount(
+  public async getUserMaxStake(
     poolAddress: string,
     senderAddress: string,
     path: string[]
