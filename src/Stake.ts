@@ -1,7 +1,7 @@
 import Base from "./Base";
 import BigNumber from "bignumber.js";
 import Web3 from "web3";
-import stakeRouterAbi from "./abi/rinkeby/StakeRouter-abi.json";
+import stakeRouterAbi from "./abi/StakeRouter.json";
 import {
   getFairGasPrice,
   getMaxRemoveLiquidity,

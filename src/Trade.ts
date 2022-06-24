@@ -4,7 +4,7 @@ import { Contract } from "web3-eth-contract";
 import { TransactionReceipt } from "web3-core";
 import BigNumber from "bignumber.js";
 import { AbiItem } from "web3-utils";
-import adapterABI from "./abi/rinkeby/UniV2Adapter-abi.json";
+import adapterABI from "./abi/UniV2Adapter.json";
 import {
   getFairGasPrice,
   getMaxSwapExactIn,
