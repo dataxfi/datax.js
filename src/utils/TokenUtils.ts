@@ -322,7 +322,7 @@ export async function getTokenDetails(
   } catch (error) {
     throw {
       Code: 1000,
-      Message: "We ran into a problem, please refresh your connection.",
+      Message: "An error occurred, please refresh your connection.",
       error,
     };
   }

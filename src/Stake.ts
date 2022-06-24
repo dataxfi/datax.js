@@ -22,10 +22,9 @@ export default class Stake extends Base {
   private stakeRouterAddress: string;
   private stakeRouter: Contract;
   private GASLIMIT_DEFAULT = 1000000;
-  private stakeFailureMessage =
-    "ERROR: Failed to pay tokens in order to join the pool";
-  private unstakeFailureMessage =
-    "ERROR: Failed to pay pool shares into the pool";
+  private failureMessage =
+    "An error occured while processing your transaction. The transaction might still be processed, check your wallet.";
+
   private pool: Pool;
   private trade: Trade;
   private datatoken: Datatoken;
@@ -104,7 +103,7 @@ export default class Stake extends Base {
     } catch (error) {
       throw {
         code: 1000,
-        message: "We ran into a problem, please refresh your connection.",
+        message: "An error occurred, please refresh your connection.",
         error,
       };
     }
@@ -273,7 +272,7 @@ export default class Stake extends Base {
     } catch (error) {
       throw {
         code: 1000,
-        message: "We ran into a problem, please refresh your connection.",
+        message: "An error occurred, please refresh your connection.",
         error,
       };
     }
@@ -335,7 +334,7 @@ export default class Stake extends Base {
     } catch (error) {
       throw {
         code: 1000,
-        message: "We ran into a problem, please refresh your connection.",
+        message: "An error occurred, please refresh your connection.",
         error,
       };
     }
@@ -402,7 +401,7 @@ export default class Stake extends Base {
     } catch (error) {
       throw {
         code: 1000,
-        message: "We ran into a problem, please refresh your connection.",
+        message: "An error occurred, please refresh your connection.",
         error,
       };
     }
@@ -596,7 +595,7 @@ export default class Stake extends Base {
       senderAddress,
       stakeInfo,
       this.stakeRouter.methods.stakeETHInDTPool,
-      this.stakeFailureMessage,
+      this.failureMessage,
       true,
       "stake"
     );
@@ -629,7 +628,7 @@ export default class Stake extends Base {
       senderAddress,
       stakeInfo,
       this.stakeRouter.methods.unstakeETHFromDTPool,
-      this.unstakeFailureMessage,
+      this.failureMessage,
       true,
       "unstake"
     );
@@ -663,7 +662,7 @@ export default class Stake extends Base {
       senderAddress,
       stakeInfo,
       this.stakeRouter.methods.stakeTokenInDTPool,
-      this.stakeFailureMessage,
+      this.failureMessage,
       false,
       "stake"
     );
@@ -703,7 +702,7 @@ export default class Stake extends Base {
       senderAddress,
       stakeInfo,
       this.stakeRouter.methods.unstakeTokenFromDTPool,
-      this.unstakeFailureMessage,
+      this.failureMessage,
       false,
       "unstake"
     );

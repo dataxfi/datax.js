@@ -135,7 +135,7 @@ export default class Config {
       datatokenList: "",
       tokenList:
         "https://unpkg.com/quickswap-default-token-list@1.2.26/build/quickswap-default.tokenlist.json",
-      nativeAddress: "0x0000000000000000000000000000000000001010",
+      nativeAddress: "0x0d500B1d8E8eF31E21C99d1Db9A6444d3ADf1270",
     },
     "56": {
       stakeRouterAddress: "",
