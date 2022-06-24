@@ -1,6 +1,6 @@
 import BigNumber from "bignumber.js";
 import { TokenList as Tlist, TokenInfo as TInfo } from "@uniswap/token-lists";
-import { Config } from "src/models";
+import { Config } from "../models";
 
 export interface ConfigHelperConfig extends Config {
   networkId: number;
