@@ -115,7 +115,7 @@ export default class Config {
       stakeRouterAddress: "",
       uniV2AdapterAddress: "",
       storageAddress: "",
-      datatokenList: "Qmc8Dp1U2kW6FJbpUYGr5W6sVyJsQeQzVundT9vooCH6aX",
+      datatokenList: "",
       tokenList: "https://tokens.uniswap.org/",
       nativeAddress: "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2",
     },
@@ -123,7 +123,7 @@ export default class Config {
       stakeRouterAddress: "0x83f30c56165A89941080B7d9c07dFF8E8A338b58",
       uniV2AdapterAddress: "0xa3DcA16D8D2adF3623AAE0219F65d65EA433Cd96",
       storageAddress: "0x6e944F2f332106cd503fbb316036557fE4fdde30",
-      datatokenList: "QmUcsbmbYT6sFTAzsoH1jtgzwi9B3RhBsZzFHjbs6igoQg",
+      datatokenList: "",
       tokenList:
         "https://raw.githubusercontent.com/Uniswap/default-token-list/main/src/tokens/rinkeby.json",
       nativeAddress: "0xc778417E063141139Fce010982780140Aa0cD5Ab",

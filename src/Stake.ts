@@ -532,7 +532,7 @@ export default class Stake extends Base {
     const newUints = stakeInfo.uints.map((amt) => this.web3.utils.toWei(amt));
     const newStakeInfo = { ...stakeInfo, uints: newUints };
     const args = isETH
-      ? { from: senderAddress, value: newUints[txType === "stake" ? 2 : 0] }
+      ? { from: senderAddress, value: newUints[txType === "stake" ? 0 : 2] }
       : { from: senderAddress };
 
     console.log(newStakeInfo, args);
@@ -582,9 +582,9 @@ export default class Stake extends Base {
     console.log("In stake ETH function");
     await this.preStakeChecks(
       stakeInfo.path[0],
-      stakeInfo.meta[1],
-      stakeInfo.uints[2],
-      stakeInfo.meta[3],
+      senderAddress,
+      stakeInfo.uints[0],
+      this.config.custom.stakeRouterAddress,
       stakeInfo.meta[0],
       false,
       "stake",
@@ -615,9 +615,9 @@ export default class Stake extends Base {
     console.log("in unstake eth function");
     await this.preStakeChecks(
       stakeInfo.path[0],
-      stakeInfo.meta[1],
-      stakeInfo.uints[2],
-      stakeInfo.meta[3],
+      senderAddress,
+      stakeInfo.uints[0],
+      this.config.custom.stakeRouterAddress,
       stakeInfo.meta[0],
       false,
       "unstake",
@@ -649,9 +649,9 @@ export default class Stake extends Base {
     console.log("In stake token function");
     await this.preStakeChecks(
       stakeInfo.path[0],
-      stakeInfo.meta[1],
-      stakeInfo.uints[2],
-      stakeInfo.meta[3],
+      senderAddress,
+      stakeInfo.uints[0],
+      this.config.custom.stakeRouterAddress,
       stakeInfo.meta[0],
       false,
       "stake",
@@ -682,9 +682,9 @@ export default class Stake extends Base {
     console.log("in unstake ocean function");
     await this.preStakeChecks(
       stakeInfo.path[0],
-      stakeInfo.meta[1],
-      stakeInfo.uints[2],
-      stakeInfo.meta[3],
+      senderAddress,
+      stakeInfo.uints[0],
+      this.config.custom.stakeRouterAddress,
       stakeInfo.meta[0],
       false,
       "unstake",
