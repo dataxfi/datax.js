@@ -235,7 +235,7 @@ export default class Stake extends Base {
     refFee: string;
   }> {
     try {
-      const baseToken = path[path.length - 1];
+      const baseToken = path[0];
 
       console.log("Base token in dataxjs: ", baseToken);
       const baseMaxOut = await getMaxRemoveLiquidity(
@@ -323,9 +323,9 @@ export default class Stake extends Base {
         baseToken
       );
 
-      console.log("Base max in:", baseMaxIn);
+      console.log("Base max in:", baseMaxIn.toString());
       if (tokenInAddress.toLowerCase() === baseToken.toLowerCase())
-        return baseMaxIn;
+        return baseMaxIn.toString();
 
       const inAmts = await this.trade?.getAmountsIn(baseMaxIn.toString(), path);
       console.log("In amts:", inAmts);
@@ -363,7 +363,7 @@ export default class Stake extends Base {
       await this.getMaxStakeAmount(poolAddress, path)
     );
 
-    let maxStakeAmt: string;
+    let maxStakeAmt: string = maxPoolAmountIn.toString();
 
     if (userBalance.lt(maxPoolAmountIn)) {
       maxStakeAmt = userBalance.toString();
@@ -377,6 +377,12 @@ export default class Stake extends Base {
     return firstAmtInMax[0];
   }
 
+  /**
+   * Get balance of given token address for an account
+   * @param tokenAddress
+   * @param account
+   * @returns
+   */
   public async getBalance(tokenAddress: string, account: string) {
     return this.trade.getBalance(tokenAddress, account);
   }
@@ -520,16 +526,17 @@ export default class Stake extends Base {
     stakeInfo: IStakeInfo,
     stakeFunction: Function,
     errorMessage: string,
-    isETH: boolean
+    isETH: boolean,
+    txType: "stake" | "unstake"
   ): Promise<TransactionReceipt> {
     let estGas;
     const newUints = stakeInfo.uints.map((amt) => this.web3.utils.toWei(amt));
     const newStakeInfo = { ...stakeInfo, uints: newUints };
     const args = isETH
-      ? { from: senderAddress, value: newUints[2] }
+      ? { from: senderAddress, value: newUints[txType === "stake" ? 2 : 0] }
       : { from: senderAddress };
 
-    console.log(newStakeInfo);
+    console.log(newStakeInfo, args);
     try {
       estGas = await stakeFunction(newStakeInfo).estimateGas(
         args,
@@ -544,6 +551,8 @@ export default class Stake extends Base {
       };
     }
 
+    console.log("Estimated gas price: ", estGas);
+
     try {
       return await stakeFunction(newStakeInfo).send({
         ...args,
@@ -551,7 +560,11 @@ export default class Stake extends Base {
         gasPrice: await getFairGasPrice(this.web3, this.config.default),
       });
     } catch (error) {
-      throw new Error(`${errorMessage} : ${error.message}`);
+      throw {
+        code: 1000,
+        message: errorMessage,
+        error,
+      };
     }
   }
 
@@ -584,7 +597,8 @@ export default class Stake extends Base {
       stakeInfo,
       this.stakeRouter.methods.stakeETHInDTPool,
       this.stakeFailureMessage,
-      true
+      true,
+      "stake"
     );
   }
 
@@ -599,6 +613,7 @@ export default class Stake extends Base {
     stakeInfo: IStakeInfo,
     senderAddress: string
   ): Promise<TransactionReceipt> {
+    console.log("in unstake eth function");
     await this.preStakeChecks(
       stakeInfo.path[0],
       stakeInfo.meta[1],
@@ -615,7 +630,8 @@ export default class Stake extends Base {
       stakeInfo,
       this.stakeRouter.methods.unstakeETHFromDTPool,
       this.unstakeFailureMessage,
-      true
+      true,
+      "unstake"
     );
   }
 
@@ -648,7 +664,8 @@ export default class Stake extends Base {
       stakeInfo,
       this.stakeRouter.methods.stakeTokenInDTPool,
       this.stakeFailureMessage,
-      false
+      false,
+      "stake"
     );
   }
 
@@ -663,6 +680,7 @@ export default class Stake extends Base {
     stakeInfo: IStakeInfo,
     senderAddress: string
   ): Promise<TransactionReceipt> {
+    console.log("in unstake ocean function");
     await this.preStakeChecks(
       stakeInfo.path[0],
       stakeInfo.meta[1],
@@ -674,12 +692,20 @@ export default class Stake extends Base {
       stakeInfo.path
     );
 
+    //TODO: check if path is greater than one for this to be necessary
+    const baseAmountOut = await this.trade.getAmountsIn(
+      stakeInfo.uints[0],
+      stakeInfo.path
+    );
+    console.log("Base amount out from funciton", baseAmountOut);
+
     return await this.constructTxFunction(
       senderAddress,
       stakeInfo,
       this.stakeRouter.methods.unstakeTokenFromDTPool,
       this.unstakeFailureMessage,
-      false
+      false,
+      "unstake"
     );
   }
 
@@ -727,7 +753,11 @@ export default class Stake extends Base {
         };
       }
     } catch (error) {
-      throw new Error(`${errorMessage}: ${error.message}`);
+      throw {
+        code: 1000,
+        message: errorMessage,
+        error,
+      };
     }
   }
 
@@ -815,9 +845,11 @@ export default class Stake extends Base {
         gasPrice: await getFairGasPrice(this.web3, this.config.default),
       });
     } catch (error) {
-      throw new Error(
-        `${"Failed to claim refferer fees for this token"} : ${error.message}`
-      );
+      throw {
+        code: 1000,
+        message: "Failed to claim refferer fees for this token",
+        error,
+      };
     }
   }
 }

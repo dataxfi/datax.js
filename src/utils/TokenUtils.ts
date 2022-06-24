@@ -94,9 +94,7 @@ export async function approve(
         gasPrice: await getFairGasPrice(web3, null),
       });
   } catch (e) {
-    LoggerInstance.error(
-      `ERROR: Failed to approve spender to spend tokens : ${e.message}`
-    );
+    throw(e)
   }
   return result;
 }

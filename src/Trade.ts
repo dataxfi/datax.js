@@ -43,7 +43,8 @@ export default class Trade extends Base {
     isDT: boolean,
     decimals: number = 18
   ) {
-    if (isDT) {
+    try {
+          if (isDT) {
       return await this.datatoken.approve(
         tokenAddress,
         spender,
@@ -61,6 +62,15 @@ export default class Trade extends Base {
         decimals
       );
     }
+    } catch (error) {
+      const code = error.code === 4001 ? 4001 : 1000
+      throw {
+        code,
+        error, 
+        message: "Failed to approve tokens."
+      }
+    }
+
   }
 
   /**
