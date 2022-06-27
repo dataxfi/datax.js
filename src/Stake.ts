@@ -145,7 +145,7 @@ export default class Stake extends Base {
     } = await this.calcPoolInGivenTokenOut({
       meta,
       path,
-      uints: [finalOut, refFee, "0"],
+      uints: ["0", refFee, finalOut],
     });
 
     dataxFeeTotal = dataxFee;
@@ -171,7 +171,7 @@ export default class Stake extends Base {
       } = await this.calcTokenOutGivenPoolIn({
         meta,
         path,
-        uints: ["0", refFee, userShareBalance],
+        uints: [userShareBalance, refFee, "0"],
       });
 
       userPerc = "100";
@@ -245,7 +245,6 @@ export default class Stake extends Base {
 
       console.log("Base max out dataxjs", baseMaxOut.toString());
       if (baseToken.toLowerCase() === path[path.length - 1].toLowerCase()) {
-        console.log("Unstaking datattoken calculation");
         //User is unstaking to base token, use base max out
         return await this.calcMaxUnstakeWithFinalAmtOut(
           baseMaxOut.toString(),
@@ -691,12 +690,12 @@ export default class Stake extends Base {
       stakeInfo.path
     );
 
-    //TODO: check if path is greater than one for this to be necessary
-    const baseAmountOut = await this.trade.getAmountsIn(
-      stakeInfo.uints[0],
-      stakeInfo.path
-    );
-    console.log("Base amount out from funciton", baseAmountOut);
+    // //TODO: check if path is greater than one for this to be necessary
+    // const baseAmountOut = await this.trade.getAmountsIn(
+    //   stakeInfo.uints[0],
+    //   stakeInfo.path
+    // );
+    // console.log("Base amount out from funciton", baseAmountOut);
 
     return await this.constructTxFunction(
       senderAddress,
