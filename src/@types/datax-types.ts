@@ -68,7 +68,7 @@ export interface ITokenDetails {
 export interface ITokenInfo extends TInfo {
   pools: { id: string }[];
   did: string;
-  isFRE:boolean
+  isFRE: boolean;
 }
 
 export interface ITList extends Tlist {

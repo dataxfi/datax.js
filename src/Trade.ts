@@ -3,12 +3,13 @@ import Base from "./Base";
 import { Contract } from "web3-eth-contract";
 import { TransactionReceipt } from "web3-core";
 import BigNumber from "bignumber.js";
-import { AbiItem } from "web3-utils";
+import { AbiItem, Unit } from "web3-utils";
 import adapterABI from "./abi/UniV2Adapter.json";
 import {
   getFairGasPrice,
   getMaxSwapExactIn,
   getMaxSwapExactOut,
+  units,
 } from "./utils/";
 import { supportedNetworks } from "./@types";
 import { Datatoken } from "./tokens";
@@ -344,6 +345,7 @@ export default class Trade extends Base {
     errorMessage: string
   ): Promise<TransactionReceipt> {
     let estGas;
+    //TODO: Add to wei conversion with correct token decimals 
     try {
       estGas = await swapFunction(...params).estimateGas(
         { from: senderAddress },
@@ -568,40 +570,52 @@ export default class Trade extends Base {
       "Failed to swap tokens for exact tokens"
     );
   }
-  private fromWei = (amount: string) => this.web3.utils.fromWei(amount);
-  private toWei = (amount: string) => this.web3.utils.toWei(amount);
+
+  private fromWei = (amount: string, unit: Unit = "ether") =>
+    this.web3.utils.fromWei(amount, unit);
+  private toWei = (amount: string, unit: Unit = "ether") =>
+    this.web3.utils.toWei(amount, unit);
 
   /**
    * Given an input asset amount and an array of token addresses, calculates all subsequent maximum output token amounts.
    * @param amountIn - will be converted to wei
-   * @param path - each value in eth denom
+   * @param path - each value in respective wei conversion
    */
   public async getAmountsOut(
     amountIn: string,
     path: string[]
   ): Promise<string[]> {
-    const amountToWei = this.toWei(amountIn);
+    const tokenInDecimals = await decimals(this.web3, path[0]);
+    const amountToWei = this.toWei(amountIn, units[tokenInDecimals]);
     const amountsOutInWei = await this.adapter.methods
       .getAmountsOut(amountToWei, path)
       .call();
-    return amountsOutInWei.map((amt: string) => this.fromWei(amt));
+
+    return amountsOutInWei.map(async (amt: string, index: number) => {
+      const tokenDecimals = await decimals(this.web3, path[index]);
+      return this.fromWei(amt, units[tokenDecimals]);
+    });
   }
 
   /**
    * Given an output asset amount and an array of token addresses, calculates all preceding minimum input token amounts.
    * @param amountOut - will be converted to wei
-   * @param path -each value in eth denom
+   * @param path - each value in respective wei conversion
    */
   public async getAmountsIn(
     amountOut: string,
     path: string[]
   ): Promise<string[]> {
-    const amountToWei = this.web3.utils.toWei(amountOut);
+    const tokenOutDecimals = await decimals(this.web3, path[path.length - 1]);
+    const amountToWei = this.toWei(amountOut, units[tokenOutDecimals]);
     const amountsInInWei = await this.adapter.methods
       .getAmountsIn(amountToWei, path)
       .call();
 
-    return amountsInInWei.map((amt: string) => this.fromWei(amt));
+    return amountsInInWei.map(async (amt: string, index: number) => {
+      const tokenDecimals = await decimals(this.web3, path[index]);
+      return this.fromWei(amt, units[tokenDecimals]);
+    });
   }
 
   //TODO: make duplicate getAmountsInWei and getAmountsOutWei

@@ -6,16 +6,17 @@ import {
   getFairGasPrice,
   getMaxRemoveLiquidity,
   getMaxAddLiquidity,
+  units,
 } from "./utils/";
 import { TransactionReceipt } from "web3-core";
 import { Contract } from "web3-eth-contract";
-import { AbiItem } from "web3-utils";
+import { AbiItem, Unit } from "web3-utils";
 import { IStakeInfo } from "./@types/stake";
 import { supportedNetworks } from "./@types";
 import { Pool } from "./balancer";
 import Trade from "./Trade";
 import { gql } from "graphql-request";
-import { allowance, approve } from "./utils/TokenUtils";
+import { allowance, approve, decimals } from "./utils/TokenUtils";
 import { Datatoken } from "./tokens";
 
 export default class Stake extends Base {
@@ -107,6 +108,60 @@ export default class Stake extends Base {
         error,
       };
     }
+  }
+
+  public fromWei = (amount: string, unit: Unit = "ether") =>
+    this.web3.utils.fromWei(String(amount), unit);
+
+  public toWei = (amount: string, unit: Unit = "ether") =>
+    this.web3.utils.toWei(String(amount), unit);
+
+  /**
+   * Returns uints array defined in stakeInfo type converted to wei in the
+   * appropriate decimals, and the unit for the last token in the path.
+   * @param uints
+   * @param path
+   * @param txType
+   * @returns
+   */
+  public async convertUintsToWei(
+    uints: string[],
+    path: string[],
+    txType?: "in" | "out"
+  ): Promise<[string[], Unit]> {
+    const lastIndexInPath = path.length - 1;
+
+    const tokenInDecimals = await decimals(this.web3, path[0]);
+    const tokenInUnits = units[tokenInDecimals];
+
+    const tokenOutDecimals = await decimals(this.web3, path[lastIndexInPath]);
+    const tokenOutUnits = units[tokenOutDecimals];
+
+    let returnUnit: Unit;
+    switch (txType) {
+      case "in":
+        returnUnit = tokenInUnits;
+        break;
+      case "out":
+        returnUnit = tokenOutUnits;
+        break;
+      default:
+        returnUnit = "ether";
+        break;
+    }
+
+    const newUints = uints.map((amt, index) => {
+      switch (index) {
+        case 0:
+          return this.toWei(amt, tokenInUnits);
+        case lastIndexInPath:
+          return this.toWei(amt, tokenOutUnits);
+        default:
+          return this.toWei(amt);
+      }
+    });
+
+    return [newUints, returnUnit];
   }
 
   /**
@@ -527,7 +582,12 @@ export default class Stake extends Base {
     txType: "stake" | "unstake"
   ): Promise<TransactionReceipt> {
     let estGas;
-    const newUints = stakeInfo.uints.map((amt) => this.web3.utils.toWei(amt));
+
+    const [newUints] = await this.convertUintsToWei(
+      stakeInfo.uints,
+      stakeInfo.path
+    );
+
     const newStakeInfo = { ...stakeInfo, uints: newUints };
     const args = isETH
       ? { from: senderAddress, value: newUints[txType === "stake" ? 0 : 2] }
@@ -689,13 +749,6 @@ export default class Stake extends Base {
       stakeInfo.path
     );
 
-    // //TODO: check if path is greater than one for this to be necessary
-    // const baseAmountOut = await this.trade.getAmountsIn(
-    //   stakeInfo.uints[0],
-    //   stakeInfo.path
-    // );
-    // console.log("Base amount out from funciton", baseAmountOut);
-
     return await this.constructTxFunction(
       senderAddress,
       stakeInfo,
@@ -710,23 +763,28 @@ export default class Stake extends Base {
    * Constructs the standard way to call a calculation function. Converts all amounts in the uint256 array to wei,
    * then calls the passed transaction function with the updated stakeInfo. Built in error handling will pass the
    * provided errorMessage to the thrown error if an error occurs.
-   * @param stakeInfo
-   * @param calcFunction
-   * @param errorMessage
+   * @param stakeInfo - stakeInfo to be used in tx function
+   * @param calcFunction - calculation function to be called
+   * @param errorMessage - message in the case of failure
+   * @param IN - whether calculating in or not
    * @returns { dataxFee: string; poolAmountOut: string; refFee: string } pool amount out and fees in eth denom
    */
+
   private async constructCalcFunction(
     stakeInfo: IStakeInfo,
     calcFunction: Function,
-    errorMessage: string
+    errorMessage: string,
+    IN: "in" | "out"
   ): Promise<{
     dataxFee: string;
     refFee: string;
     return: string;
   }> {
-    const fromWei = (amount: string) => this.web3.utils.fromWei(String(amount));
-    const toWei = (amount: string) => this.web3.utils.toWei(String(amount));
-    const uints = stakeInfo.uints.map(toWei) as [string, string, string];
+    const [uints, returnUnit] = await this.convertUintsToWei(
+      stakeInfo.uints,
+      stakeInfo.path,
+      IN
+    );
 
     const newStakeInfo: IStakeInfo = {
       ...stakeInfo,
@@ -744,9 +802,9 @@ export default class Stake extends Base {
         const toReturn = poolAmountOut || baseAmountOut || poolAmountIn;
 
         return {
-          return: fromWei(toReturn),
-          dataxFee: fromWei(dataxFee),
-          refFee: fromWei(refFee),
+          return: this.fromWei(toReturn, returnUnit),
+          dataxFee: this.fromWei(dataxFee),
+          refFee: this.fromWei(refFee),
         };
       }
     } catch (error) {
@@ -771,7 +829,8 @@ export default class Stake extends Base {
     } = await this.constructCalcFunction(
       stakeInfo,
       this.stakeRouter.methods.calcPoolOutGivenTokenIn,
-      "Failed to calculate pool out given token in"
+      "Failed to calculate pool out given token in",
+      "out"
     );
 
     return { poolAmountOut, dataxFee, refFee };
@@ -790,7 +849,8 @@ export default class Stake extends Base {
     } = await this.constructCalcFunction(
       stakeInfo,
       this.stakeRouter.methods.calcPoolInGivenTokenOut,
-      "Failed to calculate pool in given token out"
+      "Failed to calculate pool in given token out",
+      "in"
     );
 
     return { poolAmountIn, dataxFee, refFee };
@@ -810,7 +870,8 @@ export default class Stake extends Base {
     } = await this.constructCalcFunction(
       stakeInfo,
       this.stakeRouter.methods.calcTokenOutGivenPoolIn,
-      "Failed to calculate token out given pool in"
+      "Failed to calculate token out given pool in",
+      "in"
     );
 
     return { baseAmountOut, dataxFee, refFee };
