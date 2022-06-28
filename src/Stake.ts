@@ -312,19 +312,18 @@ export default class Stake extends Base {
    */
   public async getMaxStakeAmount(poolAddress: string, path: string[]) {
     try {
-      const tokenInAddress = path[path.length - 1];
+      const tokenInAddress = path[0];
       const baseToken = await this.getBaseToken(poolAddress);
       console.log("BaseToken:", baseToken);
-      const baseMaxIn = await getMaxAddLiquidity(
-        this.pool,
-        poolAddress,
-        baseToken
-      );
+      const baseMaxIn = (
+        await getMaxAddLiquidity(this.pool, poolAddress, baseToken)
+      ).dp(5);
 
       console.log("Base max in:", baseMaxIn.toString());
       if (tokenInAddress.toLowerCase() === baseToken.toLowerCase())
         return baseMaxIn.toString();
 
+      console.log("Getting in amounts with path:", path);
       const inAmts = await this.trade?.getAmountsIn(baseMaxIn.toString(), path);
       console.log("In amts:", inAmts);
 
@@ -354,7 +353,7 @@ export default class Stake extends Base {
     path: string[]
   ): Promise<string> {
     const userBalance = new BigNumber(
-      await this.trade.getBalance(path[path.length - 1], senderAddress)
+      await this.trade.getBalance(path[0], senderAddress, false)
     );
 
     const maxPoolAmountIn = new BigNumber(
@@ -367,12 +366,7 @@ export default class Stake extends Base {
       maxStakeAmt = userBalance.toString();
     }
 
-    if (path.length === 1) {
-      return maxStakeAmt;
-    }
-
-    const firstAmtInMax = await this.trade.getAmountsIn(maxStakeAmt, path);
-    return firstAmtInMax[0];
+    return maxStakeAmt;
   }
 
   /**
@@ -381,8 +375,13 @@ export default class Stake extends Base {
    * @param account
    * @returns
    */
-  public async getBalance(tokenAddress: string, account: string) {
-    return this.trade.getBalance(tokenAddress, account);
+  public async getBalance(
+    tokenAddress: string,
+    account: string,
+    isDT: boolean,
+    decimals?: number
+  ) {
+    return this.trade.getBalance(tokenAddress, account, isDT, decimals);
   }
 
   /**
@@ -437,7 +436,7 @@ export default class Stake extends Base {
         );
 
         balance = new BigNumber(
-          await this.trade.getBalance(tokenIn, senderAddress)
+          await this.trade.getBalance(tokenIn, senderAddress, false)
         );
       } else {
         balance = new BigNumber(

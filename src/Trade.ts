@@ -14,7 +14,7 @@ import { supportedNetworks } from "./@types";
 import { Datatoken } from "./tokens";
 import { Pool } from "./balancer";
 import Config from "./Config";
-import { allowance, approve } from "./utils/TokenUtils";
+import { allowance, approve, balance, decimals } from "./utils/TokenUtils";
 
 export default class Trade extends Base {
   private adapterAddress: string;
@@ -44,33 +44,32 @@ export default class Trade extends Base {
     decimals: number = 18
   ) {
     try {
-          if (isDT) {
-      return await this.datatoken.approve(
-        tokenAddress,
-        spender,
-        amountIn,
-        senderAddress
-      );
-    } else {
-      return await approve(
-        this.web3,
-        senderAddress,
-        tokenAddress,
-        spender,
-        amountIn,
-        true,
-        decimals
-      );
-    }
+      if (isDT) {
+        return await this.datatoken.approve(
+          tokenAddress,
+          spender,
+          amountIn,
+          senderAddress
+        );
+      } else {
+        return await approve(
+          this.web3,
+          senderAddress,
+          tokenAddress,
+          spender,
+          amountIn,
+          true,
+          decimals
+        );
+      }
     } catch (error) {
-      const code = error.code === 4001 ? 4001 : 1000
+      const code = error.code === 4001 ? 4001 : 1000;
       throw {
         code,
-        error, 
-        message: "Failed to approve tokens."
-      }
+        error,
+        message: "Failed to approve tokens.",
+      };
     }
-
   }
 
   /**
@@ -255,10 +254,18 @@ export default class Trade extends Base {
    */
   public async getBalance(
     tokenAddress: string,
-    account: string
+    account: string,
+    isDT: boolean,
+    tokenDecimals?: number
   ): Promise<string> {
     try {
-      return this.datatoken.balance(tokenAddress, account);
+      if (isDT) {
+        return await this.datatoken.balance(tokenAddress, account);
+      } else {
+        if (!tokenDecimals)
+          tokenDecimals = await decimals(this.web3, tokenAddress);
+        return await balance(this.web3, tokenAddress, account, tokenDecimals);
+      }
     } catch (error) {
       throw {
         Code: 1000,
@@ -291,7 +298,7 @@ export default class Trade extends Base {
     const inBigNum = new BigNumber(amountIn);
     const outBigNum = new BigNumber(amountOut);
     const balance = new BigNumber(
-      await this.getBalance(tokenIn, senderAddress)
+      await this.getBalance(tokenIn, senderAddress, false)
     );
 
     if (balance.lt(inBigNum)) {
