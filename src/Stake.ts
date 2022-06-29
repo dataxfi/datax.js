@@ -69,45 +69,24 @@ export default class Stake extends Base {
     return await this.pool.getBaseToken(poolAddress);
   }
 
-  /** Get pool details
-   * @param {Srting} poolAddress
-   * @returns {String[]} - datatoken addresses
+  public async getDatatoken(poolAddress: string) {
+    return await this.pool.getDatatoken(poolAddress);
+  }
+
+  /**
+   * Get reserve of a token in a pool.
+   * @param poolAddress
+   * @param token
+   * @param tokenDecimals
+   * @returns
    */
-
-  public async getPoolDetails(poolAddress: string): Promise<any> {
-    try {
-      const query = gql`
-        {
-          pool(id: "${poolAddress}") {
-            id
-            baseToken {
-              name
-              symbol
-              id
-            }
-            datatoken {
-              name
-              symbol
-              id
-            }
-            baseTokenLiquidity
-            datatokenLiquidity
-            totalShares
-          }
-        }
-      `;
-
-      const response = await this.config.gqlClient.request(query);
-      console.log(response);
-
-      return response.pool;
-    } catch (error) {
-      throw {
-        code: 1000,
-        message: "An error occurred, please refresh your connection.",
-        error,
-      };
-    }
+  public async getReserve(
+    poolAddress: string,
+    token: string,
+    tokenDecimals?: number
+  ) {
+    if (!tokenDecimals) tokenDecimals = await decimals(this.web3, token);
+    return await this.pool.getReserve(poolAddress, token, tokenDecimals);
   }
 
   public fromWei = (amount: string, unit: Unit = "ether") =>
@@ -130,7 +109,7 @@ export default class Stake extends Base {
     txType?: "in" | "out"
   ): Promise<[string[], Unit]> {
     const lastIndexInPath = path.length - 1;
-    console.log('last index in path', lastIndexInPath, path)
+    console.log("last index in path", lastIndexInPath, path);
     const tokenInDecimals = await decimals(this.web3, path[0]);
     const tokenInUnits = units[tokenInDecimals];
 
@@ -150,7 +129,7 @@ export default class Stake extends Base {
         break;
     }
 
-    console.log("return unit", returnUnit)
+    console.log("return unit", returnUnit);
 
     const newUints = uints.map((amt, index) => {
       switch (index) {

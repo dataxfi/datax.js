@@ -88,9 +88,6 @@ export interface IPoolDetails {
   id: string;
   datatoken: ITokenDetails;
   baseToken: ITokenDetails;
-  baseTokenLiquidity: string;
-  datatokenLiquidity: string;
-  totalShares: string;
 }
 
 export interface IPoolTransaction {
