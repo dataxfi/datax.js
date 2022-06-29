@@ -130,7 +130,7 @@ export default class Stake extends Base {
     txType?: "in" | "out"
   ): Promise<[string[], Unit]> {
     const lastIndexInPath = path.length - 1;
-
+    console.log('last index in path', lastIndexInPath, path)
     const tokenInDecimals = await decimals(this.web3, path[0]);
     const tokenInUnits = units[tokenInDecimals];
 
@@ -149,6 +149,8 @@ export default class Stake extends Base {
         returnUnit = "ether";
         break;
     }
+
+    console.log("return unit", returnUnit)
 
     const newUints = uints.map((amt, index) => {
       switch (index) {
@@ -871,7 +873,7 @@ export default class Stake extends Base {
       stakeInfo,
       this.stakeRouter.methods.calcTokenOutGivenPoolIn,
       "Failed to calculate token out given pool in",
-      "in"
+      "out"
     );
 
     return { baseAmountOut, dataxFee, refFee };

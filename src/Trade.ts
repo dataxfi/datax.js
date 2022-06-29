@@ -345,7 +345,7 @@ export default class Trade extends Base {
     errorMessage: string
   ): Promise<TransactionReceipt> {
     let estGas;
-    //TODO: Add to wei conversion with correct token decimals 
+    //TODO: Add to wei conversion with correct token decimals
     try {
       estGas = await swapFunction(...params).estimateGas(
         { from: senderAddress },
@@ -587,14 +587,20 @@ export default class Trade extends Base {
   ): Promise<string[]> {
     const tokenInDecimals = await decimals(this.web3, path[0]);
     const amountToWei = this.toWei(amountIn, units[tokenInDecimals]);
+    console.log("Call to getAmountsOut with", amountToWei, tokenInDecimals, units[tokenInDecimals])
     const amountsOutInWei = await this.adapter.methods
       .getAmountsOut(amountToWei, path)
       .call();
 
-    return amountsOutInWei.map(async (amt: string, index: number) => {
+    const promises = amountsOutInWei.map(async (amt: string, index: number) => {
       const tokenDecimals = await decimals(this.web3, path[index]);
+      console.log(path[index], tokenDecimals);
       return this.fromWei(amt, units[tokenDecimals]);
     });
+
+    const amtsResolved = await Promise.all(promises);
+    console.log(amtsResolved)
+    return amtsResolved;
   }
 
   /**
@@ -612,10 +618,15 @@ export default class Trade extends Base {
       .getAmountsIn(amountToWei, path)
       .call();
 
-    return amountsInInWei.map(async (amt: string, index: number) => {
-      const tokenDecimals = await decimals(this.web3, path[index]);
-      return this.fromWei(amt, units[tokenDecimals]);
-    });
+    const promises: Promise<string>[] = amountsInInWei.map(
+      async (amt: string, index: number) => {
+        const tokenDecimals = await decimals(this.web3, path[index]);
+        return this.fromWei(amt, units[tokenDecimals]);
+      }
+    );
+
+    const amtsResolved = await Promise.all(promises);
+    return amtsResolved;
   }
 
   //TODO: make duplicate getAmountsInWei and getAmountsOutWei
