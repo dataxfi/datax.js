@@ -13,7 +13,6 @@ import {
   ITokenInfo,
   ITList,
   IToken,
-  IPoolDetails,
   IPoolTransaction,
   ITokensToAdd,
 } from "./@types/datax-types";
@@ -31,7 +30,6 @@ export {
   ITokenInfo,
   ITList,
   IToken,
-  IPoolDetails,
   IPoolTransaction,
   ITokensToAdd,
   Trade,

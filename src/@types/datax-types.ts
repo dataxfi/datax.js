@@ -84,12 +84,6 @@ export interface IToken {
   allowance?: BigNumber;
 }
 
-export interface IPoolDetails {
-  id: string;
-  datatoken: ITokenDetails;
-  baseToken: ITokenDetails;
-}
-
 export interface IPoolTransaction {
   poolAddress: string;
   dtAddress: string;
