@@ -254,13 +254,16 @@ export default class Trade extends Base {
    * @returns {String} (in ETH denom)
    */
   public async getBalance(
-    tokenAddress: string,
     account: string,
     isDT: boolean,
+    tokenAddress?: string,
     tokenDecimals?: number
   ): Promise<string> {
     try {
-      if (isDT) {
+      if (!tokenAddress) {
+        const balanceInWei = await this.web3.eth.getBalance(account);
+        return this.web3.utils.fromWei(balanceInWei);
+      } else if (isDT) {
         return await this.datatoken.balance(tokenAddress, account);
       } else {
         if (!tokenDecimals)
@@ -270,7 +273,7 @@ export default class Trade extends Base {
     } catch (error) {
       throw {
         Code: 1000,
-        Message: "An error occurred, please refresh your connection.",
+        Message: "Failed to get balance.",
         error,
       };
     }
@@ -299,7 +302,7 @@ export default class Trade extends Base {
     const inBigNum = new BigNumber(amountIn);
     const outBigNum = new BigNumber(amountOut);
     const balance = new BigNumber(
-      await this.getBalance(tokenIn, senderAddress, false)
+      await this.getBalance(senderAddress, false, tokenIn)
     );
 
     if (balance.lt(inBigNum)) {
@@ -587,19 +590,17 @@ export default class Trade extends Base {
   ): Promise<string[]> {
     const tokenInDecimals = await decimals(this.web3, path[0]);
     const amountToWei = this.toWei(amountIn, units[tokenInDecimals]);
-    console.log("Call to getAmountsOut with", amountToWei, tokenInDecimals, units[tokenInDecimals])
+
     const amountsOutInWei = await this.adapter.methods
       .getAmountsOut(amountToWei, path)
       .call();
 
     const promises = amountsOutInWei.map(async (amt: string, index: number) => {
       const tokenDecimals = await decimals(this.web3, path[index]);
-      console.log(path[index], tokenDecimals);
       return this.fromWei(amt, units[tokenDecimals]);
     });
 
     const amtsResolved = await Promise.all(promises);
-    console.log(amtsResolved)
     return amtsResolved;
   }
 

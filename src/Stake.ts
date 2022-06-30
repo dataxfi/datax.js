@@ -33,7 +33,6 @@ export default class Stake extends Base {
   constructor(web3: Web3, networkId: supportedNetworks) {
     super(web3, networkId);
     this.stakeRouterAddress = this.config.custom.stakeRouterAddress;
-    console.dir(this.config);
     this.stakeRouter = new this.web3.eth.Contract(
       stakeRouterAbi as AbiItem[],
       this.stakeRouterAddress
@@ -109,7 +108,6 @@ export default class Stake extends Base {
     txType?: "in" | "out"
   ): Promise<[string[], Unit]> {
     const lastIndexInPath = path.length - 1;
-    console.log("last index in path", lastIndexInPath, path);
     const tokenInDecimals = await decimals(this.web3, path[0]);
     const tokenInUnits = units[tokenInDecimals];
 
@@ -128,8 +126,6 @@ export default class Stake extends Base {
         returnUnit = "ether";
         break;
     }
-
-    console.log("return unit", returnUnit);
 
     const newUints = uints.map((amt, index) => {
       switch (index) {
@@ -272,14 +268,12 @@ export default class Stake extends Base {
     try {
       const baseToken = path[0];
 
-      console.log("Base token in dataxjs: ", baseToken);
       const baseMaxOut = await getMaxRemoveLiquidity(
         this.pool,
         meta[0],
         baseToken
       );
 
-      console.log("Base max out dataxjs", baseMaxOut.toString());
       if (baseToken.toLowerCase() === path[path.length - 1].toLowerCase()) {
         //User is unstaking to base token, use base max out
         return await this.calcMaxUnstakeWithFinalAmtOut(
@@ -386,11 +380,14 @@ export default class Stake extends Base {
   public async getUserMaxStake(
     poolAddress: string,
     senderAddress: string,
-    path: string[]
+    path: string[],
+    usingETH: boolean
   ): Promise<string> {
-    const userBalance = new BigNumber(
-      await this.trade.getBalance(path[0], senderAddress, false)
-    );
+    const balance = usingETH
+      ? await this.trade.getBalance(senderAddress, false)
+      : await this.trade.getBalance(senderAddress, false, path[0]);
+
+    const userBalanceBN = new BigNumber(balance);
 
     const maxPoolAmountIn = new BigNumber(
       await this.getMaxStakeAmount(poolAddress, path)
@@ -398,8 +395,8 @@ export default class Stake extends Base {
 
     let maxStakeAmt: string = maxPoolAmountIn.toString();
 
-    if (userBalance.lt(maxPoolAmountIn)) {
-      maxStakeAmt = userBalance.toString();
+    if (userBalanceBN.lt(maxPoolAmountIn)) {
+      maxStakeAmt = userBalanceBN.toString();
     }
 
     return maxStakeAmt;
@@ -412,12 +409,12 @@ export default class Stake extends Base {
    * @returns
    */
   public async getBalance(
-    tokenAddress: string,
     account: string,
     isDT: boolean,
+    tokenAddress?: string,
     decimals?: number
   ) {
-    return this.trade.getBalance(tokenAddress, account, isDT, decimals);
+    return this.trade.getBalance(account, isDT, tokenAddress, decimals);
   }
 
   /**
@@ -460,7 +457,8 @@ export default class Stake extends Base {
     poolAddress: string,
     isDT: boolean,
     txType: "stake" | "unstake",
-    path: string[]
+    path: string[],
+    isETH: boolean
   ) {
     const txAmtBigNum = new BigNumber(amount);
 
@@ -471,8 +469,10 @@ export default class Stake extends Base {
           "gettin balance of" + tokenIn + "in account" + senderAddress
         );
 
+        const tokenAddress = isETH ? null : tokenIn;
+
         balance = new BigNumber(
-          await this.trade.getBalance(tokenIn, senderAddress, false)
+          await this.trade.getBalance(senderAddress, false, tokenAddress)
         );
       } else {
         balance = new BigNumber(
@@ -488,41 +488,42 @@ export default class Stake extends Base {
       throw new Error("Could not check account balance");
     }
 
-    let isApproved;
-    const contractToApprove = this.config.custom.stakeRouterAddress;
-    try {
-      //check approval limit vs tx amount
-      isApproved = new BigNumber(
-        await allowance(this.web3, tokenIn, senderAddress, contractToApprove)
-      );
-    } catch (error) {
-      throw new Error("Could not check allowance limit");
-    }
+    if (!isETH) {
+      let isApproved;
+      const contractToApprove = this.config.custom.stakeRouterAddress;
+      try {
+        //check approval limit vs tx amount
+        isApproved = new BigNumber(
+          await allowance(this.web3, tokenIn, senderAddress, contractToApprove)
+        );
+      } catch (error) {
+        throw new Error("Could not check allowance limit");
+      }
 
-    try {
-      if (isApproved.lt(txAmtBigNum))
-        if (isDT) {
-          //approve if not approved
-          await this.datatoken.approve(
-            tokenIn,
-            contractToApprove,
-            amount,
-            senderAddress
-          );
-        } else {
-          await approve(
-            this.web3,
-            senderAddress,
-            tokenIn,
-            contractToApprove,
-            amount,
-            true
-          );
-        }
-    } catch (error) {
-      throw new Error("Could not process approval transaction");
+      try {
+        if (isApproved.lt(txAmtBigNum))
+          if (isDT) {
+            //approve if not approved
+            await this.datatoken.approve(
+              tokenIn,
+              contractToApprove,
+              amount,
+              senderAddress
+            );
+          } else {
+            await approve(
+              this.web3,
+              senderAddress,
+              tokenIn,
+              contractToApprove,
+              amount,
+              true
+            );
+          }
+      } catch (error) {
+        throw new Error("Could not process approval transaction");
+      }
     }
-
     try {
       //check max stake/unstake vs tx amount
 
@@ -530,8 +531,9 @@ export default class Stake extends Base {
       if (txType === "stake") {
         max = new BigNumber(await this.getMaxStakeAmount(poolAddress, path));
       } else {
+        const baseAddress = await this.getBaseToken(poolAddress)
         max = new BigNumber(
-          await getMaxRemoveLiquidity(this.pool, poolAddress, tokenIn)
+          await getMaxRemoveLiquidity(this.pool, poolAddress, baseAddress)
         );
       }
 
@@ -618,16 +620,16 @@ export default class Stake extends Base {
     senderAddress: string
   ): Promise<TransactionReceipt> {
     // checks balance, approval, and max
-    console.log("In stake ETH function");
     await this.preStakeChecks(
-      stakeInfo.path[0],
+      senderAddress,
       senderAddress,
       stakeInfo.uints[0],
       this.config.custom.stakeRouterAddress,
       stakeInfo.meta[0],
       false,
       "stake",
-      stakeInfo.path
+      stakeInfo.path,
+      true
     );
 
     return await this.constructTxFunction(
@@ -651,16 +653,16 @@ export default class Stake extends Base {
     stakeInfo: IStakeInfo,
     senderAddress: string
   ): Promise<TransactionReceipt> {
-    console.log("in unstake eth function");
     await this.preStakeChecks(
-      stakeInfo.path[0],
+      stakeInfo.meta[0],
       senderAddress,
       stakeInfo.uints[0],
       this.config.custom.stakeRouterAddress,
       stakeInfo.meta[0],
       false,
       "unstake",
-      stakeInfo.path
+      stakeInfo.path,
+      true
     );
 
     return await this.constructTxFunction(
@@ -694,7 +696,8 @@ export default class Stake extends Base {
       stakeInfo.meta[0],
       false,
       "stake",
-      stakeInfo.path
+      stakeInfo.path,
+      false
     );
 
     return await this.constructTxFunction(
@@ -718,7 +721,6 @@ export default class Stake extends Base {
     stakeInfo: IStakeInfo,
     senderAddress: string
   ): Promise<TransactionReceipt> {
-    console.log("in unstake ocean function");
     await this.preStakeChecks(
       stakeInfo.path[0],
       senderAddress,
@@ -727,7 +729,8 @@ export default class Stake extends Base {
       stakeInfo.meta[0],
       false,
       "unstake",
-      stakeInfo.path
+      stakeInfo.path,
+      false
     );
 
     return await this.constructTxFunction(
@@ -755,7 +758,8 @@ export default class Stake extends Base {
     stakeInfo: IStakeInfo,
     calcFunction: Function,
     errorMessage: string,
-    IN: "in" | "out"
+    IN: "in" | "out",
+    senderAddress?: string
   ): Promise<{
     dataxFee: string;
     refFee: string;
@@ -802,7 +806,10 @@ export default class Stake extends Base {
    * @param stakeInfo
    * @returns {{ poolAmountOut, dataxFee, refFee }} { poolAmountOut, dataxFee, refFee }
    */
-  public async calcPoolOutGivenTokenIn(stakeInfo: IStakeInfo) {
+  public async calcPoolOutGivenTokenIn(
+    stakeInfo: IStakeInfo,
+    senderAddress?: string
+  ) {
     const {
       return: poolAmountOut,
       dataxFee,
@@ -811,7 +818,8 @@ export default class Stake extends Base {
       stakeInfo,
       this.stakeRouter.methods.calcPoolOutGivenTokenIn,
       "Failed to calculate pool out given token in",
-      "out"
+      "out",
+      senderAddress
     );
 
     return { poolAmountOut, dataxFee, refFee };
@@ -822,7 +830,10 @@ export default class Stake extends Base {
    * @param stakeInfo
    * @returns {{ poolAmountIn, dataxFee, refFee }} { poolAmountIn, dataxFee, refFee }
    */
-  public async calcPoolInGivenTokenOut(stakeInfo: IStakeInfo) {
+  public async calcPoolInGivenTokenOut(
+    stakeInfo: IStakeInfo,
+    senderAddress?: string
+  ) {
     const {
       return: poolAmountIn,
       dataxFee,
@@ -831,7 +842,8 @@ export default class Stake extends Base {
       stakeInfo,
       this.stakeRouter.methods.calcPoolInGivenTokenOut,
       "Failed to calculate pool in given token out",
-      "in"
+      "in",
+      senderAddress
     );
 
     return { poolAmountIn, dataxFee, refFee };
@@ -843,7 +855,10 @@ export default class Stake extends Base {
    * @param senderAddress - The address which the transaction will be sent from.
    * @returns {{ baseAmountOut, dataxFee, refFee }} {baseAmountOut, dataxFee, refFee}
    */
-  public async calcTokenOutGivenPoolIn(stakeInfo: IStakeInfo) {
+  public async calcTokenOutGivenPoolIn(
+    stakeInfo: IStakeInfo,
+    senderAddress?: string
+  ) {
     const {
       return: baseAmountOut,
       dataxFee,
@@ -852,7 +867,8 @@ export default class Stake extends Base {
       stakeInfo,
       this.stakeRouter.methods.calcTokenOutGivenPoolIn,
       "Failed to calculate token out given pool in",
-      "out"
+      "out",
+      senderAddress
     );
 
     return { baseAmountOut, dataxFee, refFee };
