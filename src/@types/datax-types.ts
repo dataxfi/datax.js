@@ -18,13 +18,13 @@ export interface ConfigHelperConfig extends Config {
 export type PoolTransactionType = "swap" | "join" | "exit";
 
 export type supportedNetworks =
-  | "1"
-  | "4"
-  | "56"
-  | "137"
-  | "246"
-  | "1285"
-  | "8996";
+| "137"
+  // | "1"
+  // | "4"
+  // | "56"
+  // | "246"
+  // | "1285"
+  // | "8996";
 
 export interface IMaxUnstake {
   maxTokenOut: BigNumber;

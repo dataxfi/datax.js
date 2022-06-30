@@ -8,7 +8,6 @@ import { GraphQLClient } from "graphql-request";
 interface ICustomConfig {
   stakeRouterAddress: string;
   uniV2AdapterAddress: string;
-  routerAddress: string;
   datatokenList: string;
   tokenList: string;
   nativeAddress: string;
@@ -87,24 +86,26 @@ export default class Config {
    * @returns
    */
   public getNetwork(networkId: supportedNetworks): string {
-    switch (networkId) {
-      case "1":
-        return "mainnet";
-      case "137":
-        return "polygon";
-      case "4":
-        return "rinkeby";
-      case "56":
-        return "bsc";
-      case "246":
-        return "energyweb";
-      case "1285":
-        return "moonriver";
-      case "8996":
-        return "development";
-      default:
-        return "unknown";
-    }
+    if (networkId === "137") return "polygon";
+    return "unknown";
+    // switch (networkId) {
+    //   case "1":
+    //     return "mainnet";
+    //   case "137":
+    //     return "polygon";
+    //   case "4":
+    //     return "rinkeby";
+    //   case "56":
+    //     return "bsc";
+    //   case "246":
+    //     return "energyweb";
+    //   case "1285":
+    //     return "moonriver";
+    //   case "8996":
+    //     return "development";
+    //   default:
+    //     return "unknown";
+    // }
   }
 
   /**
