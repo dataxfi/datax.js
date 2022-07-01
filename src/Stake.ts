@@ -592,7 +592,7 @@ export default class Stake extends Base {
     );
 
     const newStakeInfo = { ...stakeInfo, uints: newUints };
-    const args = isETH
+    const args = isETH && txType !== 'unstake'
       ? { from: senderAddress, value: newUints[txType === "stake" ? 0 : 2] }
       : { from: senderAddress };
 
