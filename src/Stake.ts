@@ -34,7 +34,7 @@ export default class Stake extends Base {
     super(web3, networkId);
     this.stakeRouterAddress = this.config.custom.stakeRouterAddress;
     this.stakeRouter = new this.web3.eth.Contract(
-      stakeRouterAbi as AbiItem[],
+      stakeRouterAbi.abi as AbiItem[],
       this.stakeRouterAddress
     );
 

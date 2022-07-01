@@ -31,7 +31,7 @@ export default class Trade extends Base {
     this.pool = new Pool(web3, this.config);
 
     this.adapter = new this.web3.eth.Contract(
-      adapterABI as AbiItem[],
+      adapterABI.abi as AbiItem[],
       this.adapterAddress
     );
   }
