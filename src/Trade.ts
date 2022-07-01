@@ -42,8 +42,9 @@ export default class Trade extends Base {
     amountIn: string,
     spender: string,
     isDT: boolean,
-    decimals: number = 18
+    tokenDecimals?: number
   ) {
+    if (!tokenDecimals) tokenDecimals = await decimals(this.web3, tokenAddress);
     try {
       if (isDT) {
         return await this.datatoken.approve(
@@ -60,7 +61,7 @@ export default class Trade extends Base {
           spender,
           amountIn,
           true,
-          decimals
+          tokenDecimals
         );
       }
     } catch (error) {

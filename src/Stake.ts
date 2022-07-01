@@ -463,7 +463,7 @@ export default class Stake extends Base {
     const txAmtBigNum = new BigNumber(amount);
 
     try {
-      let balance: BigNumber;
+      let balanceBN: BigNumber;
       if (txType === "stake") {
         console.log(
           "gettin balance of" + tokenIn + "in account" + senderAddress
@@ -471,16 +471,22 @@ export default class Stake extends Base {
 
         const tokenAddress = isETH ? null : tokenIn;
 
-        balance = new BigNumber(
+        balanceBN = new BigNumber(
           await this.trade.getBalance(senderAddress, false, tokenAddress)
         );
       } else {
-        balance = new BigNumber(
-          await this.sharesBalance(senderAddress, poolAddress)
+        const balance = await this.sharesBalance(senderAddress, poolAddress);
+        // const balance = this.web3.utils.fromWei(balanceWei);
+        console.log(
+          "Shares balance: ",
+          balance,
+          "Transaction Amount: ",
+          amount
         );
+        balanceBN = new BigNumber(balance);
       }
 
-      if (balance.lt(txAmtBigNum)) {
+      if (balanceBN.lt(txAmtBigNum)) {
         throw new Error("Not Enough Balance");
       }
     } catch (error) {
@@ -489,38 +495,27 @@ export default class Stake extends Base {
     }
 
     if (!isETH) {
-      let isApproved;
+      let allowanceLimit;
       const contractToApprove = this.config.custom.stakeRouterAddress;
+      const tokenToAllow = txType === "unstake" ? poolAddress : tokenIn;
       try {
         //check approval limit vs tx amount
-        isApproved = new BigNumber(
-          await allowance(this.web3, tokenIn, senderAddress, contractToApprove)
+        allowanceLimit = new BigNumber(
+          await allowance(this.web3, tokenToAllow, senderAddress, contractToApprove)
         );
       } catch (error) {
+        console.error(error)
         throw new Error("Could not check allowance limit");
       }
 
+      console.log("Allownce: ", allowanceLimit.toString(), "Transaction Amount:", amount)
       try {
-        if (isApproved.lt(txAmtBigNum))
-          if (isDT) {
-            //approve if not approved
-            await this.datatoken.approve(
-              tokenIn,
-              contractToApprove,
-              amount,
-              senderAddress
-            );
-          } else {
-            await approve(
-              this.web3,
-              senderAddress,
-              tokenIn,
-              contractToApprove,
-              amount,
-              true
-            );
-          }
+        if (allowanceLimit.lt(txAmtBigNum)){
+          this.trade.approve(tokenToAllow, senderAddress, amount, contractToApprove, isDT)
+        }
+          
       } catch (error) {
+        console.error(error);
         throw new Error("Could not process approval transaction");
       }
     }
@@ -531,7 +526,7 @@ export default class Stake extends Base {
       if (txType === "stake") {
         max = new BigNumber(await this.getMaxStakeAmount(poolAddress, path));
       } else {
-        const baseAddress = await this.getBaseToken(poolAddress)
+        const baseAddress = await this.getBaseToken(poolAddress);
         max = new BigNumber(
           await getMaxRemoveLiquidity(this.pool, poolAddress, baseAddress)
         );
@@ -576,7 +571,12 @@ export default class Stake extends Base {
       ? { from: senderAddress, value: newUints[txType === "stake" ? 0 : 2] }
       : { from: senderAddress };
 
-    console.log(newStakeInfo, args);
+    console.log(
+      "StakeInfo Sent From Datax.js",
+      newStakeInfo,
+      "Args send to From Datax.js",
+      args
+    );
     try {
       estGas = await stakeFunction(newStakeInfo).estimateGas(
         args,
@@ -600,8 +600,9 @@ export default class Stake extends Base {
         gasPrice: await getFairGasPrice(this.web3, this.config.default),
       });
     } catch (error) {
+      const code = error.code === 4001 ? 4001 : 1000;
       throw {
-        code: 1000,
+        code,
         message: errorMessage,
         error,
       };
