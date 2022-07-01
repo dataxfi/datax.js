@@ -143,14 +143,14 @@ export default class Stake extends Base {
 
   /**
    * Helper function for getMaxUnstake
-   * @param finalOut - Max amount out converted to final token in the path.
+   * @param maxShareAmountIn - Max amount out converted to final token in the path.
    * @param meta  - [poolAddress, to, refAddress, adapter]
    * @param path - The swap path
    * @param userShareBalance
    * @returns { {tokenOut: string, shares: string, userPerc:string, dataxFee:string, refFee:string} }
    */
   private async calcMaxUnstakeWithFinalAmtOut(
-    finalOut: string,
+    maxShareAmountIn: string,
     meta: string[],
     path: string[],
     senderAddress: string,
@@ -159,72 +159,82 @@ export default class Stake extends Base {
     const userShareBalance = await this.sharesBalance(senderAddress, meta[0]);
 
     let userPerc: string;
-    let maxTokenOut: string = finalOut;
+    let maxTokenOut: string;
     let dataxFeeTotal: string;
     let refFeeTotal: string;
-    let maxPoolAmountIn: string;
     console.log(
-      "max final out",
-      finalOut,
+      "max shares out",
+      maxShareAmountIn,
       "user share balance",
       userShareBalance
     );
 
+    if (new BigNumber(userShareBalance).lt(new BigNumber(maxShareAmountIn))) {
+      maxShareAmountIn = userShareBalance;
+      userPerc = "100";
+    } else {
+      const shareBalanceBN = new BigNumber(userShareBalance);
+      const userPercBN = new BigNumber(maxShareAmountIn)
+        .div(shareBalanceBN)
+        .multipliedBy(100);
+      userPerc = userPercBN.toString();
+    }
+
+    maxShareAmountIn = new BigNumber(maxShareAmountIn).dp(5).toString()
     const {
-      poolAmountIn,
+      baseAmountOut,
       dataxFee,
       refFee: totalRefFee,
-    } = await this.calcPoolInGivenTokenOut({
+    } = await this.calcTokenOutGivenPoolIn({
       meta,
       path,
-      uints: ["0", refFee, finalOut],
+      uints: [maxShareAmountIn, refFee, "0"],
     });
 
     dataxFeeTotal = dataxFee;
     refFeeTotal = totalRefFee;
-    maxPoolAmountIn = poolAmountIn;
-    console.log(poolAmountIn);
+    maxTokenOut = baseAmountOut;
 
-    const maxPoolIn = new BigNumber(poolAmountIn);
-    if (maxPoolIn.lt(userShareBalance)) {
-      console.log("max unstake is less than user balance in shares");
-      const shareBalanceBN = new BigNumber(userShareBalance);
-      const userPercBN = new BigNumber(maxPoolIn)
-        .div(shareBalanceBN)
-        .multipliedBy(100);
+    // const maxPoolIn = new BigNumber(poolAmountIn);
+    // if (maxPoolIn.lt(userShareBalance)) {
+    //   console.log("max unstake is less than user balance in shares");
+    //   const shareBalanceBN = new BigNumber(userShareBalance);
+    //   const userPercBN = new BigNumber(maxPoolIn)
+    //     .div(shareBalanceBN)
+    //     .multipliedBy(100);
 
-      userPerc = userPercBN.toString();
-    } else {
-      console.log("max unstake is greater than user balance in shares");
-      const {
-        dataxFee,
-        refFee: totalRefFee,
-        baseAmountOut,
-      } = await this.calcTokenOutGivenPoolIn({
-        meta,
-        path,
-        uints: [userShareBalance, refFee, "0"],
-      });
+    //   userPerc = userPercBN.toString();
+    // } else {
+    //   console.log("max unstake is greater than user balance in shares");
+    //   const {
+    //     dataxFee,
+    //     refFee: totalRefFee,
+    //     baseAmountOut,
+    //   } = await this.calcTokenOutGivenPoolIn({
+    //     meta,
+    //     path,
+    //     uints: [userShareBalance, refFee, "0"],
+    //   });
 
-      userPerc = "100";
-      dataxFeeTotal = dataxFee;
-      refFeeTotal = totalRefFee;
-      maxTokenOut = baseAmountOut;
-      maxPoolAmountIn = userShareBalance;
-    }
+    //   userPerc = "100";
+    //   dataxFeeTotal = dataxFee;
+    //   refFeeTotal = totalRefFee;
+    //   maxTokenOut = baseAmountOut;
+    //   maxShareAmountIn = userShareBalance;
+    // }
 
     console.log(
       "maxUnstake",
-      maxTokenOut.toString(),
-      maxPoolAmountIn.toString(),
-      userPerc.toString(),
+      maxTokenOut,
+      maxShareAmountIn,
+      userPerc,
       refFeeTotal,
       dataxFeeTotal
     );
 
     const userMaxUnstake = {
       maxTokenOut,
-      maxPoolTokensIn: maxPoolAmountIn,
+      maxPoolTokensIn: maxShareAmountIn,
       userPerc,
       dataxFee: dataxFeeTotal,
       refFee: refFeeTotal,
@@ -268,7 +278,7 @@ export default class Stake extends Base {
     try {
       const baseToken = path[0];
 
-      const baseMaxOut = await getMaxRemoveLiquidity(
+      const maxShareAmountOut = await getMaxRemoveLiquidity(
         this.pool,
         meta[0],
         baseToken
@@ -277,7 +287,7 @@ export default class Stake extends Base {
       if (baseToken.toLowerCase() === path[path.length - 1].toLowerCase()) {
         //User is unstaking to base token, use base max out
         return await this.calcMaxUnstakeWithFinalAmtOut(
-          baseMaxOut.toString(),
+          maxShareAmountOut.toString(),
           meta,
           path,
           senderAddress,
@@ -285,13 +295,13 @@ export default class Stake extends Base {
         );
       } else {
         //User is unstaking to a non-base token, get final max out
-        const amtsOut = await this.trade.getAmountsOut(
-          baseMaxOut.toString(),
-          path
-        );
+        // const amtsOut = await this.trade.getAmountsOut(
+        //   baseMaxOut.toString(),
+        //   path
+        // );
 
         return await this.calcMaxUnstakeWithFinalAmtOut(
-          amtsOut[amtsOut.length - 1],
+          maxShareAmountOut.toString(),
           meta,
           path,
           senderAddress,
@@ -501,19 +511,34 @@ export default class Stake extends Base {
       try {
         //check approval limit vs tx amount
         allowanceLimit = new BigNumber(
-          await allowance(this.web3, tokenToAllow, senderAddress, contractToApprove)
+          await allowance(
+            this.web3,
+            tokenToAllow,
+            senderAddress,
+            contractToApprove
+          )
         );
       } catch (error) {
-        console.error(error)
+        console.error(error);
         throw new Error("Could not check allowance limit");
       }
 
-      console.log("Allownce: ", allowanceLimit.toString(), "Transaction Amount:", amount)
+      console.log(
+        "Allownce: ",
+        allowanceLimit.toString(),
+        "Transaction Amount:",
+        amount
+      );
       try {
-        if (allowanceLimit.lt(txAmtBigNum)){
-          this.trade.approve(tokenToAllow, senderAddress, amount, contractToApprove, isDT)
+        if (allowanceLimit.lt(txAmtBigNum)) {
+          this.trade.approve(
+            tokenToAllow,
+            senderAddress,
+            amount,
+            contractToApprove,
+            isDT
+          );
         }
-          
       } catch (error) {
         console.error(error);
         throw new Error("Could not process approval transaction");
