@@ -131,7 +131,7 @@ export default class Config {
     },
     "137": {
       stakeRouterAddress: "0x7cB2C41aE53a44Fb66bD5BA61346725dFa552d36",
-      uniV2AdapterAddress: "0x1568d1fF96E76013A6A4Cfa2e39F083971874531",
+      uniV2AdapterAddress: "0x994B6B46c19eA9c0d56E88a0C34FcBDEb646e820",
       storageAddress: "0xBc54e36A4A5D2d36693E3AcC7e68b0FBe819C3D7",
       datatokenList: "",
       tokenList:
