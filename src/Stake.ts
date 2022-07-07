@@ -2,7 +2,7 @@ import Base from "./Base";
 import BigNumber from "bignumber.js";
 import Web3 from "web3";
 import stakeRouterAbi from "./abi/StakeRouter.json";
-import stakeCalcAbi from "./abi/StakeCalc.json"
+import stakeCalcAbi from "./abi/StakeCalc.json";
 import {
   getFairGasPrice,
   getMaxRemoveLiquidity,
@@ -22,7 +22,7 @@ import { Datatoken } from "./tokens";
 export default class Stake extends Base {
   private stakeRouterAddress: string;
   private stakeRouter: Contract;
-  private stakeCalcAddress:string
+  private stakeCalcAddress: string;
   private stakeCalc: Contract;
   private GASLIMIT_DEFAULT = 1000000;
   private failureMessage =
@@ -40,11 +40,11 @@ export default class Stake extends Base {
       this.stakeRouterAddress
     );
 
-    this.stakeCalcAddress = this.config.custom.stakeCalcAddress
+    this.stakeCalcAddress = this.config.custom.stakeCalcAddress;
     this.stakeCalc = new this.web3.eth.Contract(
-      stakeCalcAbi.abi as AbiItem[], 
+      stakeCalcAbi.abi as AbiItem[],
       this.stakeCalcAddress
-    )
+    );
 
     this.pool = new Pool(this.web3, this.config);
     this.trade = new Trade(web3, networkId);
@@ -188,7 +188,7 @@ export default class Stake extends Base {
       userPerc = userPercBN.toString();
     }
 
-    maxShareAmountIn = new BigNumber(maxShareAmountIn).dp(5).toString()
+    maxShareAmountIn = new BigNumber(maxShareAmountIn).dp(5).toString();
     const {
       baseAmountOut,
       dataxFee,
@@ -352,7 +352,7 @@ export default class Stake extends Base {
     } catch (error) {
       throw {
         code: 1000,
-        message: "An error occurred, please refresh your connection.",
+        message: "In sufficient liquidity for base max in and path.",
         error,
       };
     }
@@ -379,17 +379,27 @@ export default class Stake extends Base {
 
     const userBalanceBN = new BigNumber(balance);
 
-    const maxPoolAmountIn = new BigNumber(
-      await this.getMaxStakeAmount(poolAddress, path)
-    );
-
-    let maxStakeAmt: string = maxPoolAmountIn.toString();
-
-    if (userBalanceBN.lt(maxPoolAmountIn)) {
-      maxStakeAmt = userBalanceBN.toString();
+    let amountsIn;
+    if (path.length > 1) {
+      amountsIn = await this.trade.getAmountsOut(
+        userBalanceBN.toString(),
+        path
+      );
     }
 
-    return maxStakeAmt;
+    let userBaseMaxIn;
+    if (amountsIn)
+      userBaseMaxIn = new BigNumber(amountsIn[amountsIn.length - 1]);
+
+    const maxPoolAmountIn = new BigNumber(
+      await getMaxAddLiquidity(this.pool, poolAddress, path[path.length - 1])
+    );
+
+    if (userBaseMaxIn.lt(maxPoolAmountIn)) {
+      return userBalanceBN.toString();
+    } else {
+      return this.getMaxStakeAmount(poolAddress, path);
+    }
   }
 
   /**
@@ -529,7 +539,9 @@ export default class Stake extends Base {
 
       let max;
       if (txType === "stake") {
-        max = new BigNumber(await this.getMaxStakeAmount(poolAddress, path));
+        max = new BigNumber(
+          await this.getUserMaxStake(poolAddress, senderAddress, path, isETH)
+        );
       } else {
         const baseAddress = await this.getBaseToken(poolAddress);
         max = new BigNumber(
@@ -572,9 +584,10 @@ export default class Stake extends Base {
     );
 
     const newStakeInfo = { ...stakeInfo, uints: newUints };
-    const args = isETH && txType !== 'unstake'
-      ? { from: senderAddress, value: newUints[txType === "stake" ? 0 : 2] }
-      : { from: senderAddress };
+    const args =
+      isETH && txType !== "unstake"
+        ? { from: senderAddress, value: newUints[txType === "stake" ? 0 : 2] }
+        : { from: senderAddress };
 
     console.log(
       "StakeInfo Sent From Datax.js",
