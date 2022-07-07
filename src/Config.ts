@@ -8,6 +8,7 @@ import { GraphQLClient } from "graphql-request";
 interface ICustomConfig {
   stakeRouterAddress: string;
   uniV2AdapterAddress: string;
+  stakeCalcAddress: string,
   datatokenList: string;
   tokenList: string;
   nativeAddress: string;
@@ -115,22 +116,22 @@ export default class Config {
     "1": {
       stakeRouterAddress: "",
       uniV2AdapterAddress: "",
-      storageAddress: "",
+      stakeCalcAddress: "",
       datatokenList: "",
       tokenList: "https://tokens.uniswap.org/",
       nativeAddress: "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2",
     },
     "4": {
-      stakeRouterAddress: "0x83f30c56165A89941080B7d9c07dFF8E8A338b58",
-      uniV2AdapterAddress: "0xa3DcA16D8D2adF3623AAE0219F65d65EA433Cd96",
-      storageAddress: "0x6e944F2f332106cd503fbb316036557fE4fdde30",
+      stakeRouterAddress: "",
+      uniV2AdapterAddress: "",
+      stakeCalcAddress: "",
       datatokenList: "",
       tokenList:
         "https://raw.githubusercontent.com/Uniswap/default-token-list/main/src/tokens/rinkeby.json",
       nativeAddress: "0xc778417E063141139Fce010982780140Aa0cD5Ab",
     },
     "137": {
-      stakeRouterAddress: "0x7cB2C41aE53a44Fb66bD5BA61346725dFa552d36",
+      stakeRouterAddress: "0x7DFf6CB0509Ad58F573f1F1f50DD1fa8C8903263",
       uniV2AdapterAddress: "0x900Fb00F6a63303928A80f4F2E5850De1B6B367e",
       stakeCalcAddress: "0xbB164ca36a2Eb9F51fD0Ab0Cb035918e772E75C8",
       datatokenList: "",
@@ -141,7 +142,7 @@ export default class Config {
     "56": {
       stakeRouterAddress: "",
       uniV2AdapterAddress: "",
-      storageAddress: "",
+      stakeCalcAddress: "",
       datatokenList: "",
       tokenList: "https://tokens.pancakeswap.finance/pancakeswap-extended.json",
       nativeAddress: "0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c",
@@ -149,7 +150,7 @@ export default class Config {
     "1285": {
       stakeRouterAddress: "",
       uniV2AdapterAddress: "",
-      storageAddress: "",
+      stakeCalcAddress: "",
       datatokenList: "",
       tokenList:
         "https://raw.githubusercontent.com/solarbeamio/solarbeam-tokenlist/main/solarbeam.tokenlist.json",
@@ -158,7 +159,7 @@ export default class Config {
     "246": {
       stakeRouterAddress: "",
       uniV2AdapterAddress: "",
-      storageAddress: "",
+      stakeCalcAddress: "",
       datatokenList: "",
       tokenList:
         "https://raw.githubusercontent.com/carbonswap/assets/master/carbonswap/Carbonswap_List.json",
