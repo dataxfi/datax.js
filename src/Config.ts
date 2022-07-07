@@ -131,8 +131,8 @@ export default class Config {
     },
     "137": {
       stakeRouterAddress: "0x7cB2C41aE53a44Fb66bD5BA61346725dFa552d36",
-      uniV2AdapterAddress: "0x994B6B46c19eA9c0d56E88a0C34FcBDEb646e820",
-      storageAddress: "0xBc54e36A4A5D2d36693E3AcC7e68b0FBe819C3D7",
+      uniV2AdapterAddress: "0x900Fb00F6a63303928A80f4F2E5850De1B6B367e",
+      stakeCalcAddress: "0xbB164ca36a2Eb9F51fD0Ab0Cb035918e772E75C8",
       datatokenList: "",
       tokenList:
         "https://unpkg.com/quickswap-default-token-list@1.2.26/build/quickswap-default.tokenlist.json",

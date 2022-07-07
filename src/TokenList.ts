@@ -319,13 +319,9 @@ export default class TokenList extends Base {
     }
   }
   /**
-   * Fetch a prepared datatoken list from google drive
-   *  This function will be used instead of prepareDateTokenList, the schema is the same for each of their responses.
-   *  This funciton uses axios which means it will function in dataxjs via the dapp without dep issues
-   *
-   * @returns
-   * Datatoken list to be published
-   * (OCEAN + datatokens)
+   * Fetch a prepared datatoken list from github
+   *  This function will be used instead of prepareDateTokenList.
+   * @returns Datatoken list 
    *
    *
    */
