@@ -1,7 +1,10 @@
 import Web3 from 'web3'
 import { AbiItem } from 'web3-utils/types'
-import { Contract } from 'web3-eth-contract'
+import { Contract } from 'web3-eth/node_modules/web3-eth-contract/types/index'
 
+/**
+ * Deploys two pools available for testing. 
+ */
 export class BalancerContractHandler {
   public factory: Contract
   public pool1: Contract

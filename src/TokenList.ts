@@ -1,15 +1,8 @@
 require("dotenv").config();
 import Base from "./Base";
-import { TokenList as Tlist, TokenInfo as TInfo } from "@uniswap/token-lists";
+import { ITokenInfo, ITList} from "./@types/datax-types";
 import axios from "axios";
 
-export interface TokenInfo extends TInfo {
-  pool:string
-}
-
-export interface TList extends Tlist {
-  tokens: TokenInfo[]
-}
 
 export default class TokenList extends Base {
   private pinataApiKey: string;
@@ -30,7 +23,7 @@ export default class TokenList extends Base {
    * fetch global token list with all ERC20 tokens + Datatokens
    * @returns
    */
-  public async fetchGlobalTokenList(chainId: number): Promise<TList> {
+  public async fetchGlobalTokenList(chainId: number): Promise<ITList> {
     try {
       let apiResp = await axios(
         `https://gateway.pinata.cloud/ipfs/${
@@ -42,8 +35,11 @@ export default class TokenList extends Base {
       console.log(tokenList);
       return tokenList;
     } catch (e) {
-      console.error(`ERROR: ${e.message}`);
-      throw Error(`ERROR : ${e.message}`);
+      throw {
+        Code: 2000,
+        Message: "Failed to fetch token list.",
+        Error: e,
+      };
     }
   }
 
@@ -51,7 +47,7 @@ export default class TokenList extends Base {
    * fetch list of all Datatokens
    * @returns
    */
-  public async fetchDataTokenList(chainId: number): Promise<TList> {
+  public async fetchDataTokenList(chainId: number): Promise<ITList> {
     try {
       let apiResp = await axios(
         `https://gateway.pinata.cloud/ipfs/${
@@ -63,8 +59,11 @@ export default class TokenList extends Base {
       console.log(tokenList);
       return tokenList;
     } catch (e) {
-      console.error(`ERROR: ${e.message}`);
-      throw Error(`ERROR : ${e.message}`);
+      throw {
+        Code: 2000,
+        Message: "Failed to fetch data token list.",
+        Error: e,
+      };
     }
   }
 
@@ -79,7 +78,7 @@ export default class TokenList extends Base {
     chainId: number
   ): Promise<any> {
     try {
-      const aquariusUrl = this.config.defaultConfig.metadataCacheUri;
+      const aquariusUrl = this.config.default.metadataCacheUri;
       let resp = await axios(aquariusUrl + "/api/v1/aquarius/assets/ddo");
       let ddos = resp.data;
 
@@ -105,13 +104,16 @@ export default class TokenList extends Base {
 
       let tokenList = await this.fetchDataTokenList(chainId);
       // console.log(fetchedList)
-      //let tokenList: TList = await this.prepareDataTokenList(tokens, chainId);
+      //let tokenList: ITList = await this.prepareDataTokenList(tokens, chainId);
 
       const pinataResp = await this.pinTokenListToIPFS(listname, tokenList);
       return pinataResp;
     } catch (e) {
-      console.error(`ERROR: ${e.message}`);
-      throw Error(`ERROR : ${e.message}`);
+      throw {
+        Code: 2000,
+        Message: "Failed to publish token list.",
+        Error: e,
+      };
     }
   }
 
@@ -126,7 +128,7 @@ export default class TokenList extends Base {
     chainId: number
   ): Promise<any> {
     try {
-      const aquariusUrl = this.config.defaultConfig.metadataCacheUri;
+      const aquariusUrl = this.config.default.metadataCacheUri;
       let resp = await axios(aquariusUrl + "/api/v1/aquarius/assets/ddo");
       let ddos = resp.data;
 
@@ -150,14 +152,18 @@ export default class TokenList extends Base {
           })
       );
 
-      //let tokenList: TList = await this.prepareGlobalTokenList(tokens, chainId);
-      let tokenList: TList = await this.fetchDataTokenList(chainId);
+      //let tokenList: ITList = await this.prepareGlobalTokenList(tokens, chainId);
+      let tokenList: ITList = await this.fetchDataTokenList(chainId);
 
       const pinataResp = await this.pinTokenListToIPFS(listname, tokenList);
       return pinataResp;
     } catch (e) {
       console.error(`ERROR: ${e.message}`);
-      throw Error(`ERROR : ${e.message}`);
+      throw {
+        Code: 2000,
+        Message: "Failed to publish token list.",
+        Error: e,
+      };
     }
   }
 
@@ -169,7 +175,7 @@ export default class TokenList extends Base {
   private async prepareGlobalTokenList(
     tokens: any,
     chainId: any
-  ): Promise<TList> {
+  ): Promise<ITList> {
     try {
       let listTemplate = {
         name: "Datax",
@@ -196,7 +202,7 @@ export default class TokenList extends Base {
         },
       };
 
-      const tokensData: TokenInfo[] = await Promise.all(
+      const tokensData: ITokenInfo[] = await Promise.all(
         tokens.map((token) => {
           const { chainId, address, symbol, name, pool } = token;
           return {
@@ -231,8 +237,11 @@ export default class TokenList extends Base {
 
       return listTemplate;
     } catch (e) {
-      console.error(`ERROR: ${e.message}`);
-      throw Error(`ERROR : ${e.message}`);
+      throw {
+        Code: 2000,
+        Message: "Failed to prepare token list.",
+        Error: e,
+      };
     }
   }
 
@@ -244,7 +253,7 @@ export default class TokenList extends Base {
   private async prepareDataTokenList(
     tokens: any,
     chainId: any
-  ): Promise<TList> {
+  ): Promise<ITList> {
     try {
       let listTemplate = {
         name: "Datax",
@@ -288,7 +297,7 @@ export default class TokenList extends Base {
       let oceantoken = [
         {
           chainId,
-          address: this.config.defaultConfig.oceanTokenAddress,
+          address: this.config.default.oceanTokenAddress,
           symbol: "OCEAN",
           name: "Ocean Token",
           decimals: 18,
@@ -306,32 +315,26 @@ export default class TokenList extends Base {
 
       return listTemplate;
     } catch (e) {
-      console.error(`ERROR: ${e.message}`);
-      throw Error(`ERROR : ${e.message}`);
+      throw { Code: 2000, Message: "Failed to prepare token list.", Error: e };
     }
   }
   /**
-   * Fetch a prepared datatoken list from google drive
-   *  This function will be used instead of prepareDateTokenList, the schema is the same for each of their responses.
-   *  This funciton uses axios which means it will function in dataxjs via the dapp without dep issues
-   *
-   * @returns
-   * Datatoken list to be published
-   * (OCEAN + datatokens)
+   * Fetch a prepared datatoken list from github
+   *  This function will be used instead of prepareDateTokenList.
+   * @returns Datatoken list 
    *
    *
    */
 
-  public async fetchPreparedTokenList(chainId: number): Promise<TList> {
+  public async fetchPreparedTokenList(chainId: number): Promise<ITList> {
     try {
       const file = await axios.get(
-        `https://raw.githubusercontent.com/dataxfi/scripts/master/TokenList/chain${chainId}.json`
+        `https://raw.githubusercontent.com/dataxfi/scripts/master/TokenListsV4/chain${chainId}.json`
       );
 
       return file.data;
     } catch (e) {
-      console.error(e);
-      throw Error(`ERROR : ${e.message}`);
+      throw { Code: 2000, Message: "Failed to fetch token list.", Error: e };
     }
   }
 
@@ -343,7 +346,7 @@ export default class TokenList extends Base {
    */
   private async pinTokenListToIPFS(
     listname: string,
-    list: TList
+    list: ITList
   ): Promise<string> {
     try {
       let pinata: object = {};
@@ -352,7 +355,7 @@ export default class TokenList extends Base {
       };
       pinata["pinataContent"] = list;
 
-      const url = `${this.config.default.pinataAPIBaseUrl}/pinning/pinJSONToIPFS`;
+      const url = `${this.config.extra.pinataAPIBaseUrl}/pinning/pinJSONToIPFS`;
       let resp = await axios.post(url, pinata, {
         headers: {
           pinata_api_key: this.pinataApiKey,
@@ -364,8 +367,7 @@ export default class TokenList extends Base {
       console.log(hash);
       return hash;
     } catch (e) {
-      console.error(`ERROR: ${e.message}`);
-      throw Error(`ERROR : ${e.message}`);
+      throw { Code: 2000, Message: "Failed to post token list.", Error: e };
     }
   }
 }
