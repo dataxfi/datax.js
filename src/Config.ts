@@ -8,7 +8,7 @@ import { GraphQLClient } from "graphql-request";
 interface ICustomConfig {
   stakeRouterAddress: string;
   uniV2AdapterAddress: string;
-  stakeCalcAddress: string,
+  stakeCalcAddress: string;
   datatokenList: string;
   tokenList: string;
   nativeAddress: string;
@@ -228,6 +228,7 @@ export default class Config {
       explorerUri: "https://polygonscan.com",
       oceanTokenSymbol: "mOCEAN",
       oceanTokenAddress: "0x282d8efCe846A88B159800bd4130ad77443Fa1A1",
+      gasFeeMultiplier: 1.2,
     },
     "1287": {
       ...configHelperNetworksBase,
@@ -256,7 +257,7 @@ export default class Config {
       providerUri: "https://v4.provider.mumbai.oceanprotocol.com",
       subgraphUri: "https://v4.subgraph.mumbai.oceanprotocol.com",
       explorerUri: "https://mumbai.polygonscan.com",
-      gasFeeMultiplier: 1.1,
+      gasFeeMultiplier: 1.2,
     },
     "56": {
       ...configHelperNetworksBase,

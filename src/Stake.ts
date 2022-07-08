@@ -462,13 +462,8 @@ export default class Stake extends Base {
   ) {
     const txAmtBigNum = new BigNumber(amount);
 
-    try {
       let balanceBN: BigNumber;
       if (txType === "stake") {
-        console.log(
-          "gettin balance of" + tokenIn + "in account" + senderAddress
-        );
-
         const tokenAddress = isETH ? null : tokenIn;
 
         balanceBN = new BigNumber(
@@ -489,16 +484,11 @@ export default class Stake extends Base {
       if (balanceBN.lt(txAmtBigNum)) {
         throw new Error("Not Enough Balance");
       }
-    } catch (error) {
-      console.error(error);
-      throw new Error("Could not check account balance");
-    }
 
     if (!isETH) {
       let allowanceLimit;
       const contractToApprove = this.config.custom.stakeRouterAddress;
       const tokenToAllow = txType === "unstake" ? poolAddress : tokenIn;
-      try {
         //check approval limit vs tx amount
         allowanceLimit = new BigNumber(
           await allowance(
@@ -508,10 +498,7 @@ export default class Stake extends Base {
             contractToApprove
           )
         );
-      } catch (error) {
-        console.error(error);
-        throw new Error("Could not check allowance limit");
-      }
+      
 
       console.log(
         "Allownce: ",
@@ -519,6 +506,7 @@ export default class Stake extends Base {
         "Transaction Amount:",
         amount
       );
+      
       try {
         if (allowanceLimit.lt(txAmtBigNum)) {
           this.trade.approve(
@@ -531,7 +519,12 @@ export default class Stake extends Base {
         }
       } catch (error) {
         console.error(error);
-        throw new Error("Could not process approval transaction");
+        const code = error.code === 4001 ? 4001 : 1000;
+        throw {
+          code,
+          message: error.message,
+          error,
+        };
       }
     }
     try {

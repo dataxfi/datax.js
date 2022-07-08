@@ -36,7 +36,8 @@ export async function getFairGasPrice(
   if (config && config.gasFeeMultiplier)
     return x
       .multipliedBy(config.gasFeeMultiplier)
-      .integerValue(BigNumber.ROUND_DOWN)
+      .plus(1)
+      .integerValue(BigNumber.ROUND_UP)
       .toString(10);
   else return x.toString(10);
 }
