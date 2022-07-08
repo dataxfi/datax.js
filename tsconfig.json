@@ -14,8 +14,11 @@
     "outDir": "./dist/",
     "rootDir": "./src/",
     "sourceMap": true,
-    "typeRoots": ["node_modules/@types"],
-    "strictPropertyInitialization": false
+    "typeRoots": ["node_modules/@types"], 
+    "baseUrl": ".",
+    "paths":{
+      "web3-eth-contract": ["node_modules/web3-eth-contract"]
+    }
   },
   "include": ["src/**/*"],
   "exclude": ["node_modules", "**/*.test.ts"]

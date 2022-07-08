@@ -1,18 +1,18 @@
-import Web3 from "web3";
-import { Contract } from "web3-eth/node_modules/web3-eth-contract/types/index";
-import { AbiItem } from "web3-utils/types";
+import Web3 from 'web3'
+import { Contract } from 'web3-eth/node_modules/web3-eth-contract/types/index'
+import { AbiItem } from 'web3-utils/types'
 
 const communityCollector = "0xeE9300b7961e0a01d9f0adb863C7A227A07AaD75";
 
-export class TestContractHandler {
-  public factory: Contract;
-  public template: Contract;
-  public accounts: string[];
-  public templateBytecode: string;
-  public factoryBytecode: string;
-  public factoryAddress: string;
-  public templateAddress: string;
-  public web3: Web3;
+export class DTContractHandler {
+  public factory: Contract
+  public template: Contract
+  public accounts: string[]
+  public templateBytecode: string
+  public factoryBytecode: string
+  public factoryAddress: string
+  public templateAddress: string
+  public web3: Web3
 
   constructor(
     factoryABI: AbiItem | AbiItem[],

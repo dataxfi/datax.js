@@ -1,10 +1,9 @@
 require("source-map-support").install();
 import { assert } from "chai";
-import { TestContractHandler } from "../TestContractHandler";
+import { DTContractHandler } from "../DTContractHandler";
 import { BalancerContractHandler } from "../BalancerContractHandler";
-import { OceanPool } from "../../src/balancer";
-import { DataTokens } from "../../src/Datatokens";
-import { LoggerInstance } from "../../src/utils";
+import { Logger as LoggerInstance } from "../../src/utils/";
+import { DataTokens } from "../../src/";
 import { AbiItem } from "web3-utils/types";
 import ganache from "ganache-core";
 import Web3 from "web3";
@@ -23,7 +22,7 @@ describe("Simple flow", () => {
   let tom: string;
   let bob: string;
   let alice: string;
-  let DTContracts: TestContractHandler;
+  let DTContracts: DTContractHandler;
   let BalancerContracts: BalancerContractHandler;
   let datatoken: DataTokens;
   let dt1Address: string;
@@ -45,7 +44,7 @@ describe("Simple flow", () => {
   before(async () => {
     config = new Config(web3, network);
 
-    DTContracts = new TestContractHandler(
+    DTContracts = new DTContractHandler(
       factory.abi as AbiItem[],
       datatokensTemplate.abi as AbiItem[],
       datatokensTemplate.bytecode,
@@ -267,8 +266,7 @@ describe("Simple flow", () => {
       bob,
       BalancerContracts.pool1Address,
       "1",
-      oceanSpent,
-      "1"
+      oceanSpent
     );
     assert(swapTx.status, "ERROR : Swap tx failed");
 
@@ -308,8 +306,7 @@ describe("Simple flow", () => {
       alice,
       BalancerContracts.pool1Address,
       "1",
-      dtSpent,
-      "1"
+      dtSpent
     );
     assert(swapTx.status, "ERROR : Swap tx failed");
 

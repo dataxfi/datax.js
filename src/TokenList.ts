@@ -1,6 +1,6 @@
 require("dotenv").config();
 import Base from "./Base";
-import { ITokenInfo, ITList} from "./Types";
+import { ITokenInfo, ITList} from "./@types/datax-types";
 import axios from "axios";
 
 
@@ -78,7 +78,7 @@ export default class TokenList extends Base {
     chainId: number
   ): Promise<any> {
     try {
-      const aquariusUrl = this.config.defaultConfig.metadataCacheUri;
+      const aquariusUrl = this.config.default.metadataCacheUri;
       let resp = await axios(aquariusUrl + "/api/v1/aquarius/assets/ddo");
       let ddos = resp.data;
 
@@ -128,7 +128,7 @@ export default class TokenList extends Base {
     chainId: number
   ): Promise<any> {
     try {
-      const aquariusUrl = this.config.defaultConfig.metadataCacheUri;
+      const aquariusUrl = this.config.default.metadataCacheUri;
       let resp = await axios(aquariusUrl + "/api/v1/aquarius/assets/ddo");
       let ddos = resp.data;
 
@@ -297,7 +297,7 @@ export default class TokenList extends Base {
       let oceantoken = [
         {
           chainId,
-          address: this.config.defaultConfig.oceanTokenAddress,
+          address: this.config.default.oceanTokenAddress,
           symbol: "OCEAN",
           name: "Ocean Token",
           decimals: 18,
@@ -319,13 +319,9 @@ export default class TokenList extends Base {
     }
   }
   /**
-   * Fetch a prepared datatoken list from google drive
-   *  This function will be used instead of prepareDateTokenList, the schema is the same for each of their responses.
-   *  This funciton uses axios which means it will function in dataxjs via the dapp without dep issues
-   *
-   * @returns
-   * Datatoken list to be published
-   * (OCEAN + datatokens)
+   * Fetch a prepared datatoken list from github
+   *  This function will be used instead of prepareDateTokenList.
+   * @returns Datatoken list 
    *
    *
    */
@@ -333,7 +329,7 @@ export default class TokenList extends Base {
   public async fetchPreparedTokenList(chainId: number): Promise<ITList> {
     try {
       const file = await axios.get(
-        `https://raw.githubusercontent.com/dataxfi/scripts/master/TokenList/chain${chainId}.json`
+        `https://raw.githubusercontent.com/dataxfi/scripts/master/TokenListsV4/chain${chainId}.json`
       );
 
       return file.data;
@@ -359,7 +355,7 @@ export default class TokenList extends Base {
       };
       pinata["pinataContent"] = list;
 
-      const url = `${this.config.default.pinataAPIBaseUrl}/pinning/pinJSONToIPFS`;
+      const url = `${this.config.extra.pinataAPIBaseUrl}/pinning/pinJSONToIPFS`;
       let resp = await axios.post(url, pinata, {
         headers: {
           pinata_api_key: this.pinataApiKey,
