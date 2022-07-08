@@ -387,9 +387,9 @@ export default class Stake extends Base {
       );
     }
 
-    let userBaseMaxIn;
-    if (amountsIn)
-      userBaseMaxIn = new BigNumber(amountsIn[amountsIn.length - 1]);
+    const userBaseMaxIn = amountsIn
+      ? new BigNumber(amountsIn[amountsIn.length - 1])
+      : userBalanceBN;
 
     const maxPoolAmountIn = new BigNumber(
       await getMaxAddLiquidity(this.pool, poolAddress, path[path.length - 1])
@@ -462,43 +462,37 @@ export default class Stake extends Base {
   ) {
     const txAmtBigNum = new BigNumber(amount);
 
-      let balanceBN: BigNumber;
-      if (txType === "stake") {
-        const tokenAddress = isETH ? null : tokenIn;
+    let balanceBN: BigNumber;
+    if (txType === "stake") {
+      const tokenAddress = isETH ? null : tokenIn;
 
-        balanceBN = new BigNumber(
-          await this.trade.getBalance(senderAddress, false, tokenAddress)
-        );
-      } else {
-        const balance = await this.sharesBalance(senderAddress, poolAddress);
-        // const balance = this.web3.utils.fromWei(balanceWei);
-        console.log(
-          "Shares balance: ",
-          balance,
-          "Transaction Amount: ",
-          amount
-        );
-        balanceBN = new BigNumber(balance);
-      }
+      balanceBN = new BigNumber(
+        await this.trade.getBalance(senderAddress, false, tokenAddress)
+      );
+    } else {
+      const balance = await this.sharesBalance(senderAddress, poolAddress);
+      // const balance = this.web3.utils.fromWei(balanceWei);
+      console.log("Shares balance: ", balance, "Transaction Amount: ", amount);
+      balanceBN = new BigNumber(balance);
+    }
 
-      if (balanceBN.lt(txAmtBigNum)) {
-        throw new Error("Not Enough Balance");
-      }
+    if (balanceBN.lt(txAmtBigNum)) {
+      throw new Error("Not Enough Balance");
+    }
 
     if (!isETH) {
       let allowanceLimit;
       const contractToApprove = this.config.custom.stakeRouterAddress;
       const tokenToAllow = txType === "unstake" ? poolAddress : tokenIn;
-        //check approval limit vs tx amount
-        allowanceLimit = new BigNumber(
-          await allowance(
-            this.web3,
-            tokenToAllow,
-            senderAddress,
-            contractToApprove
-          )
-        );
-      
+      //check approval limit vs tx amount
+      allowanceLimit = new BigNumber(
+        await allowance(
+          this.web3,
+          tokenToAllow,
+          senderAddress,
+          contractToApprove
+        )
+      );
 
       console.log(
         "Allownce: ",
@@ -506,7 +500,7 @@ export default class Stake extends Base {
         "Transaction Amount:",
         amount
       );
-      
+
       try {
         if (allowanceLimit.lt(txAmtBigNum)) {
           this.trade.approve(
