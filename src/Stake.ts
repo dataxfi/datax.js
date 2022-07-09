@@ -8,6 +8,8 @@ import {
   getMaxRemoveLiquidity,
   getMaxAddLiquidity,
   units,
+  amountToUnits,
+  unitsToAmount,
 } from "./utils/";
 import { TransactionReceipt } from "web3-core";
 import { Contract } from "web3-eth-contract";
@@ -101,53 +103,6 @@ export default class Stake extends Base {
 
   public toWei = (amount: string, unit: Unit = "ether") =>
     this.web3.utils.toWei(String(amount), unit);
-
-  /**
-   * Returns uints array defined in stakeInfo type converted to wei in the
-   * appropriate decimals, and the unit for the last token in the path.
-   * @param uints
-   * @param path
-   * @param txType
-   * @returns
-   */
-  public async convertUintsToWei(
-    uints: string[],
-    path: string[],
-    txType?: "in" | "out"
-  ): Promise<[string[], Unit]> {
-    const lastIndexInPath = path.length - 1;
-    const tokenInDecimals = await decimals(this.web3, path[0]);
-    const tokenInUnits = units[tokenInDecimals];
-
-    const tokenOutDecimals = await decimals(this.web3, path[lastIndexInPath]);
-    const tokenOutUnits = units[tokenOutDecimals];
-
-    let returnUnit: Unit;
-    switch (txType) {
-      case "in":
-        returnUnit = tokenInUnits;
-        break;
-      case "out":
-        returnUnit = tokenOutUnits;
-        break;
-      default:
-        returnUnit = "ether";
-        break;
-    }
-
-    const newUints = uints.map((amt, index) => {
-      switch (index) {
-        case 0:
-          return this.toWei(amt, tokenInUnits);
-        case lastIndexInPath:
-          return this.toWei(amt, tokenOutUnits);
-        default:
-          return this.toWei(amt);
-      }
-    });
-
-    return [newUints, returnUnit];
-  }
 
   /**
    * Helper function for getMaxUnstake
@@ -544,77 +499,6 @@ export default class Stake extends Base {
   }
 
   /**
-   * Constructs the standard format of calling a stake or unstake transaction function: fist calls
-   * estimate gas, then sends the transaction. Built in error handling will pass errorMessage
-   * along with the origional error message. This function assumes the
-   * transaction will be successful, and does not make any pre tx checks.
-   * @param senderAddress - The address which the transaction will be sent from.
-   * @param stakeInfo
-   * @param stakeFunction - The stake or unstake transaction function to be executed.
-   * @param errorMessage - A custom error message to pass into the error thrown if an error occurs.
-   * @return {TransactionReceipt} The transaction receipt.
-   */
-
-  private async constructTxFunction(
-    senderAddress: string,
-    stakeInfo: IStakeInfo,
-    stakeFunction: Function,
-    errorMessage: string,
-    isETH: boolean,
-    txType: "stake" | "unstake"
-  ): Promise<TransactionReceipt> {
-    let estGas;
-
-    const [newUints] = await this.convertUintsToWei(
-      stakeInfo.uints,
-      stakeInfo.path
-    );
-
-    const newStakeInfo = { ...stakeInfo, uints: newUints };
-    const args =
-      isETH && txType !== "unstake"
-        ? { from: senderAddress, value: newUints[txType === "stake" ? 0 : 2] }
-        : { from: senderAddress };
-
-    console.log(
-      "StakeInfo Sent From Datax.js",
-      newStakeInfo,
-      "Args send to From Datax.js",
-      args
-    );
-    try {
-      estGas = await stakeFunction(newStakeInfo).estimateGas(
-        args,
-        (err, estGas) => (err ? this.GASLIMIT_DEFAULT : estGas)
-      );
-    } catch (error) {
-      throw {
-        code: 1000,
-        message:
-          "Gas estimation could not be determined. Aborting due to likey transaction failure.",
-        error,
-      };
-    }
-
-    console.log("Estimated gas price: ", estGas);
-
-    try {
-      return await stakeFunction(newStakeInfo).send({
-        ...args,
-        gas: estGas + 1,
-        gasPrice: await getFairGasPrice(this.web3, this.config.default),
-      });
-    } catch (error) {
-      const code = error.code === 4001 ? 4001 : 1000;
-      throw {
-        code,
-        message: errorMessage,
-        error,
-      };
-    }
-  }
-
-  /**
    * Uses a chains native coin to stake into a datatoken pool. The native coin is internally
    * swapped to the pool's base token, then staked.
    * @param {IStakeInfo} stakeInfo - The stake information for the transaction.
@@ -638,14 +522,61 @@ export default class Stake extends Base {
       true
     );
 
-    return await this.constructTxFunction(
-      senderAddress,
-      stakeInfo,
-      this.stakeRouter.methods.stakeETHInDTPool,
-      this.failureMessage,
-      true,
-      "stake"
+    const { uints, path } = stakeInfo;
+
+    const tokenInDecimals = await decimals(this.web3, path[0]);
+    const amountInUnits = await amountToUnits(
+      this.web3,
+      path[0],
+      uints[0],
+      tokenInDecimals
     );
+
+    const refFeeUnits = this.web3.utils.toWei(uints[1]);
+
+    const amountOutUnits = this.web3.utils.toWei(uints[2]);
+
+    const newUints = [amountInUnits, refFeeUnits, amountOutUnits];
+    const newStakeInfo = { ...stakeInfo, uints: newUints };
+
+    let estGas;
+    console.log("StakeInfo Sent From Datax.js", newStakeInfo);
+
+    try {
+      estGas = await this.stakeRouter.methods
+        .stakeETHInDTPool(newStakeInfo)
+        .estimateGas(
+          { from: senderAddress, value: newUints[0] },
+          (err, estGas) => (err ? this.GASLIMIT_DEFAULT : estGas)
+        );
+    } catch (error) {
+      throw {
+        code: 1000,
+        message:
+          "Gas estimation could not be determined. Aborting due to likey transaction failure.",
+        error,
+      };
+    }
+
+    console.log("Estimated gas price: ", estGas);
+
+    try {
+      return await this.stakeRouter.methods
+        .stakeETHInDTPool(newStakeInfo)
+        .send({
+          from: senderAddress,
+          value: newUints[0],
+          gas: estGas + 1,
+          gasPrice: await getFairGasPrice(this.web3, this.config.default),
+        });
+    } catch (error) {
+      const code = error.code === 4001 ? 4001 : 1000;
+      throw {
+        code,
+        message: this.failureMessage,
+        error,
+      };
+    }
   }
 
   /**
@@ -671,14 +602,58 @@ export default class Stake extends Base {
       true
     );
 
-    return await this.constructTxFunction(
-      senderAddress,
-      stakeInfo,
-      this.stakeRouter.methods.unstakeETHFromDTPool,
-      this.failureMessage,
-      true,
-      "unstake"
+    const { uints, path } = stakeInfo;
+
+    const amountInUnits = this.web3.utils.toWei(uints[0]);
+    const refFeeUnits = this.web3.utils.toWei(uints[1]);
+
+    const amountOutDecimals = await decimals(this.web3, path[path.length - 1]);
+    const amountOutUnits = await amountToUnits(
+      this.web3,
+      path[path.length - 1],
+      uints[2],
+      amountOutDecimals
     );
+
+    const newUints = [amountInUnits, refFeeUnits, amountOutUnits];
+    const newStakeInfo = { ...stakeInfo, uints: newUints };
+
+    let estGas;
+    console.log("StakeInfo Sent From Datax.js", newStakeInfo);
+
+    try {
+      estGas = await this.stakeRouter.methods
+        .unstakeETHFromDTPool(newStakeInfo)
+        .estimateGas({ from: senderAddress }, (err, estGas) =>
+          err ? this.GASLIMIT_DEFAULT : estGas
+        );
+    } catch (error) {
+      throw {
+        code: 1000,
+        message:
+          "Gas estimation could not be determined. Aborting due to likey transaction failure.",
+        error,
+      };
+    }
+
+    console.log("Estimated gas price: ", estGas);
+
+    try {
+      return await this.stakeRouter.methods
+        .unstakeETHFromDTPool(newStakeInfo)
+        .send({
+          from: senderAddress,
+          gas: estGas + 1,
+          gasPrice: await getFairGasPrice(this.web3, this.config.default),
+        });
+    } catch (error) {
+      const code = error.code === 4001 ? 4001 : 1000;
+      throw {
+        code,
+        message: this.failureMessage,
+        error,
+      };
+    }
   }
 
   /**
@@ -706,14 +681,58 @@ export default class Stake extends Base {
       false
     );
 
-    return await this.constructTxFunction(
-      senderAddress,
-      stakeInfo,
-      this.stakeRouter.methods.stakeTokenInDTPool,
-      this.failureMessage,
-      false,
-      "stake"
+    const { uints, path } = stakeInfo;
+
+    const tokenInDecimals = await decimals(this.web3, path[0]);
+    const amountInUnits = await amountToUnits(
+      this.web3,
+      path[0],
+      uints[0],
+      tokenInDecimals
     );
+
+    const refFeeUnits = this.web3.utils.toWei(uints[1]);
+    const amountOutUnits = this.web3.utils.toWei(uints[2]);
+
+    const newUints = [amountInUnits, refFeeUnits, amountOutUnits];
+    const newStakeInfo = { ...stakeInfo, uints: newUints };
+
+    let estGas;
+    console.log("StakeInfo Sent From Datax.js", newStakeInfo);
+
+    try {
+      estGas = await this.stakeRouter.methods
+        .stakeTokenInDTPool(newStakeInfo)
+        .estimateGas({ from: senderAddress }, (err, estGas) =>
+          err ? this.GASLIMIT_DEFAULT : estGas
+        );
+    } catch (error) {
+      throw {
+        code: 1000,
+        message:
+          "Gas estimation could not be determined. Aborting due to likey transaction failure.",
+        error,
+      };
+    }
+
+    console.log("Estimated gas price: ", estGas);
+
+    try {
+      return await this.stakeRouter.methods
+        .stakeTokenInDTPool(newStakeInfo)
+        .send({
+          from: senderAddress,
+          gas: estGas + 1,
+          gasPrice: await getFairGasPrice(this.web3, this.config.default),
+        });
+    } catch (error) {
+      const code = error.code === 4001 ? 4001 : 1000;
+      throw {
+        code,
+        message: this.failureMessage,
+        error,
+      };
+    }
   }
 
   /**
@@ -739,68 +758,55 @@ export default class Stake extends Base {
       false
     );
 
-    return await this.constructTxFunction(
-      senderAddress,
-      stakeInfo,
-      this.stakeRouter.methods.unstakeTokenFromDTPool,
-      this.failureMessage,
-      false,
-      "unstake"
-    );
-  }
+    const { uints, path } = stakeInfo;
 
-  /**
-   * Constructs the standard way to call a calculation function. Converts all amounts in the uint256 array to wei,
-   * then calls the passed transaction function with the updated stakeInfo. Built in error handling will pass the
-   * provided errorMessage to the thrown error if an error occurs.
-   * @param stakeInfo - stakeInfo to be used in tx function
-   * @param calcFunction - calculation function to be called
-   * @param errorMessage - message in the case of failure
-   * @param IN - whether calculating in or not
-   * @returns { dataxFee: string; poolAmountOut: string; refFee: string } pool amount out and fees in eth denom
-   */
+    const amountInUnits = this.web3.utils.toWei(uints[0]);
+    const refFeeUnits = this.web3.utils.toWei(uints[1]);
 
-  private async constructCalcFunction(
-    stakeInfo: IStakeInfo,
-    calcFunction: Function,
-    errorMessage: string,
-    IN: "in" | "out",
-    senderAddress?: string
-  ): Promise<{
-    dataxFee: string;
-    refFee: string;
-    return: string;
-  }> {
-    const [uints, returnUnit] = await this.convertUintsToWei(
-      stakeInfo.uints,
-      stakeInfo.path,
-      IN
+    const amountOutDecimals = await decimals(this.web3, path[path.length - 1]);
+    const amountOutUnits = await amountToUnits(
+      this.web3,
+      path[path.length - 1],
+      uints[2],
+      amountOutDecimals
     );
 
-    const newStakeInfo: IStakeInfo = {
-      ...stakeInfo,
-      uints,
-    };
+    const newUints = [amountInUnits, refFeeUnits, amountOutUnits];
+    const newStakeInfo = { ...stakeInfo, uints: newUints };
+
+    let estGas;
+    console.log("StakeInfo Sent From Datax.js", newStakeInfo);
 
     try {
-      const responseInWei = await calcFunction(newStakeInfo).call();
-      if (responseInWei) {
-        const { poolAmountOut, baseAmountOut, poolAmountIn, dataxFee, refFee } =
-          responseInWei;
-
-        //depending on the calcFunction param, only one of these values will be truthy
-        const toReturn = poolAmountOut || baseAmountOut || poolAmountIn;
-
-        return {
-          return: this.fromWei(toReturn, returnUnit),
-          dataxFee: this.fromWei(dataxFee),
-          refFee: this.fromWei(refFee),
-        };
-      }
+      estGas = await this.stakeRouter.methods
+        .unstakeTokenFromDTPool(newStakeInfo)
+        .estimateGas({ from: senderAddress }, (err, estGas) =>
+          err ? this.GASLIMIT_DEFAULT : estGas
+        );
     } catch (error) {
       throw {
         code: 1000,
-        message: errorMessage,
+        message:
+          "Gas estimation could not be determined. Aborting due to likey transaction failure.",
+        error,
+      };
+    }
+
+    console.log("Estimated gas price: ", estGas);
+
+    try {
+      return await this.stakeRouter.methods
+        .unstakeTokenFromDTPool(newStakeInfo)
+        .send({
+          from: senderAddress,
+          gas: estGas + 1,
+          gasPrice: await getFairGasPrice(this.web3, this.config.default),
+        });
+    } catch (error) {
+      const code = error.code === 4001 ? 4001 : 1000;
+      throw {
+        code,
+        message: this.failureMessage,
         error,
       };
     }
@@ -814,22 +820,45 @@ export default class Stake extends Base {
   public async calcPoolOutGivenTokenIn(
     stakeInfo: IStakeInfo,
     senderAddress?: string
-  ) {
+  ): Promise<{ poolAmountOut: string; dataxFee: string; refFee: string }> {
     console.log("Stake info in calcPoolOutGivenTokenIn datax.js", stakeInfo);
 
-    const {
-      return: poolAmountOut,
-      dataxFee,
-      refFee,
-    } = await this.constructCalcFunction(
-      stakeInfo,
-      this.stakeCalc.methods.calcPoolOutGivenTokenIn,
-      "Failed to calculate pool out given token in",
-      "out",
-      senderAddress
-    );
+    try {
+      const { uints, path } = stakeInfo;
 
-    return { poolAmountOut, dataxFee, refFee };
+      const tokenInDecimals = await decimals(this.web3, path[0]);
+
+      const tokenInUnits = await amountToUnits(
+        this.web3,
+        path[0],
+        uints[0],
+        tokenInDecimals
+      );
+      const refFeeUnits = this.web3.utils.toWei(uints[1]);
+      const newUints = [tokenInUnits, refFeeUnits, "0"];
+
+      stakeInfo = { ...stakeInfo, uints: newUints };
+
+      const { poolAmountOut, dataxFee, refFee } = await this.stakeCalc.methods
+        .calcPoolOutGivenTokenIn(stakeInfo)
+        .call();
+
+      const amountOut = this.web3.utils.fromWei(poolAmountOut);
+      const dataxFeeAmt = this.web3.utils.fromWei(dataxFee);
+      const refFeeAmt = this.web3.utils.fromWei(refFee);
+
+      return {
+        poolAmountOut: amountOut,
+        dataxFee: dataxFeeAmt,
+        refFee: refFeeAmt,
+      };
+    } catch (error) {
+      throw {
+        code: 1000,
+        message: "Failed to calculate pool out given token in",
+        error,
+      };
+    }
   }
 
   /**
@@ -839,23 +868,44 @@ export default class Stake extends Base {
    */
   public async calcPoolInGivenTokenOut(
     stakeInfo: IStakeInfo,
-    senderAddress?: string
-  ) {
+  ): Promise<{ poolAmountIn:string; dataxFee:string; refFee:string }> {
     console.log("Stake info in calcPoolInGivenTokenOut datax.js", stakeInfo);
 
-    const {
-      return: poolAmountIn,
-      dataxFee,
-      refFee,
-    } = await this.constructCalcFunction(
-      stakeInfo,
-      this.stakeCalc.methods.calcPoolInGivenTokenOut,
-      "Failed to calculate pool in given token out",
-      "in",
-      senderAddress
-    );
+    try {
+      const { uints, path } = stakeInfo;
 
-    return { poolAmountIn, dataxFee, refFee };
+      const tokenOutDecimals = await decimals(this.web3, path[path.length - 1]);
+      const tokenOutUnits = await amountToUnits(
+        this.web3,
+        path[path.length - 1],
+        uints[2],
+        tokenOutDecimals
+      );
+      const refFeeUnits = this.web3.utils.toWei(path[1]);
+
+      const newUints = ["0", refFeeUnits, tokenOutUnits];
+      stakeInfo = { ...stakeInfo, uints: newUints };
+
+      const { poolAmountIn, dataxFee, refFee } = await this.stakeCalc.methods
+        .calcPoolInGivenTokenOut(stakeInfo)
+        .call();
+
+      const poolAmt = this.web3.utils.fromWei(poolAmountIn);
+      const dataxFeeAmt = this.web3.utils.fromWei(dataxFee);
+      const refFeeAmt = this.web3.utils.fromWei(refFee);
+
+      return {
+        poolAmountIn: poolAmt,
+        dataxFee: dataxFeeAmt,
+        refFee: refFeeAmt,
+      };
+    } catch (error) {
+      throw {
+        code: 1000,
+        message: "Failed to calculate pool in given token out",
+        error,
+      };
+    }
   }
 
   /**
@@ -866,23 +916,44 @@ export default class Stake extends Base {
    */
   public async calcTokenOutGivenPoolIn(
     stakeInfo: IStakeInfo,
-    senderAddress?: string
-  ) {
+  ): Promise<{ baseAmountOut:string; dataxFee:string; refFee:string }> {
     console.log("Stake info in calcTokenOutGivenPoolIn datax.js", stakeInfo);
 
-    const {
-      return: baseAmountOut,
-      dataxFee,
-      refFee,
-    } = await this.constructCalcFunction(
-      stakeInfo,
-      this.stakeCalc.methods.calcTokenOutGivenPoolIn,
-      "Failed to calculate token out given pool in",
-      "out",
-      senderAddress
-    );
+    try {
+      const { path, uints } = stakeInfo;
 
-    return { baseAmountOut, dataxFee, refFee };
+      const poolInUnits = this.web3.utils.toWei(uints[0]);
+      const refFeeUnits = this.web3.utils.toWei(uints[1]);
+      const newUints = [poolInUnits, refFeeUnits, "0"];
+
+      stakeInfo = {...stakeInfo, uints:newUints}
+
+      const { baseAmountOut, dataxFee, refFee } = await this.stakeCalc.methods
+        .calcTokenOutGivenPoolIn(stakeInfo)
+        .call();
+
+      const tokenOutDecimals = await decimals(this.web3, path[path.length - 1]);
+      const amountOut = await unitsToAmount(
+        this.web3,
+        path[path.length - 1],
+        baseAmountOut,
+        tokenOutDecimals
+      );
+      const dataxFeeAmt = this.web3.utils.fromWei(dataxFee);
+      const refFeeAmt = this.web3.utils.fromWei(refFee);
+
+      return {
+        baseAmountOut: amountOut,
+        dataxFee: dataxFeeAmt,
+        refFee: refFeeAmt,
+      };
+    } catch (error) {
+      throw {
+        code: 1000,
+        message: "Failed to calculate token out given pool in",
+        error,
+      };
+    }
   }
 
   /**
